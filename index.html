@@ -1,0 +1,2704 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>[hidden]{display:none!important} html,body{margin:0;padding:0}</style>
+</head>
+<body>
+<title>PifPaf</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  :root {
+    --bg: #1a1d24;
+    --fg: #e8eaf0;
+    --field: #ddc9a3;
+    --field-line: rgba(255,255,255,0.18);
+    --tank1: #3f7fe0;
+    --tank1-dark: #2a5bb0;
+    --tank2: #e04f3f;
+    --tank2-dark: #b0302a;
+    --barrel: #233a5c;
+    --barrel2: #5c2323;
+    --btn: #2a2e38;
+    --btn-active: #3a4a5a;
+    --shell: #ffcc55;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, sans-serif;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 10px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  html { height: 100%; }
+
+  /* Карта всегда 12×22 блока (336×616). Экран подстраивается под неё:
+     #scaler уменьшает или увеличивает поле целиком и ставит по центру */
+  #arena {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+  }
+  #scaler {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+  }
+  #field {
+    width: 336px;
+    height: 616px;
+    background:
+      repeating-linear-gradient(135deg, var(--field-line) 0px, var(--field-line) 1px, transparent 1px, transparent 28px),
+      var(--field);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+  }
+
+  .tank {
+    position: absolute;
+    width: 19px;
+    height: 17px;
+    left: 0;
+    top: 0;
+    transform-origin: center center;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+  }
+  .tank-track {
+    position: absolute;
+    top: 1.5px;
+    bottom: 1.5px;
+    width: 2px;
+    border-radius: 1px;
+    background: rgba(0,0,0,0.3);
+  }
+  .tank-track.left { left: 0.5px; }
+  .tank-track.right { right: 0.5px; }
+  .tank-body {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: 1.5px;
+    bottom: 1.5px;
+    border-radius: 3px;
+  }
+  .tank-turret {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    left: 50%;
+    top: 50%;
+    margin: -4.5px 0 0 -4.5px;
+    border-radius: 50%;
+  }
+  .tank-barrel {
+    position: absolute;
+    width: 3px;
+    height: 6px;
+    left: 50%;
+    top: -3px;
+    margin-left: -1.5px;
+    border-radius: 1px;
+  }
+  .p1 .tank-body, .p1 .tank-turret { background: var(--tank1); border: 1px solid var(--tank1-dark); }
+  .p1 .tank-barrel { background: var(--barrel); }
+  .p2 .tank-body, .p2 .tank-turret { background: var(--tank2); border: 1px solid var(--tank2-dark); }
+  .p2 .tank-barrel { background: var(--barrel2); }
+
+  .shell {
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #6a6a6a 0%, #2a2a2a 55%, #0a0a0a 100%);
+    box-shadow: 0 2px 2px rgba(0,0,0,0.4);
+  }
+  .shell::before {
+    content: '';
+    position: absolute;
+    width: 2.4px;
+    height: 5.6px;
+    background: #8a5a2a;
+    top: -5px;
+    left: 50%;
+    margin-left: -1.2px;
+    border-radius: 1px;
+    transform: rotate(-18deg);
+  }
+  .shell::after {
+    content: '';
+    position: absolute;
+    width: 4.8px;
+    height: 4.8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff6c0 0%, #ffb020 60%, transparent 100%);
+    top: -9px;
+    left: 50%;
+    margin-left: -2.4px;
+    animation: sparkFlicker 0.25s ease-in-out infinite alternate;
+  }
+  @keyframes sparkFlicker {
+    0% { opacity: 0.6; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.15); }
+  }
+
+  .muzzleFlash {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fffbe0 0 25%, #ffd23f 45%, #ff9a1a 62%, rgba(255, 140, 0, 0) 76%);
+    filter: drop-shadow(0 0 2px rgba(255, 120, 0, 0.8));
+    pointer-events: none;
+    animation: flashPop 0.16s ease-out forwards;
+  }
+  @keyframes flashPop {
+    0% { opacity: 1; transform: scale(0.6); }
+    40% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1.3); }
+  }
+  /* искра — светящийся штрих, повёрнутый по направлению полёта */
+  .spark {
+    position: absolute;
+    width: 8px;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, rgba(255, 150, 30, 0), #ffd23f 55%, #fffbe6);
+    box-shadow: 0 0 3px 1px rgba(255, 160, 40, 0.85);
+    pointer-events: none;
+    animation: sparkFly 0.22s ease-out forwards;
+  }
+  @keyframes sparkFly {
+    0% { transform: translate(var(--sx), var(--sy)) rotate(var(--rot)) scaleX(0.6); opacity: 1; }
+    100% { transform: translate(var(--ex), var(--ey)) rotate(var(--rot)) scaleX(1.3); opacity: 0; }
+  }
+
+  @keyframes barrelRecoil {
+    0% { transform: translateY(0); }
+    35% { transform: translateY(2.5px); }
+    100% { transform: translateY(0); }
+  }
+  .tank.firing .tank-barrel { animation: barrelRecoil 0.18s ease-out; }
+
+  .fireBtn {
+    height: 6vh;
+    min-height: 42px;
+    border-radius: 14px;
+    background: var(--btn);
+    border: none;
+    color: var(--fg);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: background 0.1s;
+    width: 100%;
+  }
+  .fireBtn.active {
+    background: var(--btn-active);
+  }
+  .ctrlRow {
+    display: flex;
+    gap: 8px;
+  }
+  .ctrlRow .fireBtn { flex: 1; width: auto; min-width: 0; }
+  #row2 { transform: rotate(180deg); }
+
+  .pierceBtn {
+    position: relative;
+    overflow: hidden;
+    flex: none;
+    width: 78px;
+    height: 6vh;
+    min-height: 42px;
+    border-radius: 14px;
+    border: 2px solid #d9822b;
+    background: var(--btn);
+    color: #ffb35c;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+  .pierceBtn:active { background: #3a3226; }
+  .pierceBtn.cooling { color: #7a6a58; border-color: #5a4a38; }
+  .pierceBtn.cooling::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    transform-origin: left;
+    animation: cdFill var(--cd, 5s) linear forwards;
+  }
+  @keyframes cdFill {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+  }
+
+  /* прошивающий снаряд: проходит сквозь дерево (полосатые стены) */
+  .pierceShell {
+    position: absolute;
+    width: 20px;
+    height: 7px;
+    border-radius: 4px 7px 7px 4px;
+    background: linear-gradient(90deg, rgba(255, 120, 40, 0) 0%, #ff7a2a 35%, #ffd27a 85%, #fff6d8 100%);
+    box-shadow: 0 0 6px rgba(255, 150, 60, 0.9);
+  }
+
+  .shield-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(130, 220, 255, 0.9);
+    box-shadow: 0 0 6px rgba(130, 220, 255, 0.8), inset 0 0 4px rgba(130, 220, 255, 0.6);
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+  .tank.shielded .shield-ring { opacity: 1; }
+
+  #scoreBar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  #scoreBar .s1 { color: var(--tank1); }
+  #scoreBar .s2 { color: var(--tank2); }
+  #scoreBar .dash { color: #6a7488; font-weight: 600; font-size: 1rem; }
+
+  .boom {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: boomOut 0.45s ease-out forwards;
+  }
+  @keyframes boomOut {
+    0% { transform: translate(var(--bx), var(--by)) scale(0.4); opacity: 1; }
+    100% { transform: translate(calc(var(--bx) + var(--tx)), calc(var(--by) + var(--ty))) scale(1.4); opacity: 0; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-6px, 3px); }
+    40% { transform: translate(5px, -4px); }
+    60% { transform: translate(-4px, -2px); }
+    80% { transform: translate(3px, 4px); }
+  }
+  #field.shake { animation: shake 0.3s ease-in-out; }
+
+  .wall.mover {
+    background: repeating-linear-gradient(45deg, #9a7a44 0 6px, #7d6236 6px 12px);
+    border-color: rgba(0,0,0,0.45);
+    z-index: 1;
+  }
+  .wall.blink { animation: wallBlink 0.14s steps(2) infinite; }
+  @keyframes wallBlink { 0% { opacity: 1; } 100% { opacity: 0.25; } }
+  .preview .pm {
+    position: absolute;
+    background: #9a7a44;
+    border-radius: 2px;
+  }
+
+  #wallsLayer {
+    position: absolute;
+    inset: 0;
+  }
+  .wall {
+    position: absolute;
+    background: linear-gradient(160deg, #a8a0a0, #7c7474);
+    border: 1px solid rgba(0,0,0,0.3);
+    border-radius: 6px;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.25), inset 0 1px 2px rgba(255,255,255,0.25);
+  }
+
+  #menuBtn {
+    background: var(--btn);
+    color: var(--fg);
+    border: none;
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  /* --- меню --- */
+  #menu {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--bg);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: calc(24px + env(safe-area-inset-top, 0px)) 24px;
+    overflow-y: auto;
+    touch-action: auto;
+  }
+  .menuScreen {
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .menuTitle {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 14px;
+  }
+  .tile {
+    aspect-ratio: 1;
+    max-width: 100%;
+    background: #252a35;
+    border: 2px solid #323848;
+    border-radius: 20px;
+    color: var(--fg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.15s;
+  }
+  .tile:active { transform: scale(0.96); }
+  .tile:focus-visible { outline: 2px solid var(--tank1); outline-offset: 2px; }
+  .tileIcon {
+    position: relative;
+    width: 60px;
+    height: 60px;
+  }
+  .tileIcon .tank {
+    left: 50%;
+    top: 50%;
+    margin: -8.5px 0 0 -9.5px;
+    transform: scale(2.6) rotate(-20deg);
+  }
+  .preview {
+    position: relative;
+    width: 70%;
+    aspect-ratio: 6 / 11;
+    background: var(--field);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .preview .pw {
+    position: absolute;
+    background: #7c7474;
+    border-radius: 2px;
+  }
+  .preview .q {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #7c7474;
+  }
+  .levelGroups {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .groupTitle {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a93a8;
+    margin-bottom: 10px;
+  }
+  .backBtn {
+    align-self: flex-start;
+    background: var(--btn);
+    color: var(--fg);
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .respawnFlash {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    animation: flashOut 0.3s ease-out forwards;
+  }
+  @keyframes flashOut {
+    0% { opacity: 0.5; }
+    100% { opacity: 0; }
+  }
+
+  /* --- счёт: цель и патроны --- */
+  #scoreBar .goal { font-size: 0.72rem; font-weight: 700; color: #8a93a8; letter-spacing: 0.04em; }
+  .ammo { display: inline-flex; gap: 3px; align-items: center; }
+  .ammo .pip { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .ammo .pip.empty { opacity: 0.2; }
+  #ammo1 { color: var(--tank1); }
+  #ammo2 { color: var(--tank2); }
+
+  /* --- сообщение посреди поля --- */
+  #toast {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(26, 29, 36, 0.85);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    pointer-events: none;
+    z-index: 30;
+  }
+
+  /* --- победа --- */
+  #victory {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(14, 16, 22, 0.78);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .vCard {
+    position: relative;
+    z-index: 2;
+    background: #252a35;
+    border: 1px solid #323848;
+    border-radius: 22px;
+    padding: 26px 22px;
+    width: min(320px, 100%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .vTitle { font-size: 1.7rem; font-weight: 900; letter-spacing: -0.01em; text-wrap: balance; }
+  .vScore { font-size: 1.1rem; font-weight: 700; color: #aab2c4; font-variant-numeric: tabular-nums; }
+  .vBtns { display: flex; gap: 10px; margin-top: 8px; }
+  .vBtns button {
+    flex: 1;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--btn-active);
+  }
+  .vBtns #rematchBtn { background: var(--vColor, var(--tank1)); }
+  .confetti {
+    position: absolute;
+    top: -12px;
+    width: 8px;
+    height: 12px;
+    border-radius: 2px;
+    z-index: 1;
+    animation: fall linear infinite;
+  }
+  @keyframes fall {
+    0% { transform: translateY(-20px) rotate(0deg); }
+    100% { transform: translateY(110vh) rotate(720deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .confetti { display: none; }
+  }
+
+  /* --- турникеты: деревянная крестовина на каменной оси --- */
+  .turn { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 1; }
+  .turn .bar {
+    position: absolute;
+    background: repeating-linear-gradient(45deg, #9a7a44 0 6px, #7d6236 6px 12px);
+    border: 1px solid rgba(0, 0, 0, 0.45);
+    border-radius: 4px;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
+  }
+  .turn .hub {
+    position: absolute;
+    width: 16px; height: 16px;
+    margin: -8px 0 0 -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #c8c0c0, #6f6868);
+    border: 1px solid rgba(0, 0, 0, 0.45);
+  }
+  .turn.big .hub { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
+  .preview .pt {
+    position: absolute;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2px dashed #9a7a44;
+    transform: translate(-50%, -50%);
+  }
+
+  /* --- порталы --- */
+  #portalsLayer > * { position: absolute; pointer-events: none; }
+  .portal {
+    width: 26px;
+    height: 26px;
+    margin: -13px 0 0 -13px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 3px, transparent 4px),
+      conic-gradient(from 0deg, var(--pc), transparent 30%, var(--pc) 50%, transparent 80%, var(--pc));
+    box-shadow: 0 0 10px var(--pc), inset 0 0 6px var(--pc);
+    animation: portalSpin 1.6s linear infinite;
+  }
+  @keyframes portalSpin { to { transform: rotate(360deg); } }
+  .portalCharge {
+    width: 36px;
+    height: 36px;
+    margin: -18px 0 0 -18px;
+    border-radius: 50%;
+    background: conic-gradient(var(--cc, #fff) calc(var(--p, 0) * 360deg), transparent 0);
+    -webkit-mask: radial-gradient(circle, transparent 13px, #000 14px);
+    mask: radial-gradient(circle, transparent 13px, #000 14px);
+  }
+  /* компактные плитки уровней: по 4 в ряд на телефоне */
+  #levelGroups .tiles {
+    grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+    gap: 8px;
+  }
+  #levelGroups .tile {
+    aspect-ratio: auto;
+    padding: 8px 4px 7px;
+    gap: 6px;
+    border-radius: 14px;
+    font-size: 0.72rem;
+    line-height: 1.15;
+    text-align: center;
+  }
+  #levelGroups .preview { width: 44px; border-radius: 5px; }
+  .preview .ps {
+    position: absolute;
+    width: 14%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.85;
+  }
+  .preview .pp {
+    position: absolute;
+    width: 16%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 4px currentColor;
+  }
+  @media (prefers-reduced-motion: reduce) { .portal { animation: none; } }
+
+  /* --- красный под управлением бота --- */
+  .ctrlRow.botRow { opacity: 0.55; pointer-events: none; }
+  .segmented { display: flex; gap: 6px; flex-wrap: wrap; }
+  .segmented button {
+    border: none;
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--fg);
+    background: #323848;
+  }
+  .segmented button[aria-pressed="true"] { background: var(--tank2); }
+  .segmented button:focus-visible { outline: 2px solid var(--tank1); outline-offset: 2px; }
+
+  /* --- режимы и настройки в меню --- */
+  .panel {
+    background: #20242e;
+    border: 1px solid #2e3442;
+    border-radius: 18px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .panel .groupTitle { margin-bottom: 0; }
+  .modes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .modeChip {
+    text-align: left;
+    background: #252a35;
+    border: 2px solid #323848;
+    border-radius: 14px;
+    padding: 10px 12px;
+    color: var(--fg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .modeChip b { font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
+  .modeChip b::before {
+    content: '';
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    border: 2px solid #5a6378;
+    flex: none;
+  }
+  .modeChip small { font-size: 0.74rem; line-height: 1.35; color: #9aa3b6; }
+  .modeChip[aria-pressed="true"] { border-color: var(--tank1); background: #233049; }
+  .modeChip[aria-pressed="true"] b::before {
+    background: var(--tank1);
+    border-color: var(--tank1);
+    box-shadow: inset 0 0 0 2px #233049;
+  }
+  .modeChip:focus-visible, .stepper button:focus-visible, .switch:focus-visible { outline: 2px solid var(--tank1); outline-offset: 2px; }
+  .settingRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .settingRow .label { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 0.9rem; font-weight: 600; }
+  .settingRow .label small { font-size: 0.74rem; font-weight: 400; color: #9aa3b6; }
+  .stepper { display: flex; align-items: center; gap: 8px; flex: none; }
+  .stepper button {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    border: none;
+    background: var(--btn-active);
+    color: var(--fg);
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .stepper span { min-width: 26px; text-align: center; font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .switch {
+    position: relative;
+    flex: none;
+    width: 52px; height: 30px;
+    border-radius: 15px;
+    border: none;
+    background: #3a4152;
+    transition: background 0.15s;
+  }
+  .switch span {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s;
+  }
+  .switch[aria-checked="true"] { background: var(--tank1); }
+  .switch[aria-checked="true"] span { transform: translateX(22px); }
+  .switch:disabled { opacity: 0.45; }
+</style>
+
+<div class="ctrlRow" id="row2">
+  <button class="fireBtn" id="btn2">ИГРОК 2 (красный)</button>
+  <button class="pierceBtn" id="pierce2">ПРОБОЙ</button>
+</div>
+<div id="scoreBar"><span class="ammo" id="ammo1" hidden></span><span class="s1" id="score1">0</span><span class="dash">—</span><span class="s2" id="score2">0</span><span class="ammo" id="ammo2" hidden></span><span class="goal" id="goal">до 3</span><button id="menuBtn">Меню</button></div>
+<div id="arena"><div id="scaler">
+<div id="field">
+  <div id="wallsLayer"></div>
+  <div id="portalsLayer"></div>
+  <div id="toast" hidden></div>
+  <div class="tank p1" id="tank1">
+    <div class="shield-ring"></div>
+    <div class="tank-track left"></div>
+    <div class="tank-track right"></div>
+    <div class="tank-body"></div>
+    <div class="tank-turret"></div>
+    <div class="tank-barrel"></div>
+  </div>
+  <div class="tank p2" id="tank2">
+    <div class="shield-ring"></div>
+    <div class="tank-track left"></div>
+    <div class="tank-track right"></div>
+    <div class="tank-body"></div>
+    <div class="tank-turret"></div>
+    <div class="tank-barrel"></div>
+  </div>
+</div>
+</div></div>
+<div class="ctrlRow" id="row1">
+  <button class="fireBtn" id="btn1">ИГРОК 1 (синий)</button>
+  <button class="pierceBtn" id="pierce1">ПРОБОЙ</button>
+</div>
+
+<div id="victory" hidden>
+  <div class="vCard">
+    <div class="vTitle" id="vTitle"></div>
+    <div class="vScore" id="vScore"></div>
+    <div class="vBtns">
+      <button id="rematchBtn">Реванш</button>
+      <button id="toLevelsBtn">Уровни</button>
+    </div>
+  </div>
+</div>
+
+<div id="menu">
+  <div class="menuScreen" id="homeScreen">
+    <h1 class="menuTitle">PifPaf</h1>
+    <div class="tiles">
+      <button class="tile" id="tanksTile">
+        <div class="tileIcon">
+          <div class="tank p1">
+            <div class="tank-track left"></div>
+            <div class="tank-track right"></div>
+            <div class="tank-body"></div>
+            <div class="tank-turret"></div>
+            <div class="tank-barrel"></div>
+          </div>
+        </div>
+        <span>Танки</span>
+      </button>
+    </div>
+  </div>
+  <div class="menuScreen" id="levelScreen" hidden>
+    <button class="backBtn" id="backBtn">← Назад</button>
+    <h1 class="menuTitle">Танки</h1>
+    <section class="panel">
+      <h2 class="groupTitle">Режимы · можно включить несколько</h2>
+      <div class="modes">
+        <button class="modeChip" id="modeLast" aria-pressed="false">
+          <b>Последний выстрел</b>
+          <small>Одна жизнь и 3 выстрела на раунд. Кончились у обоих — ничья, раунд заново.</small>
+        </button>
+        <button class="modeChip" id="modeRico" aria-pressed="false">
+          <b>Рикошеты</b>
+          <small>Обычные снаряды отскакивают 4 раза. Настройку рикошета менять нельзя.</small>
+        </button>
+      </div>
+    </section>
+    <section class="panel">
+      <h2 class="groupTitle">Соперник</h2>
+      <div class="settingRow">
+        <div class="label">Кто играет за красного<small id="oppNote">Второй человек напротив</small></div>
+      </div>
+      <div class="segmented" id="oppSeg">
+        <button data-opp="human" aria-pressed="true">Человек</button>
+        <button data-opp="easy" aria-pressed="false">Бот: лёгкий</button>
+        <button data-opp="medium" aria-pressed="false">Бот: средний</button>
+        <button data-opp="hard" aria-pressed="false">Бот: злой</button>
+      </div>
+    </section>
+    <section class="panel">
+      <h2 class="groupTitle">Настройки</h2>
+      <div class="settingRow">
+        <div class="label">Очков до победы</div>
+        <div class="stepper">
+          <button id="roundsMinus" aria-label="Меньше">−</button>
+          <span id="roundsVal">3</span>
+          <button id="roundsPlus" aria-label="Больше">+</button>
+        </div>
+      </div>
+      <div class="settingRow">
+        <div class="label">Рикошет обычных снарядов<small id="ricoNote">Один отскок от стены или края поля</small></div>
+        <button class="switch" id="ricoSwitch" role="switch" aria-checked="false" aria-label="Рикошет обычных снарядов"><span></span></button>
+      </div>
+      <div class="settingRow">
+        <div class="label">Урон от своих снарядов<small id="selfNote">Свои бомбы после отскока пролетают сквозь тебя</small></div>
+        <button class="switch" id="selfSwitch" role="switch" aria-checked="false" aria-label="Урон от своих снарядов"><span></span></button>
+      </div>
+    </section>
+    <div class="levelGroups" id="levelGroups"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const field = document.getElementById('field');
+  // логический размер поля не зависит от экрана
+  const fieldRect = { width: 336, height: 616 };
+  const arena = document.getElementById('arena');
+  const scaler = document.getElementById('scaler');
+  function fitField() {
+    const r = arena.getBoundingClientRect();
+    const k = Math.min(r.width / fieldRect.width, r.height / fieldRect.height) || 1;
+    const ox = (r.width - fieldRect.width * k) / 2, oy = (r.height - fieldRect.height * k) / 2;
+    scaler.style.transform = `translate(${ox}px, ${oy}px) scale(${k})`;
+  }
+  window.addEventListener('resize', fitField);
+  fitField();
+
+  const ROTATE_SPEED = 360 / 1.7; // deg/sec
+  const MOVE_SPEED = 90; // px/sec
+  const SHELL_SPEED = 300; // px/sec
+  const TANK_SCALE = 1.2; // танк на 20% крупнее базовой модели 19×17
+  const HIT_RADIUS = 12;
+  const TANK_PAD = 11; // радиус танка для столкновений со стенами
+  const RESPAWN_SHIELD = 3000; // мс неуязвимости после возрождения
+  const PIERCE_COOLDOWN = 5000; // мс перезарядки прошивающего снаряда
+  const LAST_SHOT_AMMO = 3;     // выстрелов на раунд в режиме «Последний выстрел»
+
+  // --- настройки и режимы (запоминаются в браузере) ---
+  const settings = { rounds: 3, ricochet: false, opponent: 'human', selfDamage: false };
+  const modes = { lastShot: false, ricochet: false };
+  try {
+    const saved = JSON.parse(localStorage.getItem('tanks-options') || 'null');
+    if (saved) { Object.assign(settings, saved.settings); Object.assign(modes, saved.modes); delete modes.mines; }
+  } catch (e) {}
+  function saveOptions() {
+    try { localStorage.setItem('tanks-options', JSON.stringify({ settings, modes })); } catch (e) {}
+  }
+  // сколько раз обычный снаряд может отскочить
+  const ricochetCount = () => modes.ricochet ? 4 : (settings.ricochet ? 1 : 0);
+
+  let gameOver = false;
+
+  // --- вибрация ---
+  function vibrate(pattern) {
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+  }
+
+  // --- уровни: всё собрано из одинаковых блоков на общей сетке ---
+  const BLOCK = 28;        // единый блок ≈ 1,5 танка
+  const RANDOM_BLOCKS = 20;
+
+  // Сетка поля: сколько клеток влезает, отступы, клетки точек появления
+  function makeGrid(W, H) {
+    const cols = Math.floor(W / BLOCK), rows = Math.floor(H / BLOCK);
+    const ox = (W - cols * BLOCK) / 2, oy = (H - rows * BLOCK) / 2;
+    const cellOf = (x, y) => [
+      Math.min(cols - 1, Math.max(0, Math.floor((x - ox) / BLOCK))),
+      Math.min(rows - 1, Math.max(0, Math.floor((y - oy) / BLOCK)))
+    ];
+    const s1 = cellOf(W / 2, H * 0.8);
+    const s2 = cellOf(W / 2, H * 0.2);
+    const nearSpawn = (c, r) =>
+      (Math.abs(c - s1[0]) <= 1 && Math.abs(r - s1[1]) <= 1) ||
+      (Math.abs(c - s2[0]) <= 1 && Math.abs(r - s2[1]) <= 1);
+    return { cols, rows, ox, oy, s1, s2, nearSpawn, cellOf };
+  }
+
+  const key = (c, r) => c + ',' + r;
+
+  // Сколько свободных клеток достижимо от спавна (поиск в ширину)
+  function reachable(g, blocked) {
+    const seen = new Set([key(g.s1[0], g.s1[1])]);
+    const queue = [g.s1];
+    while (queue.length) {
+      const [c, r] = queue.shift();
+      for (const [dc, dr] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nc = c + dc, nr = r + dr;
+        if (nc < 0 || nr < 0 || nc >= g.cols || nr >= g.rows) continue;
+        const k = key(nc, nr);
+        if (blocked.has(k) || seen.has(k)) continue;
+        seen.add(k);
+        queue.push([nc, nr]);
+      }
+    }
+    return seen.size;
+  }
+
+  // Отражаем блоки через центр поля — карта честная для обоих игроков
+  function finalizeCells(g, cells) {
+    const out = new Map();
+    cells.forEach(([c, r]) => {
+      [[c, r], [g.cols - 1 - c, g.rows - 1 - r]].forEach(([cc, rr]) => {
+        if (cc < 0 || rr < 0 || cc >= g.cols || rr >= g.rows) return;
+        if (g.nearSpawn(cc, rr)) return;
+        out.set(key(cc, rr), [cc, rr]);
+      });
+    });
+    return [...out.values()];
+  }
+
+  // Цикл движущихся стен: 0 = открыто, 1 = закрыто, с паузами в крайних положениях
+  const smooth = x => x * x * (3 - 2 * x);
+  function cycle(period, offset = 0) {
+    return now => {
+      const t = ((now / 1000 + offset) % period) / period;
+      if (t < 0.35) return 0;
+      if (t < 0.5) return smooth((t - 0.35) / 0.15);
+      if (t < 0.85) return 1;
+      return 1 - smooth((t - 0.85) / 0.15);
+    };
+  }
+  // Движущаяся стена + её зеркальная копия через центр поля
+  function moverPair(W, H, w, h, open, closed, phase) {
+    const mir = pt => ({ x: W - pt.x - w, y: H - pt.y - h });
+    return [
+      { w, h, from: open, to: closed, phase },
+      { w, h, from: mir(open), to: mir(closed), phase }
+    ];
+  }
+  const midRow = g => Math.floor((g.rows - 1) / 2);
+  const thickness = g => (g.rows % 2 ? 1 : 2);
+
+  const LEVELS = [
+    // Г-образные укрытия у каждого спавна, атаковать приходится по открытой диагонали
+    { name: 'Диагональ', group: 'Обычные', build: g => {
+      const r = Math.round(g.rows * 0.64), c = Math.round(g.cols * 0.15);
+      return [[c, r], [c + 1, r], [c + 2, r], [c + 2, r - 1]];
+    }},
+    // Стена поперёк поля с проходом ровно в один-два блока по центру
+    { name: 'Горлышко', group: 'Обычные', build: g => {
+      const r = midRow(g);
+      const gap = g.cols % 2
+        ? [(g.cols - 1) / 2]
+        : [g.cols / 2 - 1, g.cols / 2];
+      const cells = [];
+      for (let c = 0; c < g.cols; c++) if (!gap.includes(c)) cells.push([c, r]);
+      return cells;
+    }},
+    // Четыре колонны 2×2 — коридоры и укрытия, центр открыт
+    { name: 'Колонны', group: 'Обычные', build: g => {
+      const c1 = Math.round(g.cols * 0.2), r1 = Math.round(g.rows * 0.3);
+      const c2 = g.cols - 2 - c1;
+      const pillar = (c, r) => [[c, r], [c + 1, r], [c, r + 1], [c + 1, r + 1]];
+      return [...pillar(c1, r1), ...pillar(c2, r1)];
+    }},
+    // 20 блоков в случайных местах, всегда с проходом
+    { name: 'Лабиринт', group: 'Обычные', random: true },
+
+    // Стена поперёк поля с двумя проёмами; в проёмах ездят двери
+    { name: 'Двери', group: 'Двери',
+      doorCol: g => Math.max(2, Math.round(g.cols * 0.22)),
+      build(g) {
+        const r = midRow(g), a = this.doorCol(g);
+        const gaps = [a, a + 1, g.cols - 2 - a, g.cols - 1 - a];
+        const cells = [];
+        for (let c = 0; c < g.cols; c++) if (!gaps.includes(c)) cells.push([c, r]);
+        return cells;
+      },
+      movers(g, W, H) {
+        const r = midRow(g), a = this.doorCol(g), B = BLOCK;
+        const closed = { x: g.ox + a * B, y: g.oy + r * B };
+        const open = { x: closed.x - 2 * B, y: closed.y };
+        return moverPair(W, H, 2 * B, thickness(g) * B, open, closed, cycle(4.5));
+      }
+    },
+    // Две балки съезжаются к центру и разъезжаются; танк между ними выталкивает
+    { name: 'Тиски', group: 'Механики',
+      build: g => [[1, Math.round(g.rows * 0.68)], [g.cols - 2, Math.round(g.rows * 0.68)]],
+      movers(g, W, H) {
+        const r = midRow(g), B = BLOCK;
+        const len = Math.ceil(g.cols / 2) - 1;
+        const closed = { x: g.ox, y: g.oy + r * B };
+        const open = { x: g.ox - (len - 1) * B, y: closed.y };
+        return moverPair(W, H, len * B, thickness(g) * B, open, closed, cycle(6));
+      }
+    },
+    // 20 блоков, которые каждые 5 секунд перепрыгивают на новые места
+    { name: 'Прыжки', group: 'Механики', random: true, jumping: true },
+
+    // 10 дверей ездят туда-обратно, а каждые 6 секунд все разом телепортируются на новые места
+    { name: 'Телепорт-двери', group: 'Смешанные', doorsRandom: 10, jumping: true, jumpEvery: 6000 },
+
+    // Полноценная карта по схеме из справочника: Г-укрытия и стена с дверями, но просторнее.
+    // Случайное при каждом запуске: сторона укрытий, скорость дверей,
+    // и 6 одиночных блоков, которые раз в 8 секунд перепрыгивают на новые места
+    { name: 'Полигон', group: 'Смешанные', jumping: true, jumpEvery: 8000, extraRandom: 3,
+      onStart() {
+        this.flip = Math.random() < 0.5;
+        this.doorPeriod = 3.6 + Math.random() * 2;
+        this.doorOffset = Math.random() * 4;
+      },
+      doorCol: g => Math.max(2, Math.round(g.cols * 0.22)),
+      build(g) {
+        const mid = midRow(g), th = thickness(g), a = this.doorCol(g);
+        const gaps = [a, a + 1, g.cols - 2 - a, g.cols - 1 - a];
+        const cells = [];
+        for (let c = 0; c < g.cols; c++) if (!gaps.includes(c)) cells.push([c, mid]);
+        // Г-укрытие на 2 пустых ряда дальше от стены, чем на схеме
+        const r = Math.min(g.rows - 2, mid + th + 3);
+        let cover = [[1, r], [2, r], [3, r], [3, r - 1]];
+        if (this.flip) cover = cover.map(([c, rr]) => [g.cols - 1 - c, rr]);
+        return cells.concat(cover);
+      },
+      movers(g, W, H) {
+        const r = midRow(g), a = this.doorCol(g), B = BLOCK;
+        const closed = { x: g.ox + a * B, y: g.oy + r * B };
+        const open = { x: closed.x - 2 * B, y: closed.y };
+        return moverPair(W, H, 2 * B, thickness(g) * B, open, closed,
+          cycle(this.doorPeriod || 4.5, this.doorOffset || 0));
+      },
+      // у стены с дверями случайные блоки не ставим, чтобы не загородить проёмы
+      noRandom(g, c, r) {
+        const mid = midRow(g), th = thickness(g);
+        return r >= mid - 1 && r <= mid + th;
+      }
+    },
+
+    // Поле делится на три части двумя стенами, в каждой по 2 двери.
+    // В центре ходят балки тисков, по полю ездят 10 телепорт-дверей
+    { name: 'Рубежи', group: 'Смешанные', doorsRandom: 10, jumping: true, jumpEvery: 6000,
+      lineRow: g => Math.min(Math.round(g.rows / 3), midRow(g) - 2),
+      doorCol: g => Math.max(2, Math.round(g.cols * 0.22)),
+      build(g) {
+        const r = this.lineRow(g), a = this.doorCol(g);
+        const gaps = [a, a + 1, g.cols - 2 - a, g.cols - 1 - a];
+        const cells = [];
+        for (let c = 0; c < g.cols; c++) if (!gaps.includes(c)) cells.push([c, r]);
+        return cells; // нижняя стена получится отражением
+      },
+      movers(g, W, H) {
+        const B = BLOCK, r = this.lineRow(g), a = this.doorCol(g);
+        const y = g.oy + r * B;
+        const lClosed = { x: g.ox + a * B, y }, lOpen = { x: lClosed.x - 2 * B, y };
+        const rc = g.cols - 2 - a;
+        const rClosed = { x: g.ox + rc * B, y }, rOpen = { x: rClosed.x + 2 * B, y };
+        const rm = midRow(g), len = Math.ceil(g.cols / 2) - 1;
+        const vClosed = { x: g.ox, y: g.oy + rm * B }, vOpen = { x: g.ox - (len - 1) * B, y: vClosed.y };
+        return [
+          // левая и правая дверь открываются по очереди
+          ...moverPair(W, H, 2 * B, B, lOpen, lClosed, cycle(4.5)),
+          ...moverPair(W, H, 2 * B, B, rOpen, rClosed, cycle(4.5, 2.25)),
+          // балки тисков в центре
+          ...moverPair(W, H, len * B, thickness(g) * B, vOpen, vClosed, cycle(6))
+        ];
+      },
+      // клетки, которые занимают сомкнутые тиски — для проверки прохода
+      checkBlocked(g) {
+        const rm = midRow(g), th = thickness(g), len = Math.ceil(g.cols / 2) - 1, out = [];
+        for (let t = 0; t < th; t++)
+          for (let c = 0; c < len; c++) out.push([c, rm + t], [g.cols - 1 - c, rm + t]);
+        return out;
+      },
+      // телепорт-двери не ставим на стены и на линию тисков
+      noRandom(g, c, r) {
+        const l = this.lineRow(g), rm = midRow(g), th = thickness(g);
+        return r === l || r === g.rows - 1 - l || (r >= rm && r < rm + th);
+      }
+    }
+  ];
+  // Карта из текста: '#' — каменный блок, '.' — пусто,
+  // 'o' — малый турникет, 'O' — большой (ось в центре клетки). 12 символов × 22 строки
+  function fromAscii(lines) {
+    const cells = [];
+    lines.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') cells.push([c, r]); }));
+    return cells;
+  }
+  function turnstilesFromAscii(lines) {
+    const out = [];
+    lines.forEach((row, r) => [...row].forEach((ch, c) => {
+      if (ch === 'o' || ch === 'O')
+        out.push({ x: c * BLOCK + BLOCK / 2, y: r * BLOCK + BLOCK / 2, big: ch === 'O', dir: (c + r) % 2 ? 1 : -1 });
+    }));
+    return out;
+  }
+  const TURN_T = 12; // толщина лопасти
+  const TURN_SIZES = {
+    small: { R: 42, omega: 1.6 },  // размах 3 блока, ~90°/с
+    big:   { R: 70, omega: 0.9 }   // размах 5 блоков, ~50°/с
+  };
+
+  // --- «каша»: всё вперемешку, без порталов ---
+  LEVELS.push(
+    // Бункеры по углам, стена с двумя дверями по центру, «пилы» сверху и снизу,
+    // 3 телепорт-двери и 4 прыгающих блока (всё случайное прыгает раз в 7 с)
+    { name: 'Каша', group: 'Каша', doorsRandom: 3, extraRandom: 2, jumping: true, jumpEvery: 7000,
+      map: [
+        '............',
+        '............',
+        '.##......##.',
+        '.#........#.',
+        '............',
+        '............',
+        '............',
+        '...##..##...',
+        '............',
+        '............',
+        '###..##..###',
+        '###..##..###',
+        '............',
+        '............',
+        '...##..##...',
+        '............',
+        '............',
+        '............',
+        '.#........#.',
+        '.##......##.',
+        '............',
+        '............'
+      ],
+      build() { return fromAscii(this.map); },
+      movers(g, W, H) {
+        const B = BLOCK;
+        // двери в проёмах средней стены (строки 10–11), отъезжают на стену
+        const door = moverPair(W, H, 2 * B, 2 * B, { x: 1 * B, y: 10 * B }, { x: 3 * B, y: 10 * B }, cycle(4.5));
+        // «пила»: балка в 4 блока выезжает от края по строке 8 (и зеркально по строке 13)
+        const saw = moverPair(W, H, 4 * B, B, { x: -3 * B, y: 8 * B }, { x: 0, y: 8 * B }, cycle(5, 1.2));
+        return door.concat(saw);
+      },
+      checkBlocked: () => [[0, 8], [1, 8], [2, 8], [3, 8], [8, 13], [9, 13], [10, 13], [11, 13]],
+      noRandom: (g, c, r) => r >= 8 && r <= 13
+    },
+    // Колонны и щиты, тиски в центре, 6 телепорт-дверей носятся по полю
+    { name: 'Хаос', group: 'Каша', doorsRandom: 6, jumping: true, jumpEvery: 6000,
+      map: [
+        '............',
+        '............',
+        '............',
+        '..#......#..',
+        '..#......#..',
+        '............',
+        '............',
+        '#...####...#',
+        '............',
+        '...#....#...',
+        '............',
+        '............',
+        '...#....#...',
+        '............',
+        '#...####...#',
+        '............',
+        '............',
+        '..#......#..',
+        '..#......#..',
+        '............',
+        '............',
+        '............'
+      ],
+      build() { return fromAscii(this.map); },
+      movers(g, W, H) {
+        const B = BLOCK, len = 5;
+        // тиски по центру (строки 10–11), в сомкнутом виде проход 2 блока
+        return moverPair(W, H, len * B, 2 * B, { x: -(len - 1) * B, y: 10 * B }, { x: 0, y: 10 * B }, cycle(6));
+      },
+      checkBlocked() {
+        const out = [];
+        for (let c = 0; c < 5; c++) out.push([c, 10], [c, 11], [11 - c, 10], [11 - c, 11]);
+        return out;
+      },
+      noRandom: (g, c, r) => r === 10 || r === 11
+    }
+  );
+
+  // --- турникеты ---
+  LEVELS.push(
+    // Большой турникет в центре и четыре малых у точек появления
+    { name: 'Мельница', group: 'Турникеты',
+      map: [
+        '............',
+        '............',
+        '............',
+        '#..........#',
+        '#..........#',
+        '............',
+        '...o....o...',
+        '............',
+        '##........##',
+        '............',
+        '............',
+        '............',
+        '............',
+        '##........##',
+        '............',
+        '...o....o...',
+        '............',
+        '#..........#',
+        '#..........#',
+        '............',
+        '............',
+        '............'
+      ],
+      build() { return fromAscii(this.map); },
+      turnstiles() {
+        return turnstilesFromAscii(this.map)
+          .concat([{ x: 6 * BLOCK, y: 11 * BLOCK, big: true, dir: -1 }]); // большой ровно в центре поля
+      }
+    }
+  );
+
+  // --- уровни с порталами ---
+  const PORTAL_COLORS = ['#3fd0ff', '#c46bff'];
+  LEVELS.push(
+    // Арена: у каждого рядом два портала, ведущих во фланги соперника
+    { name: 'Порталы', group: 'Порталы',
+      build(g) {
+        const m = midRow(g);
+        const c = Math.round(g.cols * 0.3);
+        return [[c, m - 1], [c, m], [c, m + 1], [1, m - 2], [2, m - 2]];
+      },
+      portals(g) {
+        const m = midRow(g), lo = Math.min(g.rows - 3, m + 4);
+        return [
+          { a: [1, lo], b: [g.cols - 2, g.rows - 1 - lo], color: PORTAL_COLORS[0] },
+          { a: [g.cols - 2, lo], b: [1, g.rows - 1 - lo], color: PORTAL_COLORS[1] }
+        ];
+      }
+    },
+    // Кольцевая трасса вокруг острова; порталы — срезки через остров
+    { name: 'Трасса', group: 'Порталы',
+      island: g => {
+        const top = Math.max(g.s2[1] + 3, Math.round(g.rows * 0.32));
+        return { c0: 2, c1: g.cols - 3, r0: top, r1: g.rows - 1 - top };
+      },
+      build(g) {
+        const I = this.island(g), cells = [];
+        for (let r = I.r0; r <= I.r1; r++)
+          for (let c = I.c0; c <= I.c1; c++) cells.push([c, r]);
+        const m = midRow(g);
+        // шиканы: сужают трассу до одной клетки
+        cells.push([0, m - 1], [g.cols - 4, 1]);
+        return cells;
+      },
+      portals(g) {
+        const I = this.island(g);
+        return [
+          // нижняя прямая слева ↔ верхняя прямая справа
+          { a: [I.c0 + 1, I.r1 + 2], b: [g.cols - 1 - (I.c0 + 1), g.rows - 1 - (I.r1 + 2)], color: PORTAL_COLORS[0] },
+          // левая сторона острова ↔ правая сторона
+          { a: [1, I.r1 - 1], b: [g.cols - 2, g.rows - 1 - (I.r1 - 1)], color: PORTAL_COLORS[1] }
+        ];
+      }
+    }
+  );
+  // --- авторские карты ---
+  LEVELS.push(
+    // У каждого своя каменная крепость. Ворота — дверь, которая раз в 5 с открывается.
+    // Пока ворота закрыты, внутри безопасно (кроме пробоя). В центре два малых турникета
+    { name: 'Крепости', group: 'Авторские',
+      map: [
+        '............',
+        '...######...',
+        '...#....#...',
+        '...#....#...',
+        '...#....#...',
+        '...#....#...',
+        '...##..##...',
+        '............',
+        '#..........#',
+        '............',
+        '...o........',
+        '........o...',
+        '............',
+        '#..........#',
+        '............',
+        '...##..##...',
+        '...#....#...',
+        '...#....#...',
+        '...#....#...',
+        '...#....#...',
+        '...######...',
+        '............'
+      ],
+      build() { return fromAscii(this.map); },
+      turnstiles() { return turnstilesFromAscii(this.map); },
+      movers(g, W, H) {
+        const B = BLOCK;
+        // ворота красной крепости (ряд 6), отъезжают на каменную стену справа
+        return moverPair(W, H, 2 * B, B, { x: 7 * B, y: 6 * B }, { x: 5 * B, y: 6 * B }, cycle(5));
+      }
+    },
+    // Поле одиночных камней с узкими проходами — раздолье для рикошетов.
+    // Посередине навстречу друг другу ездят две короткие пилы
+    { name: 'Сад камней', group: 'Авторские',
+      map: [
+        '............',
+        '............',
+        '..#......#..',
+        '............',
+        '............',
+        '............',
+        '....#..#....',
+        '.#..#..#..#.',
+        '............',
+        '..#..##..#..',
+        '............',
+        '............',
+        '..#..##..#..',
+        '............',
+        '.#..#..#..#.',
+        '....#..#....',
+        '............',
+        '............',
+        '............',
+        '..#......#..',
+        '............',
+        '............'
+      ],
+      build() { return fromAscii(this.map); },
+      movers(g, W, H) {
+        const B = BLOCK;
+        return moverPair(W, H, 3 * B, B, { x: -2 * B, y: 10 * B }, { x: 0, y: 10 * B }, cycle(3.5));
+      }
+    },
+    // Четыре длинные пилы выезжают поочерёдно слева и справа — проскакивай, угадав момент
+    { name: 'Пилорама', group: 'Авторские',
+      map: [
+        '............',
+        '............',
+        '............',
+        '##........##',
+        '............',
+        '............',
+        '............',
+        '............',
+        '##........##',
+        '............',
+        '....#..#....',
+        '....#..#....',
+        '............',
+        '##........##',
+        '............',
+        '............',
+        '............',
+        '............',
+        '##........##',
+        '............',
+        '............',
+        '............'
+      ],
+      build() { return fromAscii(this.map); },
+      movers(g, W, H) {
+        const B = BLOCK, len = 7;
+        return [
+          // пила слева по ряду 6 (зеркально — справа по ряду 15)
+          ...moverPair(W, H, len * B, B, { x: -(len - 1) * B, y: 6 * B }, { x: 0, y: 6 * B }, cycle(4)),
+          // пила справа по ряду 9 (зеркально — слева по ряду 12), со сдвигом по времени
+          ...moverPair(W, H, len * B, B, { x: W - B, y: 9 * B }, { x: W - len * B, y: 9 * B }, cycle(4, 2))
+        ];
+      }
+    }
+  );
+  const GROUPS = ['Обычные', 'Двери', 'Механики', 'Смешанные', 'Каша', 'Турникеты', 'Порталы', 'Авторские'];
+
+  // Постоянная часть уровня + случайные одиночные блоки (зеркальными парами).
+  // Каждый случайный блок стоит минимум в клетке от любого другого — свободнее проезжать.
+  function withExtras(L, g, exclude) {
+    const base = finalizeCells(g, L.build(g));
+    const taken = new Set(base.map(([c, r]) => key(c, r)));
+    const nearTaken = (c, r, set) => {
+      for (let dc = -1; dc <= 1; dc++)
+        for (let dr = -1; dr <= 1; dr++)
+          if (set.has(key(c + dc, r + dr))) return true;
+      return false;
+    };
+    const farFromSpawn = (c, r) =>
+      Math.max(Math.abs(c - g.s1[0]), Math.abs(r - g.s1[1])) > 2 &&
+      Math.max(Math.abs(c - g.s2[0]), Math.abs(r - g.s2[1])) > 2;
+    const ok = (c, r) => c >= 0 && r >= 0 && c < g.cols && r < g.rows &&
+      farFromSpawn(c, r) && !nearTaken(c, r, taken) &&
+      !(L.noRandom && L.noRandom(g, c, r)) && !(exclude && exclude(c, r));
+    const candidates = [];
+    for (let r = 0; r < g.rows; r++)
+      for (let c = 0; c < g.cols; c++) {
+        const mc = g.cols - 1 - c, mr = g.rows - 1 - r;
+        if ((c === mc && r === mr) || !ok(c, r) || !ok(mc, mr)) continue;
+        candidates.push([c, r]);
+      }
+    for (let attempt = 0; attempt < 300; attempt++) {
+      const pool = candidates.slice();
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      const chosen = new Set();
+      const extra = [];
+      for (const [c, r] of pool) {
+        if (extra.length >= L.extraRandom * 2) break;
+        const mc = g.cols - 1 - c, mr = g.rows - 1 - r;
+        if (nearTaken(c, r, chosen) || nearTaken(mc, mr, chosen)) continue;
+        if (Math.max(Math.abs(c - mc), Math.abs(r - mr)) <= 1) continue;
+        chosen.add(key(c, r)); chosen.add(key(mc, mr));
+        const a = [c, r], b = [mc, mr];
+        a.jumpy = b.jumpy = true;
+        extra.push(a, b);
+      }
+      if (extra.length < L.extraRandom * 2) continue;
+      const blocked = new Set([...taken, ...chosen]);
+      if (reachable(g, blocked) === g.cols * g.rows - blocked.size) return base.concat(extra);
+    }
+    return base;
+  }
+
+  const JUMP_EVERY = 5000;   // мс между прыжками блоков
+  const JUMP_BLINK = 700;    // мс мигания перед прыжком
+
+  function buildCells(L, g, exclude) {
+    if (L.doorsRandom && !L.build) return [];
+    if (L.extraRandom) return withExtras(L, g, exclude);
+    if (!L.random) return finalizeCells(g, L.build(g));
+    const candidates = [];
+    for (let r = 0; r < g.rows; r++)
+      for (let c = 0; c < g.cols; c++)
+        if (!g.nearSpawn(c, r) && !(exclude && exclude(c, r))) candidates.push([c, r]);
+    const count = Math.min(RANDOM_BLOCKS, candidates.length);
+    for (let attempt = 0; attempt < 400; attempt++) {
+      const pool = candidates.slice();
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      const pick = pool.slice(0, count);
+      const blocked = new Set(pick.map(([c, r]) => key(c, r)));
+      if (reachable(g, blocked) === g.cols * g.rows - count) return pick;
+    }
+    return [];
+  }
+
+  // Случайные двери: каждая — блок, который ездит между двумя соседними клетками.
+  // Для проверки прохода считаем занятыми обе клетки — значит, проход есть в любой момент.
+  function randomDoors(g, n, exclude, base = new Set()) {
+    const B = BLOCK;
+    const free = (c, r) => c >= 0 && r >= 0 && c < g.cols && r < g.rows &&
+      !g.nearSpawn(c, r) && !base.has(key(c, r)) && !(exclude && exclude(c, r));
+    for (let attempt = 0; attempt < 400; attempt++) {
+      const used = new Set();
+      const tracks = [];
+      let tries = 0;
+      while (tracks.length < n && tries++ < 2000) {
+        const c = Math.floor(Math.random() * g.cols), r = Math.floor(Math.random() * g.rows);
+        const horiz = Math.random() < 0.5;
+        const c2 = horiz ? c + 1 : c, r2 = horiz ? r : r + 1;
+        if (!free(c, r) || !free(c2, r2)) continue;
+        if (used.has(key(c, r)) || used.has(key(c2, r2))) continue;
+        used.add(key(c, r)); used.add(key(c2, r2));
+        tracks.push([[c, r], [c2, r2]]);
+      }
+      if (tracks.length < n) continue;
+      const blockedAll = new Set([...base, ...used]);
+      if (reachable(g, blockedAll) !== g.cols * g.rows - blockedAll.size) continue;
+      return tracks.map(([a, b]) => {
+        const flip = Math.random() < 0.5;
+        const A = flip ? b : a, Bc = flip ? a : b;
+        return {
+          w: B, h: B, jumpy: true,
+          from: { x: g.ox + A[0] * B, y: g.oy + A[1] * B },
+          to: { x: g.ox + Bc[0] * B, y: g.oy + Bc[1] * B },
+          phase: cycle(2.4 + Math.random() * 1.6, Math.random() * 4)
+        };
+      });
+    }
+    return [];
+  }
+
+  let currentLevel = 0;
+  let turnstiles = [];       // [{ cx, cy, R, omega, theta0, theta, el, big }]
+  let portals = [];          // [{ color, ends: [{x, y, el, charge}, {…}] }]
+  const PORTAL_R = 12;       // радиус, в котором танк «стоит на портале»
+  const PORTAL_WAIT = 2;     // секунд стоять до перемещения
+  let staticWalls = [];
+  let movers = [];
+  let allWalls = [];
+  let nextJumpAt = 0;
+  let blinking = false;
+  const wallsLayer = document.getElementById('wallsLayer');
+  const portalsLayer = document.getElementById('portalsLayer');
+
+  // Точка (x, y) задевает лопасть турникета с запасом pad?
+  // Возвращает нормаль от лопасти к точке, точку на лопасти и расстояние
+  function turnHit(x, y, pad) {
+    for (const t of turnstiles) {
+      for (const a of [t.theta, t.theta + Math.PI / 2]) {
+        const ux = Math.cos(a), uy = Math.sin(a);
+        const rx = x - t.cx, ry = y - t.cy;
+        const along = Math.max(-t.R, Math.min(t.R, rx * ux + ry * uy));
+        const qx = t.cx + ux * along, qy = t.cy + uy * along;
+        const dx = x - qx, dy = y - qy, d = Math.hypot(dx, dy);
+        if (d < TURN_T / 2 + pad) {
+          // точка ровно на оси лопасти — толкаем по направлению вращения
+          const nx = d > 0.01 ? dx / d : -uy * Math.sign(t.omega) * Math.sign(along || 1);
+          const ny = d > 0.01 ? dy / d : ux * Math.sign(t.omega) * Math.sign(along || 1);
+          return { nx, ny, qx, qy, d, t };
+        }
+      }
+    }
+    return null;
+  }
+  // Каждый кадр: поворачиваем турникеты и выталкиваем из-под лопастей танки
+  function updateTurnstiles(now, tanks) {
+    if (!turnstiles.length) return;
+    turnstiles.forEach(t => {
+      t.theta = t.theta0 + t.omega * now / 1000;
+      if (t.el) t.el.style.transform = `translate(${t.cx}px, ${t.cy}px) rotate(${t.theta}rad)`;
+    });
+    tanks.forEach(tk => {
+      for (let i = 0; i < 2; i++) {
+        const h = turnHit(tk.x, tk.y, TANK_PAD);
+        if (!h) break;
+        const need = TURN_T / 2 + TANK_PAD + 0.5;
+        tk.x = h.qx + h.nx * need;
+        tk.y = h.qy + h.ny * need;
+        tk.x = Math.max(TANK_PAD + 1, Math.min(fieldRect.width - TANK_PAD - 1, tk.x));
+        tk.y = Math.max(TANK_PAD + 1, Math.min(fieldRect.height - TANK_PAD - 1, tk.y));
+      }
+    });
+  }
+
+  // Танк стоит на портале 2 секунды → переносится к парному.
+  // После переноса портал под ним не срабатывает, пока танк с него не съедет
+  function updatePortals(dt, tanks) {
+    if (!portals.length) return;
+    const fill = new Map();
+    tanks.forEach(t => {
+      let on = null, pair = null;
+      portals.forEach(pp => pp.ends.forEach((e, k) => {
+        if (Math.hypot(t.x - e.x, t.y - e.y) < PORTAL_R) { on = e; pair = pp.ends[1 - k]; }
+      }));
+      if (t.portalLock && t.portalLock !== on) t.portalLock = null;
+      if (!on || t.portalLock === on) { t.portalTime = 0; t.portalOn = null; return; }
+      t.portalTime = t.portalOn === on ? t.portalTime + dt : 0;
+      t.portalOn = on;
+      fill.set(on, { p: Math.min(1, t.portalTime / PORTAL_WAIT), c: t.color });
+      if (t.portalTime >= PORTAL_WAIT) {
+        portalFlash(on.x, on.y);
+        t.x = pair.x; t.y = pair.y;
+        t.portalLock = pair; t.portalTime = 0; t.portalOn = null;
+        portalFlash(pair.x, pair.y);
+        sound(440, 0.08, 'sine', 0.07);
+        setTimeout(() => sound(880, 0.12, 'sine', 0.06), 70);
+        vibrate(20);
+      }
+    });
+    portals.forEach(pp => pp.ends.forEach(e => {
+      const f = fill.get(e);
+      e.charge.style.setProperty('--p', f ? f.p : 0);
+      if (f) e.charge.style.setProperty('--cc', f.c);
+    }));
+  }
+  // Снаряд, влетевший в портал, сразу вылетает из парного
+  function portalShell(s) {
+    for (const pp of portals) {
+      for (let k = 0; k < 2; k++) {
+        const e = pp.ends[k];
+        const d = Math.hypot(s.x - e.x, s.y - e.y);
+        if (s.lastPortal === e) { if (d > 14) s.lastPortal = null; continue; }
+        if (d < 9) {
+          const to = pp.ends[1 - k];
+          s.x = to.x; s.y = to.y; s.lastPortal = to;
+          portalFlash(to.x, to.y, 4);
+          return;
+        }
+      }
+    }
+  }
+  function portalFlash(x, y, n = 8) {
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i) / n;
+      const el = document.createElement('div');
+      el.className = 'boom';
+      el.style.width = el.style.height = '6px';
+      el.style.background = i % 2 ? '#c46bff' : '#3fd0ff';
+      el.style.setProperty('--bx', x + 'px');
+      el.style.setProperty('--by', y + 'px');
+      el.style.setProperty('--tx', Math.cos(a) * 18 + 'px');
+      el.style.setProperty('--ty', Math.sin(a) * 18 + 'px');
+      field.appendChild(el);
+      setTimeout(() => el.remove(), 460);
+    }
+  }
+
+  function cellsToPx(g, cells) {
+    return cells.map(cell => ({
+      x: g.ox + cell[0] * BLOCK, y: g.oy + cell[1] * BLOCK, w: BLOCK, h: BLOCK, jumpy: !!cell.jumpy
+    }));
+  }
+
+  function moverRect(m, now) {
+    const s = m.phase(now);
+    return { x: m.from.x + (m.to.x - m.from.x) * s, y: m.from.y + (m.to.y - m.from.y) * s, w: m.w, h: m.h };
+  }
+
+  function buildLevelWalls(exclude) {
+    const W = fieldRect.width, H = fieldRect.height;
+    const g = makeGrid(W, H);
+    const L = LEVELS[currentLevel];
+    const cells = buildCells(L, g, exclude);
+    staticWalls = cellsToPx(g, cells);
+    if (L.random) staticWalls.forEach(w => w.jumpy = true);
+    const base = new Set(cells.map(([c, r]) => key(c, r)));
+    if (L.checkBlocked) L.checkBlocked(g).forEach(([c, r]) => base.add(key(c, r)));
+    const noRand = (c, r) => (exclude && exclude(c, r)) || (L.noRandom && L.noRandom(g, c, r));
+    movers = (L.movers ? L.movers(g, W, H) : [])
+      .concat(L.doorsRandom ? randomDoors(g, L.doorsRandom, noRand, base) : []);
+    const now = performance.now();
+    movers.forEach(m => m.rect = moverRect(m, now));
+    allWalls = staticWalls.concat(movers.map(m => m.rect));
+    if (L.jumping) { nextJumpAt = now + (L.jumpEvery || JUMP_EVERY); blinking = false; }
+    turnstiles = (L.turnstiles ? L.turnstiles(g) : []).map(t => {
+      const S = t.big ? TURN_SIZES.big : TURN_SIZES.small;
+      return { cx: t.x, cy: t.y, R: S.R, omega: S.omega * (t.dir || 1), theta0: t.phase || 0, theta: t.phase || 0, big: !!t.big };
+    });
+    const centre = ([c, r]) => ({ x: g.ox + c * BLOCK + BLOCK / 2, y: g.oy + r * BLOCK + BLOCK / 2 });
+    portals = (L.portals ? L.portals(g) : []).map(pp => ({ color: pp.color, ends: [centre(pp.a), centre(pp.b)] }));
+  }
+
+  function getWallsPx() { return allWalls; }
+
+  function renderWalls() {
+    const L = LEVELS[currentLevel];
+    wallsLayer.innerHTML = '';
+    staticWalls.forEach(w => {
+      const el = document.createElement('div');
+      el.className = w.jumpy ? 'wall jumpy' : 'wall';
+      el.style.left = w.x + 'px';
+      el.style.top = w.y + 'px';
+      el.style.width = w.w + 'px';
+      el.style.height = w.h + 'px';
+      wallsLayer.appendChild(el);
+    });
+    turnstiles.forEach(t => {
+      const el = document.createElement('div');
+      el.className = t.big ? 'turn big' : 'turn';
+      const L2 = 2 * t.R;
+      el.innerHTML = `<div class="bar" style="left:${-t.R}px;top:${-TURN_T / 2}px;width:${L2}px;height:${TURN_T}px"></div>`
+        + `<div class="bar" style="left:${-TURN_T / 2}px;top:${-t.R}px;width:${TURN_T}px;height:${L2}px"></div>`
+        + `<div class="hub"></div>`;
+      el.style.transform = `translate(${t.cx}px, ${t.cy}px) rotate(${t.theta}rad)`;
+      wallsLayer.appendChild(el);
+      t.el = el;
+    });
+    portalsLayer.innerHTML = '';
+    portals.forEach(pp => pp.ends.forEach(e => {
+      const ring = document.createElement('div');
+      ring.className = 'portalCharge';
+      ring.style.left = e.x + 'px';
+      ring.style.top = e.y + 'px';
+      const el = document.createElement('div');
+      el.className = 'portal';
+      el.style.left = e.x + 'px';
+      el.style.top = e.y + 'px';
+      el.style.setProperty('--pc', pp.color);
+      portalsLayer.appendChild(ring);
+      portalsLayer.appendChild(el);
+      e.charge = ring;
+    }));
+    movers.forEach(m => {
+      const el = document.createElement('div');
+      el.className = m.jumpy ? 'wall mover jumpy' : 'wall mover';
+      el.style.left = '0px';
+      el.style.top = '0px';
+      el.style.width = m.w + 'px';
+      el.style.height = m.h + 'px';
+      el.style.transform = `translate(${m.rect.x}px, ${m.rect.y}px)`;
+      wallsLayer.appendChild(el);
+      m.el = el;
+    });
+  }
+
+  // Каждый кадр: двигаем стены, выталкиваем танки, прыжки блоков
+  function updateLevel(now, tanks) {
+    const L = LEVELS[currentLevel];
+    if (movers.length) {
+      movers.forEach(m => {
+        m.rect = moverRect(m, now);
+        if (m.el) m.el.style.transform = `translate(${m.rect.x}px, ${m.rect.y}px)`;
+        tanks.forEach(t => {
+          if (!rectHit(m.rect, t.x, t.y, TANK_PAD)) return;
+          const horizontal = Math.abs(m.to.x - m.from.x) >= Math.abs(m.to.y - m.from.y);
+          if (horizontal) {
+            const above = t.y < m.rect.y + m.rect.h / 2;
+            t.y = above ? m.rect.y - TANK_PAD - 0.5 : m.rect.y + m.rect.h + TANK_PAD + 0.5;
+            t.y = Math.max(TANK_PAD + 1, Math.min(fieldRect.height - TANK_PAD - 1, t.y));
+          } else {
+            const left = t.x < m.rect.x + m.rect.w / 2;
+            t.x = left ? m.rect.x - TANK_PAD - 0.5 : m.rect.x + m.rect.w + TANK_PAD + 0.5;
+            t.x = Math.max(TANK_PAD + 1, Math.min(fieldRect.width - TANK_PAD - 1, t.x));
+          }
+        });
+      });
+      allWalls = staticWalls.concat(movers.map(m => m.rect));
+    }
+    if (L.jumping && menu.hidden) {
+      if (!blinking && now >= nextJumpAt - JUMP_BLINK) {
+        blinking = true;
+        wallsLayer.querySelectorAll('.wall.jumpy').forEach(el => el.classList.add('blink'));
+      }
+      if (now >= nextJumpAt) {
+        const g = makeGrid(fieldRect.width, fieldRect.height);
+        const tankCells = tanks.map(t => g.cellOf(t.x, t.y));
+        const nearTank = (c, r) => tankCells.some(([tc, tr]) => Math.abs(c - tc) <= 1 && Math.abs(r - tr) <= 1);
+        buildLevelWalls(nearTank);
+        renderWalls();
+        sound(330, 0.12, 'triangle', 0.07);
+      }
+    }
+  }
+
+  function rectHit(rect, px, py, pad) {
+    return px > rect.x - pad && px < rect.x + rect.w + pad &&
+           py > rect.y - pad && py < rect.y + rect.h + pad;
+  }
+
+  function wallSpark(x, y) {
+    for (let i = 0; i < 5; i++) {
+      const a = (Math.PI * 2 * i) / 5;
+      const el = document.createElement('div');
+      el.className = 'boom';
+      el.style.background = '#c8c0b8';
+      el.style.setProperty('--bx', x + 'px');
+      el.style.setProperty('--by', y + 'px');
+      el.style.setProperty('--tx', Math.cos(a) * 12 + 'px');
+      el.style.setProperty('--ty', Math.sin(a) * 12 + 'px');
+      field.appendChild(el);
+      setTimeout(() => el.remove(), 460);
+    }
+    sound(200, 0.08, 'square', 0.05);
+  }
+
+  // --- звук (Web Audio, без файлов) ---
+  let actx;
+  // Общая звуковая шина: сухой сигнал + короткое эхо помещения (свёртка с
+  // затухающим стерео-шумом). out(x) раскладывает звук по стерео по позиции на поле
+  let bus = null;
+  function audioBus() {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (bus) return bus;
+    const dry = actx.createGain();
+    dry.gain.value = 1;
+    dry.connect(actx.destination);
+    const conv = actx.createConvolver();
+    conv.normalize = false; // громкость эха задаём сами, иначе браузер его почти глушит
+    const len = Math.floor(actx.sampleRate * 0.55);
+    const ir = actx.createBuffer(2, len, actx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = 0.05 * (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.4);
+    }
+    conv.buffer = ir;
+    const wetFilter = actx.createBiquadFilter();
+    wetFilter.type = 'lowpass';
+    wetFilter.frequency.value = 3500;
+    const wet = actx.createGain();
+    wet.gain.value = 1;
+    conv.connect(wetFilter).connect(wet).connect(actx.destination);
+    bus = { dry, send: conv };
+    return bus;
+  }
+  function out(x) {
+    const b = audioBus();
+    const g = actx.createGain();
+    let tail = g;
+    if (actx.createStereoPanner) {
+      const pan = actx.createStereoPanner();
+      pan.pan.value = x == null ? 0 : Math.max(-0.7, Math.min(0.7, (x / fieldRect.width) * 2 - 1));
+      g.connect(pan);
+      tail = pan;
+    }
+    tail.connect(b.dry);
+    tail.connect(b.send);
+    return g;
+  }
+  function sound(freq, dur, type, gainVal, x) {
+    try {
+      audioBus();
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.type = type || 'square';
+      osc.frequency.value = freq;
+      gain.gain.value = gainVal || 0.08;
+      osc.connect(gain).connect(out(x));
+      gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+      osc.start();
+      osc.stop(actx.currentTime + dur);
+    } catch (e) {}
+  }
+  let noiseBuf = null;
+  function getNoise() {
+    if (noiseBuf) return noiseBuf;
+    noiseBuf = actx.createBuffer(1, Math.floor(actx.sampleRate * 0.3), actx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return noiseBuf;
+  }
+  // Выстрел: сухой резкий щелчок, короткий плотный «бум» на средних частотах
+  // и лёгкий удар снизу; всё с эхом и стерео по позиции танка. Пробой — плюс свист
+  function fireSound(pierce = false, x = null) {
+    try {
+      audioBus();
+      const dest = out(x);
+      const t = actx.currentTime, v = 0.93 + Math.random() * 0.14;
+      // щелчок
+      const n = actx.createBufferSource(), hp = actx.createBiquadFilter(), bp = actx.createBiquadFilter(), ng = actx.createGain();
+      n.buffer = getNoise();
+      hp.type = 'highpass'; hp.frequency.value = 700;
+      bp.type = 'bandpass'; bp.Q.value = 0.9;
+      bp.frequency.setValueAtTime(2600 * v, t);
+      bp.frequency.exponentialRampToValueAtTime(1200 * v, t + 0.06);
+      ng.gain.setValueAtTime(0.0001, t);
+      ng.gain.exponentialRampToValueAtTime(0.55, t + 0.002);
+      ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      n.connect(hp).connect(bp).connect(ng).connect(dest);
+      n.start(t); n.stop(t + 0.09);
+      // плотность: короткий шум в районе 500 Гц
+      const m = actx.createBufferSource(), mb = actx.createBiquadFilter(), mg = actx.createGain();
+      m.buffer = getNoise();
+      mb.type = 'bandpass'; mb.Q.value = 1.1;
+      mb.frequency.setValueAtTime(650 * v, t);
+      mb.frequency.exponentialRampToValueAtTime(380 * v, t + 0.08);
+      mg.gain.setValueAtTime(0.0001, t);
+      mg.gain.exponentialRampToValueAtTime(0.32, t + 0.004);
+      mg.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+      m.connect(mb).connect(mg).connect(dest);
+      m.start(t); m.stop(t + 0.11);
+      // короткий удар
+      const o = actx.createOscillator(), og = actx.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(240 * v, t);
+      o.frequency.exponentialRampToValueAtTime(110, t + 0.04);
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.exponentialRampToValueAtTime(0.16, t + 0.002);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+      o.connect(og).connect(dest);
+      o.start(t); o.stop(t + 0.06);
+      if (pierce) {
+        const z = actx.createOscillator(), zf = actx.createBiquadFilter(), zg = actx.createGain();
+        z.type = 'sawtooth';
+        z.frequency.setValueAtTime(1100 * v, t);
+        z.frequency.exponentialRampToValueAtTime(2800 * v, t + 0.08);
+        zf.type = 'highpass'; zf.frequency.value = 900;
+        zg.gain.setValueAtTime(0.0001, t);
+        zg.gain.exponentialRampToValueAtTime(0.045, t + 0.01);
+        zg.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+        z.connect(zf).connect(zg).connect(dest);
+        z.start(t); z.stop(t + 0.13);
+      }
+    } catch (e) {}
+  }
+  function boomSound(x) {
+    sound(90, 0.25, 'sawtooth', 0.15, x);
+    setTimeout(() => sound(60, 0.2, 'triangle', 0.1, x), 40);
+  }
+
+  // --- взрыв и тряска ---
+  function explode(x, y) {
+    for (let i = 0; i < 10; i++) {
+      const a = (Math.PI * 2 * i) / 10;
+      const dist = 20 + Math.random() * 20;
+      const el = document.createElement('div');
+      el.className = 'boom';
+      el.style.background = i % 2 ? '#ffb020' : '#ff5a3c';
+      el.style.setProperty('--bx', x + 'px');
+      el.style.setProperty('--by', y + 'px');
+      el.style.setProperty('--tx', Math.cos(a) * dist + 'px');
+      el.style.setProperty('--ty', Math.sin(a) * dist + 'px');
+      field.appendChild(el);
+      setTimeout(() => el.remove(), 460);
+    }
+    field.classList.remove('shake');
+    void field.offsetWidth;
+    field.classList.add('shake');
+    boomSound(x);
+    vibrate([25, 30, 45]);
+  }
+
+  function respawnFlash() {
+    const el = document.createElement('div');
+    el.className = 'respawnFlash';
+    field.appendChild(el);
+    setTimeout(() => el.remove(), 320);
+  }
+
+  function blockSpark(x, y) {
+    for (let i = 0; i < 5; i++) {
+      const a = (Math.PI * 2 * i) / 5;
+      const el = document.createElement('div');
+      el.className = 'boom';
+      el.style.background = '#82dcff';
+      el.style.setProperty('--bx', x + 'px');
+      el.style.setProperty('--by', y + 'px');
+      el.style.setProperty('--tx', Math.cos(a) * 14 + 'px');
+      el.style.setProperty('--ty', Math.sin(a) * 14 + 'px');
+      field.appendChild(el);
+      setTimeout(() => el.remove(), 460);
+    }
+    sound(880, 0.1, 'sine', 0.06);
+    vibrate(12);
+  }
+
+  // щепки, когда прошивающий снаряд пролетает сквозь дерево
+  function woodChips(x, y) {
+    for (let i = 0; i < 6; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const el = document.createElement('div');
+      el.className = 'boom';
+      el.style.width = el.style.height = '5px';
+      el.style.background = i % 2 ? '#8a5a2a' : '#c9a06a';
+      el.style.setProperty('--bx', x + 'px');
+      el.style.setProperty('--by', y + 'px');
+      el.style.setProperty('--tx', Math.cos(a) * 14 + 'px');
+      el.style.setProperty('--ty', Math.sin(a) * 14 + 'px');
+      field.appendChild(el);
+      setTimeout(() => el.remove(), 460);
+    }
+    sound(240, 0.05, 'triangle', 0.04);
+  }
+
+  function makePlayer(tankEl, btnEl, pierceEl, startFrac, initialAngle, color) {
+    const state = {
+      color,
+      portalTime: 0, portalOn: null, portalLock: null,
+      x: 0, y: 0,
+      angle: initialAngle,
+      rotating: true,
+      rotateDir: 1,
+      moving: false,
+      pressed: false,
+      shells: [],
+      ammo: LAST_SHOT_AMMO,
+      alive: true,
+      shieldActive: false,
+      frozenUntil: 0
+    };
+
+    function initPos() {
+      state.x = fieldRect.width / 2;
+      state.y = fieldRect.height * startFrac;
+    }
+    initPos();
+
+    state.respawn = function() {
+      state.shells.forEach(s => s.el.remove());
+      state.shells = [];
+      initPos();
+      state.angle = initialAngle;
+      state.moving = false;
+      state.rotating = true;
+      state.rotateDir = 1;
+      state.pressed = false;
+      btnEl.classList.remove('active');
+      state.portalTime = 0; state.portalOn = null; state.portalLock = null;
+      state.shieldActive = true;
+      tankEl.classList.add('shielded');
+      respawnFlash();
+      setTimeout(() => {
+        state.shieldActive = false;
+        tankEl.classList.remove('shielded');
+      }, RESPAWN_SHIELD);
+    };
+
+    const BARREL_TIP = 11; // расстояние от центра танка до кончика дула
+    const FIRE_FREEZE = 50; // мс зависания при выстреле
+
+    function fire(pierce = false) {
+      // «Последний выстрел»: патроны ограничены
+      if (modes.lastShot) {
+        if (state.ammo <= 0) { sound(140, 0.05, 'square', 0.04); return false; }
+        state.ammo--;
+        renderAmmo();
+      }
+      const rad = (state.angle - 90) * Math.PI / 180;
+      const dx = Math.cos(rad), dy = Math.sin(rad);
+      const tipX = state.x + dx * BARREL_TIP;
+      const tipY = state.y + dy * BARREL_TIP;
+
+      const el = document.createElement('div');
+      el.className = pierce ? 'pierceShell' : 'shell';
+      field.appendChild(el);
+      state.shells.push({
+        x: tipX, y: tipY, dx, dy, el, pierce,
+        hw: pierce ? 10 : 6.5, hh: pierce ? 3.5 : 6.5,
+        rot: Math.atan2(dy, dx) * 180 / Math.PI,
+        left: pierce ? 0 : ricochetCount(), // сколько отскоков осталось
+        bounces: 0,
+        // не телепортируемся сразу из портала, на котором стоим
+        lastPortal: (() => {
+          for (const pp of portals) for (const e of pp.ends)
+            if (Math.hypot(tipX - e.x, tipY - e.y) < 14) return e;
+          return null;
+        })()
+      });
+
+      const flash = document.createElement('div');
+      flash.className = 'muzzleFlash';
+      flash.style.left = (tipX + dx * 2 - 6) + 'px';
+      flash.style.top = (tipY + dy * 2 - 6) + 'px';
+      field.appendChild(flash);
+      setTimeout(() => flash.remove(), 180);
+      // искры разлетаются веером по направлению выстрела
+      const base = Math.atan2(dy, dx);
+      for (let k = 0; k < 6; k++) {
+        const a = base + (Math.random() - 0.5) * 1.0;
+        const dist = 10 + Math.random() * 14;
+        const sp = document.createElement('div');
+        sp.className = 'spark';
+        sp.style.setProperty('--rot', (a * 180 / Math.PI) + 'deg');
+        sp.style.setProperty('--sx', (tipX - 4) + 'px');
+        sp.style.setProperty('--sy', (tipY - 1) + 'px');
+        sp.style.setProperty('--ex', (tipX - 4 + Math.cos(a) * dist) + 'px');
+        sp.style.setProperty('--ey', (tipY - 1 + Math.sin(a) * dist) + 'px');
+        field.appendChild(sp);
+        setTimeout(() => sp.remove(), 240);
+      }
+
+      tankEl.classList.remove('firing');
+      void tankEl.offsetWidth;
+      tankEl.classList.add('firing');
+
+      state.frozenUntil = performance.now() + FIRE_FREEZE;
+
+      fireSound(pierce, state.x);
+      vibrate(pierce ? 14 : 8);
+      return true;
+    }
+
+    // кнопка прошивающего снаряда: выстрел сразу, потом перезарядка
+    let pierceReady = true;
+    state.pierceReady = () => pierceReady;
+    state.usePierce = () => {
+      if (!pierceReady || gameOver) return false;
+      if (!fire(true)) return false;
+      pierceReady = false;
+      // как после обычного выстрела: начинает крутиться в другую сторону.
+      // Если основная кнопка зажата, развернётся при её отпускании, как обычно
+      if (!state.pressed) state.rotateDir *= -1;
+      pierceEl.classList.add('cooling');
+      setTimeout(() => {
+        pierceReady = true;
+        pierceEl.classList.remove('cooling');
+      }, PIERCE_COOLDOWN);
+      return true;
+    };
+    pierceEl.addEventListener('pointerdown', (e) => { e.preventDefault(); state.usePierce(); });
+
+
+    state.press = () => {
+      if (state.pressed || gameOver) return false;
+      state.pressed = true;
+      btnEl.classList.add('active');
+      state.moving = true;
+      state.rotating = false;
+      fire();
+      return true;
+    };
+    btnEl.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (!state.press()) return;
+      try { btnEl.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    state.release = release;
+    function release() {
+      if (!state.pressed) return;
+      state.pressed = false;
+      btnEl.classList.remove('active');
+      state.moving = false;
+      state.rotating = true;
+      state.rotateDir *= -1;
+    }
+    btnEl.addEventListener('pointerup', release);
+    btnEl.addEventListener('pointercancel', release);
+
+    return state;
+  }
+
+  const toastEl = document.getElementById('toast');
+  const p1 = makePlayer(document.getElementById('tank1'), document.getElementById('btn1'), document.getElementById('pierce1'), 0.8, 0, '#3f7fe0');
+  const p2 = makePlayer(document.getElementById('tank2'), document.getElementById('btn2'), document.getElementById('pierce2'), 0.2, 180, '#e04f3f');
+  const other = p => (p === p1 ? p2 : p1);
+
+  // искры при отскоке
+  function bounceSpark(x, y) {
+    for (let i = 0; i < 3; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const el = document.createElement('div');
+      el.className = 'boom';
+      el.style.width = el.style.height = '5px';
+      el.style.background = '#fff2b0';
+      el.style.setProperty('--bx', x + 'px');
+      el.style.setProperty('--by', y + 'px');
+      el.style.setProperty('--tx', Math.cos(a) * 9 + 'px');
+      el.style.setProperty('--ty', Math.sin(a) * 9 + 'px');
+      field.appendChild(el);
+      setTimeout(() => el.remove(), 460);
+    }
+    sound(620, 0.04, 'triangle', 0.04);
+  }
+
+  function showToast(text, ms = 1200) {
+    toastEl.textContent = text;
+    toastEl.hidden = false;
+    clearTimeout(showToast.t);
+    showToast.t = setTimeout(() => toastEl.hidden = true, ms);
+  }
+
+  renderWalls();
+
+  function updatePlayer(state, dt, now) {
+    const frozen = now < state.frozenUntil;
+    if (state.rotating && !frozen) {
+      state.angle += ROTATE_SPEED * dt * state.rotateDir;
+      state.angle = ((state.angle % 360) + 360) % 360;
+    }
+    if (state.moving && !frozen) {
+      const rad = (state.angle - 90) * Math.PI / 180;
+      const margin = TANK_PAD + 1;
+      let nx = Math.max(margin, Math.min(fieldRect.width - margin, state.x + Math.cos(rad) * MOVE_SPEED * dt));
+      let ny = Math.max(margin, Math.min(fieldRect.height - margin, state.y + Math.sin(rad) * MOVE_SPEED * dt));
+      const walls = getWallsPx();
+      const inside = w => rectHit(w, state.x, state.y, TANK_PAD);
+      const inTurn = !!turnHit(state.x, state.y, TANK_PAD);
+      const blockedX = walls.some(w => rectHit(w, nx, state.y, TANK_PAD) && !inside(w))
+        || (!inTurn && !!turnHit(nx, state.y, TANK_PAD));
+      const blockedY = walls.some(w => rectHit(w, state.x, ny, TANK_PAD) && !inside(w))
+        || (!inTurn && !!turnHit(state.x, ny, TANK_PAD));
+      if (!blockedX) state.x = nx;
+      if (!blockedY) state.y = ny;
+    }
+    const walls = getWallsPx();
+    const FW = fieldRect.width, FH = fieldRect.height;
+    for (let i = state.shells.length - 1; i >= 0; i--) {
+      const s = state.shells[i];
+      const px = s.x, py = s.y;
+      s.x += s.dx * SHELL_SPEED * dt;
+      s.y += s.dy * SHELL_SPEED * dt;
+      // рикошет от края поля
+      if (s.left > 0 && (s.x < 4 || s.x > FW - 4)) {
+        s.dx = -s.dx; s.x = Math.max(4, Math.min(FW - 4, s.x)); s.left--; s.bounces++; bounceSpark(s.x, s.y);
+      }
+      if (s.left > 0 && (s.y < 4 || s.y > FH - 4)) {
+        s.dy = -s.dy; s.y = Math.max(4, Math.min(FH - 4, s.y)); s.left--; s.bounces++; bounceSpark(s.x, s.y);
+      }
+      if (portals.length) portalShell(s);
+      s.el.style.transform = `translate(${s.x - s.hw}px, ${s.y - s.hh}px)` + (s.pierce ? ` rotate(${s.rot}deg)` : '');
+      if (s.x < -10 || s.x > FW + 10 || s.y < -10 || s.y > FH + 10) {
+        s.el.remove();
+        state.shells.splice(i, 1);
+        continue;
+      }
+      // прошивающий снаряд разбивается только о камень, сквозь дерево пролетает
+      const solid = s.pierce ? staticWalls : walls;
+      const hitWall = solid.find(w => rectHit(w, s.x, s.y, 0));
+      if (hitWall && s.left > 0) {
+        // отражаемся по той оси, с которой влетели в блок
+        const fromSideX = !(px > hitWall.x && px < hitWall.x + hitWall.w);
+        const fromSideY = !(py > hitWall.y && py < hitWall.y + hitWall.h);
+        if (fromSideX || !fromSideY) s.dx = -s.dx;
+        if (fromSideY || !fromSideX) s.dy = -s.dy;
+        s.x = px; s.y = py;
+        s.left--; s.bounces++;
+        bounceSpark(s.x, s.y);
+        continue;
+      }
+      if (hitWall) {
+        wallSpark(s.x, s.y);
+        s.el.remove();
+        state.shells.splice(i, 1);
+        continue;
+      }
+      if (!s.pierce && turnstiles.length) {
+        const h = turnHit(s.x, s.y, 0);
+        if (h && s.left > 0) {
+          // отражение от лопасти: v' = v − 2(v·n)n
+          const dot = s.dx * h.nx + s.dy * h.ny;
+          if (dot < 0) { s.dx -= 2 * dot * h.nx; s.dy -= 2 * dot * h.ny; }
+          s.x = px; s.y = py; s.left--; s.bounces++;
+          bounceSpark(s.x, s.y);
+          continue;
+        }
+        if (h) {
+          woodChips(s.x, s.y);
+          s.el.remove();
+          state.shells.splice(i, 1);
+          continue;
+        }
+      }
+      if (s.pierce) {
+        const inWood = movers.some(m => m.rect && rectHit(m.rect, s.x, s.y, 0)) || !!turnHit(s.x, s.y, 0);
+        if (inWood && !s.inWood) woodChips(s.x, s.y);
+        s.inWood = inWood;
+      }
+    }
+  }
+
+  const tank1El = document.getElementById('tank1');
+  const tank2El = document.getElementById('tank2');
+  const score1El = document.getElementById('score1');
+  const score2El = document.getElementById('score2');
+  let score1 = 0, score2 = 0;
+  const goalEl = document.getElementById('goal');
+  const ammo1El = document.getElementById('ammo1');
+  const ammo2El = document.getElementById('ammo2');
+
+  function renderAmmo() {
+    [[p1, ammo1El], [p2, ammo2El]].forEach(([p, el]) => {
+      el.hidden = !modes.lastShot;
+      let html = '';
+      for (let i = 0; i < LAST_SHOT_AMMO; i++) html += `<span class="pip${i < p.ammo ? '' : ' empty'}"></span>`;
+      el.innerHTML = html;
+    });
+  }
+
+  function renderScore() {
+    score1El.textContent = score1;
+    score2El.textContent = score2;
+    goalEl.textContent = 'до ' + settings.rounds;
+  }
+
+  // Новый раунд в режиме «Последний выстрел»: оба на старт, патроны заново
+  let roundResetting = false;
+  function resetRound() {
+    [p1, p2].forEach(p => { p.respawn(); p.ammo = LAST_SHOT_AMMO; });
+    renderAmmo();
+    roundResetting = false;
+  }
+
+  function kill(victim) {
+    const winner = other(victim);
+    explode(victim.x, victim.y);
+    if (winner === p1) score1++; else score2++;
+    renderScore();
+    if (score1 >= settings.rounds || score2 >= settings.rounds) {
+      victim.respawn();
+      showVictory(winner);
+      return;
+    }
+    if (modes.lastShot) resetRound();
+    else victim.respawn();
+  }
+
+  // Снаряды игрока против танков. Свой танк задевает только после отскока
+  // и только если в настройках включён урон от своих снарядов
+  function checkHits(shooter) {
+    for (let i = shooter.shells.length - 1; i >= 0; i--) {
+      const s = shooter.shells[i];
+      for (const target of [p1, p2]) {
+        if (target === shooter && (s.bounces === 0 || !settings.selfDamage)) continue;
+        if (Math.hypot(s.x - target.x, s.y - target.y) >= HIT_RADIUS) continue;
+        s.el.remove();
+        shooter.shells.splice(i, 1);
+        if (target.shieldActive) blockSpark(target.x, target.y);
+        else kill(target);
+        return;
+      }
+    }
+  }
+
+  // «Последний выстрел»: у обоих кончились патроны и ничего не летит — ничья
+  function checkDraw() {
+    if (!modes.lastShot || roundResetting || gameOver) return;
+    if (p1.ammo > 0 || p2.ammo > 0 || p1.shells.length || p2.shells.length) return;
+    roundResetting = true;
+    showToast('Патроны кончились · ничья', 1300);
+    setTimeout(() => { if (!gameOver) resetRound(); }, 1400);
+  }
+
+  // --- бот за красного ---
+  const BOT_LEVELS = {
+    // aimErr — разброс прицела в градусах, react — сколько мс думает, увидев соперника
+    easy:   { aimErr: 14, react: 700, dodge: 0,    pierce: false, flip: false, label: 'лёгкий' },
+    medium: { aimErr: 5,  react: 330, dodge: 0.45, pierce: true,  flip: true,  label: 'средний' },
+    hard:   { aimErr: 1,  react: 130, dodge: 0.95, pierce: true,  flip: true,  label: 'злой' }
+  };
+  const bot = {};
+  function resetBot() {
+    Object.assign(bot, { holdUntil: 0, seeSince: 0, blindSince: 0, aimOffset: 0, prevDiff: null, aimMode: '',
+      waypoint: null, nextPath: 0, lastDist: Infinity,
+      stillSince: 0, lastX: 0, lastY: 0, nextFlip: 0 });
+  }
+  resetBot();
+  const angleTo = (a, b) => Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI + 90;
+  const angDiff = (target, cur) => ((target - cur + 540) % 360) - 180;
+  function rayClear(a, b, walls, pad = 3, withTurns = true) {
+    const d = Math.hypot(b.x - a.x, b.y - a.y), n = Math.ceil(d / 5);
+    for (let i = 1; i < n; i++) {
+      const x = a.x + (b.x - a.x) * i / n, y = a.y + (b.y - a.y) * i / n;
+      if (walls.some(w => rectHit(w, x, y, pad))) return false;
+      if (withTurns && turnstiles.length && turnHit(x, y, pad)) return false;
+    }
+    return true;
+  }
+  // Путь по клеткам сетки в обход стен (поиск в ширину)
+  function nextWaypoint(from, to) {
+    const g = makeGrid(fieldRect.width, fieldRect.height);
+    const blocked = new Set();
+    getWallsPx().forEach(w => {
+      const [c0, r0] = g.cellOf(w.x + 1, w.y + 1), [c1, r1] = g.cellOf(w.x + w.w - 1, w.y + w.h - 1);
+      for (let c = c0; c <= c1; c++) for (let r = r0; r <= r1; r++) blocked.add(key(c, r));
+    });
+    // клетки, через которые сейчас проходят лопасти турникетов
+    if (turnstiles.length)
+      for (let r = 0; r < g.rows; r++)
+        for (let c = 0; c < g.cols; c++)
+          if (turnHit(g.ox + c * BLOCK + BLOCK / 2, g.oy + r * BLOCK + BLOCK / 2, 10)) blocked.add(key(c, r));
+    const start = g.cellOf(from.x, from.y), goal = key(...g.cellOf(to.x, to.y));
+    const prev = new Map([[key(...start), null]]);
+    const q = [start];
+    while (q.length) {
+      const [c, r] = q.shift();
+      if (key(c, r) === goal) break;
+      for (const [dc, dr] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nc = c + dc, nr = r + dr, k = key(nc, nr);
+        if (nc < 0 || nr < 0 || nc >= g.cols || nr >= g.rows || blocked.has(k) || prev.has(k)) continue;
+        prev.set(k, [c, r]); q.push([nc, nr]);
+      }
+    }
+    if (!prev.has(goal)) return null;
+    const path = [];
+    for (let k = goal; k; ) { const [c, r] = k.split(',').map(Number); path.unshift([c, r]); const pv = prev.get(k); k = pv ? key(...pv) : null; }
+    // самая дальняя точка пути (до 6 клеток), куда можно проехать по прямой, не задев стену
+    const centre = ([c, r]) => ({ x: g.ox + c * BLOCK + BLOCK / 2, y: g.oy + r * BLOCK + BLOCK / 2 });
+    const walls = getWallsPx();
+    for (let k = Math.min(6, path.length - 1); k >= 1; k--) {
+      const pt = centre(path[k]);
+      if (rayClear(from, pt, walls, TANK_PAD + 1)) return pt;
+    }
+    return centre(path[Math.min(1, path.length - 1)]);
+  }
+  // Рикошеты: прогоняем полёт снаряда с отскоками наперёд.
+  // true — снаряд вернётся в самого бота (пока тот едет moveDist пикселей вперёд)
+  function shotHitsSelf(b, enemy, moveDist) {
+    const left0 = ricochetCount();
+    if (!left0 || !settings.selfDamage) return false;
+    const rad = (b.angle - 90) * Math.PI / 180, dx0 = Math.cos(rad), dy0 = Math.sin(rad);
+    const walls = getWallsPx(), FW = fieldRect.width, FH = fieldRect.height;
+    let x = b.x + dx0 * 9, y = b.y + dy0 * 9, dx = dx0, dy = dy0, left = left0, bounced = false;
+    const dt = 1 / 120;
+    for (let t = 0; t < 1.8; t += dt) {
+      const px = x, py = y;
+      x += dx * SHELL_SPEED * dt; y += dy * SHELL_SPEED * dt;
+      if (x < 4 || x > FW - 4) { if (!left) return false; dx = -dx; x = Math.max(4, Math.min(FW - 4, x)); left--; bounced = true; }
+      if (y < 4 || y > FH - 4) { if (!left) return false; dy = -dy; y = Math.max(4, Math.min(FH - 4, y)); left--; bounced = true; }
+      const w = walls.find(r => rectHit(r, x, y, 0));
+      if (w) {
+        if (!left) return false;
+        const sx = !(px > w.x && px < w.x + w.w), sy = !(py > w.y && py < w.y + w.h);
+        if (sx || !sy) dx = -dx;
+        if (sy || !sx) dy = -dy;
+        x = px; y = py; left--; bounced = true;
+      }
+      if (Math.hypot(x - enemy.x, y - enemy.y) < HIT_RADIUS) return false;
+      const go = Math.min(t * MOVE_SPEED, moveDist);
+      if (bounced && Math.hypot(x - (b.x + dx0 * go), y - (b.y + dy0 * go)) < HIT_RADIUS + 4) return true;
+    }
+    return false;
+  }
+
+  function updateBot(now) {
+    const P = BOT_LEVELS[settings.opponent];
+    if (!P || gameOver) return;
+    const b = p2, t = p1, walls = getWallsPx();
+
+    if (b.pressed) {
+      // едем: отпускаем, когда доехали, проехали мимо точки или упёрлись
+      const moved = Math.hypot(b.x - bot.lastX, b.y - bot.lastY);
+      bot.lastX = b.x; bot.lastY = b.y;
+      if (moved > 0.3) bot.stillSince = now; else if (!bot.stillSince) bot.stillSince = now;
+      let done = now >= bot.holdUntil || now - bot.stillSince > 180;
+      if (bot.waypoint) {
+        const d = Math.hypot(bot.waypoint.x - b.x, bot.waypoint.y - b.y);
+        if (d < 6 || d > bot.lastDist + 0.5) done = true;
+        bot.lastDist = d;
+      }
+      if (done) { b.release(); bot.waypoint = null; bot.prevDiff = null; }
+      return;
+    }
+
+    // уворот от летящего снаряда
+    if (P.dodge) {
+      // летящие во врага снаряды и свои, уже отскочившие от стен
+      const danger = t.shells.concat(settings.selfDamage ? b.shells.filter(s => s.bounces > 0) : []);
+      for (const s of danger) {
+        if (s.botSeen) continue;
+        const rx = b.x - s.x, ry = b.y - s.y, dist = Math.hypot(rx, ry);
+        if (dist > 120) continue;
+        const along = rx * s.dx + ry * s.dy;
+        const miss = Math.abs(rx * s.dy - ry * s.dx);
+        s.botSeen = true;
+        if (along > 0 && miss < 16 && Math.random() < P.dodge && !b.shieldActive && !shotHitsSelf(b, t, 20)) {
+          if ((bot.lastAct = 'dodge') && b.press()) { bot.holdUntil = now + 220; bot.waypoint = null; bot.stillSince = now; }
+          return;
+        }
+      }
+    }
+
+
+    const see = rayClear(b, t, walls);
+    const seeThroughWood = !see && P.pierce && b.pierceReady() && rayClear(b, t, staticWalls, 3, false);
+    const shoot = see || seeThroughWood;
+    let target, tol;
+    if (shoot) {
+      bot.blindSince = 0;
+      if (!bot.seeSince) { bot.seeSince = now; bot.aimOffset = (Math.random() * 2 - 1) * P.aimErr; }
+      const dist = Math.hypot(t.x - b.x, t.y - b.y);
+      target = angleTo(b, t) + bot.aimOffset;
+      // чем дальше цель, тем точнее надо навести
+      tol = Math.max(1.8, Math.atan(7 / dist) * 180 / Math.PI);
+    } else {
+      bot.seeSince = 0;
+      if (!bot.blindSince) bot.blindSince = now;
+      // «Последний выстрел»: каждое движение — выстрел. Едем, только если соперника
+      // не видно дольше 4 с, и последний патрон всегда бережём для цели
+      if (modes.lastShot && b.ammo > 0 && (b.ammo === 1 || now - bot.blindSince < 4000)) return;
+      if (now > bot.nextPath || !bot.waypoint) { bot.waypoint = nextWaypoint(b, t); bot.nextPath = now + 400; }
+      if (!bot.waypoint) return;
+      target = angleTo(b, bot.waypoint); tol = 8;
+    }
+    const mode = shoot ? 'shoot' : 'nav';
+    if (mode !== bot.aimMode) { bot.aimMode = mode; bot.prevDiff = null; }
+    const diff = angDiff(target, b.angle);
+    // прицел за кадр поворачивает на ~3,5°, поэтому ловим момент, когда он проходит через цель
+    const crossed = bot.prevDiff !== null && Math.sign(diff) !== Math.sign(bot.prevDiff)
+      && Math.abs(diff) < 20 && Math.abs(bot.prevDiff) < 20;
+    bot.prevDiff = diff;
+    if (Math.abs(diff) <= tol || crossed) {
+      if (shoot) {
+        if (now - bot.seeSince < P.react) return;
+        if (t.shieldActive) return; // в щит не стреляем — ждём, держа на прицеле
+        bot.aimOffset = (Math.random() * 2 - 1) * P.aimErr;
+        if (seeThroughWood) { b.usePierce(); return; }
+        if (shotHitsSelf(b, t, 20)) return;
+        if ((bot.lastAct = 'shoot') && b.press()) { bot.holdUntil = now + 60 + Math.random() * 140; bot.waypoint = null; bot.stillSince = now; }
+        return;
+      }
+      if (shotHitsSelf(b, t, Math.hypot(bot.waypoint.x - b.x, bot.waypoint.y - b.y))) return;
+      if ((bot.lastAct = 'nav') && b.press()) {
+        bot.holdUntil = now + 1500; bot.stillSince = now; bot.lastX = b.x; bot.lastY = b.y;
+        bot.lastDist = Math.hypot(bot.waypoint.x - b.x, bot.waypoint.y - b.y);
+      }
+      return;
+    }
+    // крутимся не в ту сторону и цель далеко — быстрый тап меняет направление
+    if (P.flip && now > bot.nextFlip && Math.abs(diff) > 70 && Math.sign(diff) !== Math.sign(b.rotateDir)
+        && !(modes.lastShot && b.ammo > 0)
+        && !shotHitsSelf(b, t, 4)) {
+      if ((bot.lastAct = 'flip') && b.press()) { bot.holdUntil = now + 30; bot.waypoint = null; bot.stillSince = now; bot.nextFlip = now + 900; }
+    }
+  }
+
+  // --- экран победы ---
+  const victoryEl = document.getElementById('victory');
+  function showVictory(winner) {
+    gameOver = true;
+    [p1, p2].forEach(p => { p.moving = false; p.rotating = false; });
+    const blue = winner === p1;
+    const color = blue ? 'var(--tank1)' : 'var(--tank2)';
+    const vTitle = document.getElementById('vTitle');
+    const vsBot = settings.opponent !== 'human';
+    vTitle.textContent = vsBot ? (blue ? 'Ты победил!' : 'Бот победил!') : (blue ? 'Синий победил!' : 'Красный победил!');
+    vTitle.style.color = color;
+    victoryEl.style.setProperty('--vColor', color);
+    document.getElementById('vScore').textContent = `${score1} : ${score2}`;
+    victoryEl.querySelectorAll('.confetti').forEach(c => c.remove());
+    const colors = blue ? ['#3f7fe0', '#82b4ff', '#ffcc55', '#ffffff'] : ['#e04f3f', '#ff9a8a', '#ffcc55', '#ffffff'];
+    for (let i = 0; i < 46; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = (1.8 + Math.random() * 1.8) + 's';
+      c.style.animationDelay = (-Math.random() * 3) + 's';
+      victoryEl.appendChild(c);
+    }
+    victoryEl.hidden = false;
+    sound(523, 0.15, 'triangle', 0.08);
+    setTimeout(() => sound(659, 0.15, 'triangle', 0.08), 140);
+    setTimeout(() => sound(784, 0.3, 'triangle', 0.08), 280);
+    vibrate([40, 60, 40, 60, 120]);
+  }
+
+  // --- меню ---
+  const menu = document.getElementById('menu');
+  const homeScreen = document.getElementById('homeScreen');
+  const levelScreen = document.getElementById('levelScreen');
+  const levelGroups = document.getElementById('levelGroups');
+  const groupTiles = {};
+  GROUPS.forEach(name => {
+    const sec = document.createElement('section');
+    const h = document.createElement('h2');
+    h.className = 'groupTitle';
+    h.textContent = name;
+    const tiles = document.createElement('div');
+    tiles.className = 'tiles';
+    sec.appendChild(h);
+    sec.appendChild(tiles);
+    levelGroups.appendChild(sec);
+    groupTiles[name] = tiles;
+  });
+
+  function showOnly(scr) {
+    [homeScreen, levelScreen].forEach(x => x.hidden = x !== scr);
+    menu.hidden = false;
+    menu.scrollTop = 0;
+  }
+  function showHome() { showOnly(homeScreen); }
+  function showLevels() { showOnly(levelScreen); }
+
+
+  LEVELS.forEach((L, i) => {
+    const tile = document.createElement('button');
+    tile.className = 'tile';
+    const prev = document.createElement('div');
+    prev.className = 'preview';
+    const PW = 12 * BLOCK, PH = 22 * BLOCK;
+    const pg = makeGrid(PW, PH);
+    const addRect = (cls, x, y, w, h) => {
+      const d = document.createElement('div');
+      d.className = cls;
+      d.style.left = (x / PW) * 100 + '%';
+      d.style.top = (y / PH) * 100 + '%';
+      d.style.width = (w / PW) * 100 + '%';
+      d.style.height = (h / PH) * 100 + '%';
+      prev.appendChild(d);
+    };
+    // Обложка повторяет карту: камни, подвижные стены, турникеты, порталы, точки появления.
+    // Для случайных карт — пример одной из расстановок
+    const cells = buildCells(L, pg);
+    cellsToPx(pg, cells).forEach(w => addRect('pw', w.x, w.y, w.w, w.h));
+    if (L.movers) L.movers(pg, PW, PH).forEach(m => addRect('pm', m.to.x, m.to.y, m.w, m.h));
+    if (L.doorsRandom) {
+      const base = new Set(cells.map(([c, r]) => key(c, r)));
+      if (L.checkBlocked) L.checkBlocked(pg).forEach(([c, r]) => base.add(key(c, r)));
+      randomDoors(pg, L.doorsRandom, (c, r) => L.noRandom && L.noRandom(pg, c, r), base)
+        .forEach(m => addRect('pm', m.to.x, m.to.y, m.w, m.h));
+    }
+    if (L.turnstiles) L.turnstiles(pg).forEach(t => {
+      const R = (t.big ? TURN_SIZES.big : TURN_SIZES.small).R;
+      addRect('pm', t.x - R, t.y - TURN_T / 2, 2 * R, TURN_T);
+      addRect('pm', t.x - TURN_T / 2, t.y - R, TURN_T, 2 * R);
+    });
+    if (L.portals) {
+      const C = ([c, r]) => [c * BLOCK + BLOCK / 2, r * BLOCK + BLOCK / 2];
+      L.portals(pg).forEach(pp => [pp.a, pp.b].forEach(cell => {
+        const [x, y] = C(cell);
+        const d = document.createElement('div');
+        d.className = 'pp';
+        d.style.left = (x / PW) * 100 + '%';
+        d.style.top = (y / PH) * 100 + '%';
+        d.style.background = pp.color;
+        d.style.color = pp.color;
+        prev.appendChild(d);
+      }));
+    }
+    [[PW / 2, PH * 0.8, 'var(--tank1)'], [PW / 2, PH * 0.2, 'var(--tank2)']].forEach(([x, y, col]) => {
+      const d = document.createElement('div');
+      d.className = 'ps';
+      d.style.left = (x / PW) * 100 + '%';
+      d.style.top = (y / PH) * 100 + '%';
+      d.style.background = col;
+      prev.appendChild(d);
+    });
+    const label = document.createElement('span');
+    label.textContent = L.name;
+    tile.appendChild(prev);
+    tile.appendChild(label);
+    tile.addEventListener('click', () => startLevel(i));
+    groupTiles[L.group].appendChild(tile);
+  });
+
+  // --- режимы и настройки ---
+  const modeBtns = { lastShot: 'modeLast', ricochet: 'modeRico' };
+  const roundsVal = document.getElementById('roundsVal');
+  const ricoSwitch = document.getElementById('ricoSwitch');
+  const ricoNote = document.getElementById('ricoNote');
+  const oppNotes = {
+    human: 'Второй человек напротив',
+    easy: 'Медленно целится, мажет',
+    medium: 'Целится быстрее, стреляет пробоем сквозь дерево',
+    hard: 'Почти не мажет и уворачивается от снарядов'
+  };
+  document.querySelectorAll('#oppSeg button').forEach(bt => bt.addEventListener('click', () => {
+    settings.opponent = bt.dataset.opp; saveOptions(); renderOptions();
+  }));
+  function renderOptions() {
+    document.querySelectorAll('#oppSeg button').forEach(bt =>
+      bt.setAttribute('aria-pressed', String(bt.dataset.opp === settings.opponent)));
+    document.getElementById('oppNote').textContent = oppNotes[settings.opponent] || oppNotes.human;
+    Object.entries(modeBtns).forEach(([k, id]) =>
+      document.getElementById(id).setAttribute('aria-pressed', String(modes[k])));
+    roundsVal.textContent = settings.rounds;
+    ricoSwitch.disabled = modes.ricochet;
+    ricoSwitch.setAttribute('aria-checked', String(modes.ricochet || settings.ricochet));
+    selfSwitch.setAttribute('aria-checked', String(settings.selfDamage));
+    document.getElementById('selfNote').textContent = settings.selfDamage
+      ? 'Свой снаряд после отскока может тебя подорвать'
+      : 'Свои бомбы после отскока пролетают сквозь тебя';
+    ricoNote.textContent = modes.ricochet
+      ? 'Задано режимом «Рикошеты»: 4 отскока'
+      : 'Один отскок от стены или края поля';
+  }
+  Object.entries(modeBtns).forEach(([k, id]) =>
+    document.getElementById(id).addEventListener('click', () => {
+      modes[k] = !modes[k]; saveOptions(); renderOptions();
+    }));
+  document.getElementById('roundsMinus').addEventListener('click', () => {
+    settings.rounds = Math.max(1, settings.rounds - 1); saveOptions(); renderOptions();
+  });
+  document.getElementById('roundsPlus').addEventListener('click', () => {
+    settings.rounds = Math.min(15, settings.rounds + 1); saveOptions(); renderOptions();
+  });
+  const selfSwitch = document.getElementById('selfSwitch');
+  selfSwitch.addEventListener('click', () => {
+    settings.selfDamage = !settings.selfDamage; saveOptions(); renderOptions();
+  });
+  ricoSwitch.addEventListener('click', () => {
+    if (modes.ricochet) return;
+    settings.ricochet = !settings.ricochet; saveOptions(); renderOptions();
+  });
+  renderOptions();
+
+  let lastLevel = 0;
+  let playing = false; // уровень выбран и запущен
+  function startLevel(i) {
+    lastLevel = i;
+    playing = true;
+    menu.hidden = true;
+    victoryEl.hidden = true;
+    gameOver = false;
+    roundResetting = false;
+    toastEl.hidden = true;
+    fitField();
+    currentLevel = i;
+    if (LEVELS[i].onStart) LEVELS[i].onStart();
+    buildLevelWalls();
+    renderWalls();
+    score1 = 0; score2 = 0;
+    renderScore();
+    const P = BOT_LEVELS[settings.opponent];
+    document.getElementById('row2').classList.toggle('botRow', !!P);
+    document.getElementById('btn2').textContent = P ? 'БОТ · ' + P.label : 'ИГРОК 2 (красный)';
+    resetBot();
+    [p1, p2].forEach(p => { p.ammo = LAST_SHOT_AMMO; p.respawn(); });
+    renderAmmo();
+  }
+  document.getElementById('rematchBtn').addEventListener('click', () => startLevel(lastLevel));
+  document.getElementById('toLevelsBtn').addEventListener('click', () => { victoryEl.hidden = true; showLevels(); });
+
+  document.getElementById('tanksTile').addEventListener('click', showLevels);
+  document.getElementById('backBtn').addEventListener('click', showHome);
+  document.getElementById('menuBtn').addEventListener('click', showLevels);
+  showHome();
+
+  let last = performance.now();
+  function loop(now) {
+    const dt = (now - last) / 1000;
+    last = now;
+
+    if (!gameOver && playing && menu.hidden) {
+      updateLevel(now, [p1, p2]);
+      updateTurnstiles(now, [p1, p2]);
+      updatePortals(dt, [p1, p2]);
+      updateBot(now);
+      updatePlayer(p1, dt, now);
+      updatePlayer(p2, dt, now);
+      checkHits(p1);
+      if (!gameOver) checkHits(p2);
+      checkDraw();
+    }
+
+    tank1El.style.transform = `translate(${p1.x - 9.5}px, ${p1.y - 8.5}px) rotate(${p1.angle}deg) scale(${TANK_SCALE})`;
+    tank2El.style.transform = `translate(${p2.x - 9.5}px, ${p2.y - 8.5}px) rotate(${p2.angle}deg) scale(${TANK_SCALE})`;
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+
+<script>try{Telegram.WebApp.ready();Telegram.WebApp.expand();}catch(e){}</script>
+</body>
+</html>
