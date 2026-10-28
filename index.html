@@ -1033,6 +1033,10 @@
         <div class="label">Две шайбы<small>Хаос: на поле сразу две шайбы</small></div>
         <button class="switch" id="hkTwin" role="switch" aria-checked="false" aria-label="Две шайбы"><span></span></button>
       </div>
+      <div class="settingRow">
+        <div class="label">Зона ворот<small>Бита в своей зоне ворот сжимается на 10% каждые 5 с, вне зоны растёт обратно на 10% за 10 с</small></div>
+        <button class="switch" id="hkZone" role="switch" aria-checked="false" aria-label="Зона ворот"><span></span></button>
+      </div>
       <div class="hkRow">
         <button class="backBtn" id="hkBack">← Назад</button>
         <button class="hkPlay" id="hkStart">Играть</button>
@@ -3295,6 +3299,10 @@
   const ctx = cv.getContext('2d');
   const T = { W: 360, H: 640, k: 1, ox: 0, oy: 0, dpr: 1, GW: 150 }; // логический стол
   const MR = 27, PR = 15;            // радиусы биты и шайбы
+  // мод «Зона ворот»: полукруг у своих ворот; внутри бита сжимается, снаружи растёт обратно
+  const CREASE = 72;
+  const ZONE_SHRINK = 0.10 / 5, ZONE_GROW = 0.10 / 10, ZONE_MIN = 0.4; // доля размера в секунду
+  const br = b => MR * (b.scale || 1); // текущий радиус биты
   const PUCK_MAX = 1500;             // px/с
   const MALLET_MAX = 2600;           // px/с — бита догоняет палец, но не телепортируется
   const E_WALL = 0.9, E_HIT = 0.95;  // упругость борта и удара
@@ -3304,7 +3312,7 @@
     medium: { speed: 560, think: 120, err: 22, track: 0.7,  predict: true },
     hard:   { speed: 900, think: 50,  err: 8,  track: 0.85, predict: true }
   };
-  const hkOpts = { opp: 'human', goal: 7, twin: false };
+  const hkOpts = { opp: 'human', goal: 7, twin: false, zone: false };
   try { Object.assign(hkOpts, JSON.parse(localStorage.getItem('hockey-options') || '{}')); } catch (e) {}
   const saveHk = () => { try { localStorage.setItem('hockey-options', JSON.stringify(hkOpts)); } catch (e) {} };
 
@@ -3333,9 +3341,9 @@
   }
   window.addEventListener('resize', () => { if (hkActive) hkLayout(); });
 
-  const batMinY = b => b.top ? MR : T.H / 2 + MR;
-  const batMaxY = b => b.top ? T.H / 2 - MR : T.H - MR;
-  const clampBat = (b, x, y) => [Math.max(MR, Math.min(T.W - MR, x)), Math.max(batMinY(b), Math.min(batMaxY(b), y))];
+  const batMinY = b => b.top ? br(b) : T.H / 2 + br(b);
+  const batMaxY = b => b.top ? T.H / 2 - br(b) : T.H - br(b);
+  const clampBat = (b, x, y) => [Math.max(br(b), Math.min(T.W - br(b), x)), Math.max(batMinY(b), Math.min(batMaxY(b), y))];
 
   function placePuck(p, towardTop) {
     // шайба появляется на половине того, кто пропустил, — ему и начинать
@@ -3346,7 +3354,7 @@
   function hkReset() {
     [bats[0].x, bats[0].y] = [T.W / 2, T.H - 70];
     [bats[1].x, bats[1].y] = [T.W / 2, 70];
-    bats.forEach(b => { b.tx = b.x; b.ty = b.y; b.vx = b.vy = 0; b.id = null; });
+    bats.forEach(b => { b.tx = b.x; b.ty = b.y; b.vx = b.vy = 0; b.id = null; b.scale = 1; b.zone = null; });
     pucks = hkOpts.twin ? [{}, {}] : [{}];
     pucks.forEach(p => placePuck(p, Math.random() < 0.5));
     if (pucks.length === 1) placePuck(pucks[0], Math.random() < 0.5);
@@ -3403,16 +3411,16 @@
     const p = live.reduce((a, c) => (c.y - (c.vy < 0 ? 200 : 0) < a.y - (a.vy < 0 ? 200 : 0) ? c : a));
     const bx = b.x, by = F(b.y);
     const err = () => (Math.random() * 2 - 1) * P.err;
-    const homeY = 62;
+    const homeY = hkOpts.zone ? CREASE + MR + 6 : 62; // с модом бот не стоит в своей зоне
     let tx, ty;
     if (p.y < T.H / 2 + PR && Math.abs(p.vy) < 520) {
       // атака: заходим за шайбу и бьём в сторону чужих ворот
       const gx = T.W / 2 + err() * 1.5, gy = T.H + 40;
       let dx = gx - p.x, dy = gy - p.y; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
-      const ax = p.x - dx * (MR + PR + 4), ay = p.y - dy * (MR + PR + 4);
+      const ax = p.x - dx * (br(b) + PR + 4), ay = p.y - dy * (br(b) + PR + 4);
       if (by > p.y + 4) {
         // бита между шайбой и чужими воротами — обходим сбоку, чтобы не загнать шайбу в свои
-        tx = p.x + (bx < p.x ? -1 : 1) * (MR + PR + 12); ty = p.y - MR - PR;
+        tx = p.x + (bx < p.x ? -1 : 1) * (br(b) + PR + 12); ty = p.y - br(b) - PR;
       } else if (Math.hypot(bx - ax, by - ay) < 14) {
         tx = p.x + dx * 40; ty = p.y + dy * 40; // удар насквозь
       } else {
@@ -3509,6 +3517,15 @@
       return [b.x, b.y, dx, dy];
     });
     const frozen = hkMsg && hkMsg.text === 'Поехали!' && now < hkMsg.until;
+    // мод «Зона ворот»: в своей зоне бита сжимается, полностью снаружи — растёт обратно
+    bats.forEach(b => {
+      if (!hkOpts.zone) { b.scale = 1; b.zone = null; return; }
+      const gy = b.top ? 0 : T.H;
+      const inZone = Math.hypot(b.x - T.W / 2, b.y - gy) < CREASE + br(b);
+      if (inZone && b.zone !== 'in') sound(220, 0.06, 'square', 0.03);
+      b.zone = inZone ? 'in' : 'out';
+      if (!frozen) b.scale = inZone ? Math.max(ZONE_MIN, b.scale - ZONE_SHRINK * dt) : Math.min(1, b.scale + ZONE_GROW * dt);
+    });
     for (let s = 1; s <= N; s++) {
       bats.forEach((b, i) => { const m = moves[i]; [b.x, b.y] = clampBat(b, b.x + m[2] / N, b.y + m[3] / N); });
       if (frozen) continue;
@@ -3518,9 +3535,9 @@
         // удар битой
         for (const b of bats) {
           let dx = p.x - b.x, dy = p.y - b.y; const d = Math.hypot(dx, dy);
-          if (d >= MR + PR || d === 0) continue;
+          if (d >= br(b) + PR || d === 0) continue;
           const nx = dx / d, ny = dy / d;
-          p.x = b.x + nx * (MR + PR); p.y = b.y + ny * (MR + PR);
+          p.x = b.x + nx * (br(b) + PR); p.y = b.y + ny * (br(b) + PR);
           const rvn = (p.vx - b.vx) * nx + (p.vy - b.vy) * ny;
           if (rvn < 0) {
             const inSp = Math.hypot(p.vx, p.vy);
@@ -3567,14 +3584,14 @@
         // шайбу прижали к борту и ей некуда деться — тогда отодвигаем биту, а не продавливаем шайбу
         for (const b of bats) {
           const dx = b.x - p.x, dy = b.y - p.y, d = Math.hypot(dx, dy);
-          if (d >= MR + PR - 0.5) continue;
+          if (d >= br(b) + PR - 0.5) continue;
           const nx = d ? dx / d : 0, ny = d ? dy / d : (b.top ? -1 : 1);
-          [b.x, b.y] = clampBat(b, p.x + nx * (MR + PR), p.y + ny * (MR + PR));
-          if (Math.hypot(b.x - p.x, b.y - p.y) < MR + PR - 1) {
+          [b.x, b.y] = clampBat(b, p.x + nx * (br(b) + PR), p.y + ny * (br(b) + PR));
+          if (Math.hypot(b.x - p.x, b.y - p.y) < br(b) + PR - 1) {
             // бита упёрлась в свой край — тогда шайбу выдавливаем вдоль борта
             const ex = p.x - b.x, ey = p.y - b.y, e = Math.hypot(ex, ey) || 1;
-            p.x = Math.max(PR, Math.min(T.W - PR, b.x + ex / e * (MR + PR)));
-            p.y = b.y + ey / e * (MR + PR);
+            p.x = Math.max(PR, Math.min(T.W - PR, b.x + ex / e * (br(b) + PR)));
+            p.y = b.y + ey / e * (br(b) + PR);
           }
         }
         if (wall && now - lastWallSound > 40 && Math.hypot(p.vx, p.vy) > 80) {
@@ -3623,10 +3640,16 @@
     ctx.beginPath(); ctx.arc(W / 2, H / 2, 54, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = 'rgba(80, 120, 190, 0.45)';
     ctx.beginPath(); ctx.arc(W / 2, H / 2, 5, 0, Math.PI * 2); ctx.fill();
+    if (hkOpts.zone) { // зоны ворот подкрашены, когда мод включён
+      ctx.fillStyle = 'rgba(224, 79, 63, 0.08)';
+      ctx.beginPath(); ctx.arc(W / 2, 0, CREASE, 0, Math.PI); ctx.fill();
+      ctx.fillStyle = 'rgba(63, 127, 224, 0.09)';
+      ctx.beginPath(); ctx.arc(W / 2, H, CREASE, Math.PI, 0); ctx.fill();
+    }
     ctx.strokeStyle = 'rgba(224, 79, 63, 0.35)';
-    ctx.beginPath(); ctx.arc(W / 2, 0, 72, 0, Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, 0, CREASE, 0, Math.PI); ctx.stroke();
     ctx.strokeStyle = 'rgba(63, 127, 224, 0.4)';
-    ctx.beginPath(); ctx.arc(W / 2, H, 72, Math.PI, 0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, H, CREASE, Math.PI, 0); ctx.stroke();
     // счёт на льду: синий у себя, красный у себя (перевёрнут к нему)
     ctx.font = '900 92px system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -3662,14 +3685,22 @@
     }
     // биты
     for (const b of bats) {
+      const r = br(b), k = r / MR;
       ctx.fillStyle = 'rgba(0,0,0,0.2)';
-      ctx.beginPath(); ctx.arc(b.x + 2, b.y + 4, MR, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(b.x + 2, b.y + 4, r, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = b.color;
-      ctx.beginPath(); ctx.arc(b.x, b.y, MR, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = b.dark; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.arc(b.x, b.y, MR - 7, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = b.dark; ctx.lineWidth = 5 * k;
+      ctx.beginPath(); ctx.arc(b.x, b.y, r - 7 * k, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.beginPath(); ctx.arc(b.x - 4, b.y - 5, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(b.x - 4 * k, b.y - 5 * k, 7 * k, 0, Math.PI * 2); ctx.fill();
+      // контур: красный — в зоне ворот (сжимается), зелёный — вне зоны и ещё не вырос обратно
+      if (hkOpts.zone && hkRunning && (b.zone === 'in' || (b.scale || 1) < 0.999)) {
+        const red = b.zone === 'in';
+        ctx.strokeStyle = red ? 'rgba(230, 40, 40, 0.9)' : 'rgba(40, 190, 90, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(b.x, b.y, r + 4 + Math.sin(now / 160) * 1.2, 0, Math.PI * 2); ctx.stroke();
+      }
     }
     // искры
     for (let i = hkParts.length - 1; i >= 0; i--) {
@@ -3712,10 +3743,12 @@
     document.querySelectorAll('#hkOpp button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === hkOpts.opp)));
     document.querySelectorAll('#hkGoal button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === hkOpts.goal)));
     document.getElementById('hkTwin').setAttribute('aria-checked', String(hkOpts.twin));
+    document.getElementById('hkZone').setAttribute('aria-checked', String(hkOpts.zone));
   }
   document.querySelectorAll('#hkOpp button').forEach(b => b.addEventListener('click', () => { hkOpts.opp = b.dataset.v; saveHk(); hkRenderOpts(); }));
   document.querySelectorAll('#hkGoal button').forEach(b => b.addEventListener('click', () => { hkOpts.goal = +b.dataset.v; saveHk(); hkRenderOpts(); }));
   document.getElementById('hkTwin').addEventListener('click', () => { hkOpts.twin = !hkOpts.twin; saveHk(); hkRenderOpts(); });
+  document.getElementById('hkZone').addEventListener('click', () => { hkOpts.zone = !hkOpts.zone; saveHk(); hkRenderOpts(); });
   hkRenderOpts();
   function hkShowSetup() {
     hkRunning = false;
@@ -4305,6 +4338,7 @@
   const GV_COOLDOWN = 700;             // мс между выстрелами
   const SLING_MIN = 12, SLING_MAX = 105; // рогатка: мёртвая зона и полная сила, в единицах поля
   const TGT_R = 17;                    // радиус летающей мишени
+  const GRAV_SURF = 1250, GRAV_FALL = 1.15; // сила притяжения у поверхности луны (px/с²) и как быстро она слабеет
   const GV_STEP = 1 / 120;             // шаг физики
   const SHOT_LIFE = 7;                 // секунд, потом снаряд гаснет
   const GV_BOTS = {
@@ -4363,16 +4397,16 @@
       const a = Math.random() * Math.PI * 2, d = Math.random() * r * 0.62;
       return { x: Math.cos(a) * d, y: Math.sin(a) * d, r: r * (0.12 + Math.random() * 0.18) };
     });
-    // притяжение у поверхности растёт с размером луны
-    const surf = 500 * (r / 30);
-    return { x, y, r, S: surf * r * r, hole: false, craters, spin: Math.random() * 6 };
+    // S — ускорение у самой поверхности; растёт с размером луны
+    const surf = GRAV_SURF * (r / 30);
+    return { x, y, r, S: surf, hole: false, craters, spin: Math.random() * 6 };
   }
   function gvNewMap() {
     const W = V.W, H = V.H;
     for (let attempt = 0; attempt < 200; attempt++) {
       const list = [];
       if (gvOpts.hole) {
-        list.push({ x: W / 2, y: H / 2, r: 13, S: 1250 * 900, hole: true, craters: [], spin: 0 });
+        list.push({ x: W / 2, y: H / 2, r: 13, S: 3600, hole: true, craters: [], spin: 0 });
       } else if (gvOpts.mode !== 'target' && Math.random() < 0.65) {
         list.push(makeMoon(W / 2, H / 2, 24 + Math.random() * 18));
       }
@@ -4406,9 +4440,9 @@
     let ax = 0, ay = 0;
     for (const b of bodies) {
       const dx = b.x - x, dy = b.y - y;
-      const d2 = Math.max(dx * dx + dy * dy, b.r * b.r * 0.7);
-      const d = Math.sqrt(d2);
-      const a = b.S / d2;
+      const d = Math.max(Math.hypot(dx, dy), b.r * 0.85);
+      // спадает медленнее, чем 1/d², — притяжение чувствуется и вдалеке от луны
+      const a = b.S * Math.pow(b.r / d, GRAV_FALL);
       ax += a * dx / d; ay += a * dy / d;
     }
     return [ax, ay];
