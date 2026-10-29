@@ -32,7 +32,8 @@
     font-family: system-ui, sans-serif;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 10px;
+    padding-top: calc(10px + var(--st, 0px));
+    padding-bottom: calc(10px + var(--sb, 0px));
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -40,6 +41,8 @@
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     touch-action: none;
   }
   html { height: 100%; }
@@ -269,11 +272,25 @@
   }
   .tank.shielded .shield-ring { opacity: 1; }
 
+  /* счёт и «Меню» спрятаны в створку слева — поле занимает весь экран */
   #scoreBar {
+    position: fixed;
+    left: 0;
+    top: calc(50% + (var(--st, 0px) - var(--sb, 0px)) / 2);
+    z-index: 41;
+    transform: translate(-110%, -50%);
+    transition: transform 0.22s ease;
+    background: #252a35;
+    border: 2px solid #323848;
+    border-left: none;
+    border-radius: 0 18px 18px 0;
+    padding: 14px 18px 14px max(16px, env(safe-area-inset-left, 0px));
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.45);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 18px;
+    gap: 10px;
     font-size: 1.4rem;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
@@ -281,6 +298,35 @@
   #scoreBar .s1 { color: var(--tank1); }
   #scoreBar .s2 { color: var(--tank2); }
   #scoreBar .dash { color: #6a7488; font-weight: 600; font-size: 1rem; }
+  #scoreBar .sbRow { display: flex; align-items: center; gap: 14px; }
+  body.drawer #scoreBar { transform: translate(0, -50%); }
+  #scoreTab {
+    position: fixed;
+    left: 0;
+    top: calc(50% + (var(--st, 0px) - var(--sb, 0px)) / 2);
+    z-index: 40;
+    transform: translateY(-50%);
+    width: 30px;
+    padding: 8px 0 6px;
+    border: none;
+    border-radius: 0 12px 12px 0;
+    background: rgba(26, 29, 36, 0.82);
+    color: var(--fg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font: 800 1rem system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    transition: opacity 0.15s;
+  }
+  #scoreTab .ts1 { color: var(--tank1); }
+  #scoreTab .ts2 { color: var(--tank2); }
+  #scoreTab .tline { width: 14px; height: 2px; border-radius: 1px; background: #6a7488; }
+  #scoreTab .tarrow { color: #8a93a8; font-size: 0.9rem; line-height: 0.8; }
+  #scoreTab .ammo { flex-direction: column; gap: 2px; }
+  #scoreTab .ammo .pip { width: 6px; height: 6px; }
+  body.drawer #scoreTab { opacity: 0; pointer-events: none; }
 
   .boom {
     position: absolute;
@@ -347,7 +393,7 @@
     background: var(--bg);
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: calc(24px + env(safe-area-inset-top, 0px)) 24px;
+    padding-block: calc(24px + env(safe-area-inset-top, 0px) + var(--st, 0px)) calc(24px + var(--sb, 0px));
     overflow-y: auto;
     touch-action: auto;
   }
@@ -363,6 +409,22 @@
     font-weight: 800;
     letter-spacing: -0.01em;
   }
+  /* шапка главного экрана: название и кнопка настроек */
+  .homeHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  #appSettingsBtn {
+    width: 42px; height: 42px; flex: none;
+    border-radius: 50%;
+    border: 2px solid #323848;
+    background: #252a35;
+    color: var(--fg);
+    font-size: 1.25rem;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #appSettingsBtn:active { transform: scale(0.94); }
+  #appSettings { position: fixed; z-index: 104; }
+  #appSettings .hkCard { gap: 14px; }
+  .fsNote { font-size: 0.78rem; color: #9aa3b6; margin: 0; }
   .tiles {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -681,6 +743,20 @@
   .settingRow .label { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 0.9rem; font-weight: 600; }
   .settingRow .label small { font-size: 0.74rem; font-weight: 400; color: #9aa3b6; }
   .stepper { display: flex; align-items: center; gap: 8px; flex: none; }
+  /* ползунок скорости танков */
+  .speedRow { padding-bottom: 0; border-bottom: none; }
+  .speedVal { font-weight: 900; font-size: 1.1rem; min-width: 3.4em; text-align: right; color: var(--tank1); }
+  .speedRange {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 34px; margin: 0 0 6px;
+    background: transparent;
+    touch-action: none;
+  }
+  .speedRange::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--tank1) var(--fill, 50%), #323848 var(--fill, 50%)); }
+  .speedRange::-moz-range-track { height: 8px; border-radius: 4px; background: #323848; }
+  .speedRange::-moz-range-progress { height: 8px; border-radius: 4px; background: var(--tank1); }
+  .speedRange::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; margin-top: -10px; border-radius: 50%; background: #fff; border: 3px solid var(--tank1); box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+  .speedRange::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--tank1); }
   .stepper button {
     width: 34px; height: 34px;
     border-radius: 10px;
@@ -719,7 +795,7 @@
      в снаряд или искру, которые потом удаляются, телефон мог «потерять» отпускание пальца
      и джойстик залипал. */
   #touchPad { position: absolute; inset: 0; pointer-events: auto; touch-action: none; }
-  body.stick #scoreBar { position: relative; z-index: 6; }
+  body.stick #scoreBar { z-index: 41; }
   body.stick .ctrlRow { display: none; }
   body.stick { padding-left: max(4px, env(safe-area-inset-left, 0px)); padding-right: max(4px, env(safe-area-inset-right, 0px)); }
   .joyPad {
@@ -729,9 +805,9 @@
     gap: 14px;
     pointer-events: none;
   }
-  #pad1 { left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); bottom: max(14px, env(safe-area-inset-bottom, 0px)); justify-content: flex-end; }
+  #pad1 { left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + var(--sb, 0px)); justify-content: flex-end; }
   body.vsBot #joy2 { display: none; }
-  #pad2 { left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); top: calc(max(10px, env(safe-area-inset-top, 0px)) + 44px); justify-content: flex-end; transform: rotate(180deg); }
+  #pad2 { left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); top: calc(max(10px, env(safe-area-inset-top, 0px)) + 44px + var(--st, 0px)); justify-content: flex-end; transform: rotate(180deg); }
   body.vsBot #pad2 { display: none; }
   /* джойстик появляется там, где коснулся палец; в покое — бледный в своём углу */
   .joy {
@@ -786,7 +862,7 @@
   #hkMenuBtn {
     position: absolute;
     left: max(6px, env(safe-area-inset-left, 0px));
-    top: 50%;
+    top: calc(50% + (var(--st, 0px) - var(--sb, 0px)) / 2);
     transform: translateY(-50%);
     width: 34px; height: 34px;
     border-radius: 50%;
@@ -803,7 +879,7 @@
     z-index: 3;
     background: rgba(14, 16, 22, 0.8);
     display: flex;
-    padding: 16px;
+    padding: calc(16px + var(--st, 0px)) 16px calc(16px + var(--sb, 0px));
     overflow-x: hidden;
     overflow-y: auto; /* на низких экранах меню прокручивается */
     touch-action: pan-y;
@@ -864,7 +940,7 @@
   #trMenuBtn {
     position: absolute;
     left: max(6px, env(safe-area-inset-left, 0px));
-    top: 50%;
+    top: calc(50% + (var(--st, 0px) - var(--sb, 0px)) / 2);
     transform: translateY(-50%);
     width: 34px; height: 34px;
     border-radius: 50%;
@@ -913,7 +989,7 @@
   #gvMenuBtn {
     position: absolute;
     left: max(6px, env(safe-area-inset-left, 0px));
-    top: 50%;
+    top: calc(50% + (var(--st, 0px) - var(--sb, 0px)) / 2);
     transform: translateY(-50%);
     width: 34px; height: 34px;
     border-radius: 50%;
@@ -961,7 +1037,7 @@
   .pgMenu {
     position: absolute;
     left: max(6px, env(safe-area-inset-left, 0px));
-    top: 50%;
+    top: calc(50% + (var(--st, 0px) - var(--sb, 0px)) / 2);
     transform: translateY(-50%);
     width: 34px; height: 34px;
     border-radius: 50%;
@@ -981,8 +1057,8 @@
     position: relative;
     margin: auto;
     width: min(360px, 100%);
-    max-height: calc(100vh - 32px);
-    max-height: calc(100dvh - 32px);
+    max-height: calc(100vh - 32px - var(--st, 0px) - var(--sb, 0px));
+    max-height: calc(100dvh - 32px - var(--st, 0px) - var(--sb, 0px));
     display: flex;
   }
   .scrollBox > .hkCard {
@@ -1057,11 +1133,24 @@
   }
 </style>
 
+<div class="hkOverlay" id="appSettings" hidden>
+  <div class="hkCard">
+    <h1 class="menuTitle">Настройки</h1>
+    <div class="settingRow">
+      <div class="label">Полный экран<small>Убирает шапку Telegram — игра на весь экран. Поле само отодвинется от кнопок Telegram и выреза камеры</small></div>
+      <button class="switch" id="fsSwitch" role="switch" aria-checked="false" aria-label="Полный экран"><span></span></button>
+    </div>
+    <p class="fsNote" id="fsNote" hidden></p>
+    <div class="hkRow"><button class="hkPlay" id="appSettingsClose">Готово</button></div>
+  </div>
+</div>
+
 <div class="ctrlRow" id="row2">
   <button class="fireBtn" id="btn2">ИГРОК 2 (красный)</button>
   <button class="pierceBtn" id="pierce2">ПРОБОЙ</button>
 </div>
-<div id="scoreBar"><span class="ammo" id="ammo1" hidden></span><span class="s1" id="score1">0</span><span class="dash">—</span><span class="s2" id="score2">0</span><span class="ammo" id="ammo2" hidden></span><span class="goal" id="goal">до 3</span><button id="menuBtn">Меню</button></div>
+<button id="scoreTab" aria-label="Счёт и меню"><span class="ammo" id="ammo2" hidden></span><span class="ts2" id="tabS2">0</span><span class="tline"></span><span class="ts1" id="tabS1">0</span><span class="ammo" id="ammo1" hidden></span><span class="tarrow">›</span></button>
+<div id="scoreBar"><div class="sbRow"><span class="s1" id="score1">0</span><span class="dash">—</span><span class="s2" id="score2">0</span></div><span class="goal" id="goal">до 3</span><button id="menuBtn">Меню</button></div>
 <div id="arena"><div id="scaler">
 <div id="field">
   <div id="wallsLayer"></div>
@@ -1305,6 +1394,10 @@
       <div class="label">Урон от своих снарядов<small>Свой снаряд после отскока может тебя подорвать</small></div>
       <button class="switch" id="qSelf" role="switch" aria-checked="false" aria-label="Урон от своих снарядов"><span></span></button>
     </div>
+    <div class="settingRow" id="qFixedRow">
+      <div class="label">Фиксированный джойстик<small>Джойстик стоит в углу и не ездит за пальцем. Касание левой стороны — танк едет от центра джойстика к пальцу</small></div>
+      <button class="switch" id="qFixed" role="switch" aria-checked="false" aria-label="Фиксированный джойстик"><span></span></button>
+    </div>
     <div class="settingRow">
       <div class="label">Случайная карта<small id="quickRandNote">Крепости, Сад камней, Пилорама или Прыжки</small></div>
       <button class="switch" id="quickRandSw" role="switch" aria-checked="true" aria-label="Случайная карта"><span></span></button>
@@ -1320,7 +1413,10 @@
 
 <div id="menu">
   <div class="menuScreen" id="homeScreen">
-    <h1 class="menuTitle">PifPaf</h1>
+    <div class="homeHead">
+      <h1 class="menuTitle">PifPaf</h1>
+      <button id="appSettingsBtn" aria-label="Настройки">⚙</button>
+    </div>
     <div class="segmented homeTabs" id="homeTabs">
       <button data-tab="mini">Мини-игры</button>
       <button data-tab="tanks">Танки</button>
@@ -1431,6 +1527,11 @@
           <button id="roundsPlus" aria-label="Больше">+</button>
         </div>
       </div>
+      <div class="settingRow speedRow">
+        <div class="label">Скорость танков<small>0% — стоят на месте, 100% — обычная, 200% — вдвое быстрее</small></div>
+        <span class="speedVal" id="speedVal">100%</span>
+      </div>
+      <input type="range" class="speedRange" id="speedRange" min="0" max="200" step="10" value="100" aria-label="Скорость танков">
       <div class="settingRow">
         <div class="label">Рикошет обычных снарядов<small id="ricoNote">Один отскок от стены или края поля</small></div>
         <button class="switch" id="ricoSwitch" role="switch" aria-checked="false" aria-label="Рикошет обычных снарядов"><span></span></button>
@@ -1438,6 +1539,10 @@
       <div class="settingRow">
         <div class="label">Урон от своих снарядов<small id="selfNote">Свои бомбы после отскока пролетают сквозь тебя</small></div>
         <button class="switch" id="selfSwitch" role="switch" aria-checked="false" aria-label="Урон от своих снарядов"><span></span></button>
+      </div>
+      <div class="settingRow" id="fixedRow">
+        <div class="label">Фиксированный джойстик<small>Джойстик стоит в углу и не ездит за пальцем. Касание левой стороны — танк едет от центра джойстика к пальцу</small></div>
+        <button class="switch" id="fixedSwitch" role="switch" aria-checked="false" aria-label="Фиксированный джойстик"><span></span></button>
       </div>
     </section>
     <div class="levelGroups" id="levelGroups"></div>
@@ -1447,6 +1552,26 @@
 <script>
 (function() {
   const NET = { on: false, role: null, game: null, flip: false, modes: null, send() {}, ev() {} };
+  // --- полный экран и безопасные отступы ---
+  // В полноэкранном режиме Telegram сверху остаются его кнопки и вырез камеры:
+  // SAFE.t / SAFE.b — сколько пикселей сверху и снизу не занимать игрой.
+  const tgApp = window.Telegram && window.Telegram.WebApp;
+  const inTelegram = !!(tgApp && tgApp.initData);
+  let SAFE = { t: 0, b: 0 };
+  function updateSafe() {
+    let t = 0, b = 0;
+    if (inTelegram && tgApp.isFullscreen) {
+      const s = tgApp.safeAreaInset || {}, c = tgApp.contentSafeAreaInset || {};
+      t = (s.top || 0) + (c.top || 0); b = (s.bottom || 0) + (c.bottom || 0);
+    }
+    SAFE = { t, b };
+    document.documentElement.style.setProperty('--st', t + 'px');
+    document.documentElement.style.setProperty('--sb', b + 'px');
+  }
+  updateSafe();
+  const safeTop = () => SAFE.t, safeBot = () => SAFE.b;
+  const scrH = () => innerHeight - SAFE.t - SAFE.b;       // высота, где можно играть
+  const scrMid = () => SAFE.t + scrH() / 2;               // граница половин игроков
   const field = document.getElementById('field');
   // логический размер поля не зависит от экрана
   const fieldRect = { width: 336, height: 616 };
@@ -1464,7 +1589,7 @@
   fitField();
 
   const ROTATE_SPEED = 360 / 1.7; // deg/sec
-  const MOVE_SPEED = 90; // px/sec
+  const MOVE_SPEED = 72; // px/sec (было 90, медленнее на 20%)
   const SHELL_SPEED = 300; // px/sec
   const TANK_SCALE = 1.2; // танк на 20% крупнее базовой модели 19×17
   const HIT_RADIUS = 12;
@@ -1480,7 +1605,7 @@
   // role: 'host' — создал комнату и считает игру; 'guest' — подключился
 
   // --- настройки и режимы (запоминаются в браузере) ---
-  const settings = { rounds: 3, ricochet: false, opponent: 'human', selfDamage: false };
+  const settings = { rounds: 3, ricochet: false, opponent: 'human', selfDamage: false, speed: 100, fixedJoy: false };
   const modes = { lastShot: false, ricochet: false };
   try {
     const saved = JSON.parse(localStorage.getItem('tanks-options') || 'null');
@@ -1495,6 +1620,8 @@
     get lastShot() { return NET.on && NET.role === 'guest' ? !!(NET.modes && NET.modes.lastShot) : !quickMode && modes.lastShot; },
     get ricochet() { return NET.on && NET.role === 'guest' ? !!(NET.modes && NET.modes.ricochet) : !quickMode && modes.ricochet; }
   };
+  // множитель скорости езды: ползунок есть только во вкладке «Танки»; в мини-играх всегда 100%
+  const speedK = () => NET.on && NET.role === 'guest' ? (NET.spd == null ? 1 : NET.spd) : quickMode ? 1 : (settings.speed == null ? 100 : settings.speed) / 100;
   const ricochetCount = () => gm.ricochet ? 4 : (settings.ricochet ? 1 : 0);
 
   let gameOver = false;
@@ -2388,6 +2515,12 @@
   // Общая звуковая шина: сухой сигнал + короткое эхо помещения (свёртка с
   // затухающим стерео-шумом). out(x) раскладывает звук по стерео по позиции на поле
   let bus = null;
+  // звук готовим заранее — на первом нажатии любой кнопки меню, а не на первом касании поля в игре
+  // на игровом поле телефон не должен ничего масштабировать и прокручивать (второй палец — не «щипок»)
+  const noGesture = e => { if (e.target.closest && e.target.closest('canvas, #arena, #touchPad, .ctrlRow, .joyPad')) e.preventDefault(); };
+  document.addEventListener('touchmove', noGesture, { passive: false });
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('click', () => { try { audioBus(); if (actx && actx.state === 'suspended') actx.resume(); } catch (e) {} }, true);
   function audioBus() {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
     if (bus) return bus;
@@ -2770,11 +2903,19 @@
     const J = { id: null, cx: 0, cy: 0, p: player, flip: 1 };
     const place = (x, y) => { joyEl.style.left = x + 'px'; joyEl.style.top = y + 'px'; };
     J.start = (e) => {
-      J.id = e.pointerId; J.cx = e.clientX; J.cy = e.clientY; J.lx = e.clientX; J.ly = e.clientY;
-      place(J.cx, J.cy);
+      J.id = e.pointerId; J.lx = e.clientX; J.ly = e.clientY;
       joyEl.classList.add('held');
       knob.style.transform = '';
       J.p.joy.x = 0; J.p.joy.y = 0;
+      if (settings.fixedJoy) {
+        // фиксированный: центр всегда на своём месте, направление — от центра к пальцу
+        [J.cx, J.cy] = home();
+        place(J.cx, J.cy);
+        J.move(e);
+        return;
+      }
+      J.cx = e.clientX; J.cy = e.clientY;
+      place(J.cx, J.cy);
     };
     J.move = (e) => {
       J.lx = e.clientX; J.ly = e.clientY; // где сейчас палец
@@ -2782,7 +2923,10 @@
       const d = Math.hypot(dx, dy);
       if (d < JOY_DEAD) { J.p.joy.x = 0; J.p.joy.y = 0; }
       else { J.p.joy.x = dx / d * J.flip; J.p.joy.y = dy / d * J.flip; } // только направление (у гостя поле перевёрнуто)
-      if (d > JOY_R) {
+      if (d > JOY_R && settings.fixedJoy) {
+        // фиксированный джойстик не двигается — ручка просто упирается в край
+        dx *= JOY_R / d; dy *= JOY_R / d;
+      } else if (d > JOY_R) {
         // палец ушёл за край — центр джойстика едет следом, держась на радиусе от пальца
         dx *= JOY_R / d; dy *= JOY_R / d;
         J.cx = e.clientX - dx; J.cy = e.clientY - dy;
@@ -2803,8 +2947,8 @@
     return J;
   }
   const joys = [
-    makeJoy(document.getElementById('joy1'), p1, () => [90, innerHeight - 110]),
-    makeJoy(document.getElementById('joy2'), p2, () => [innerWidth - 90, 165])
+    makeJoy(document.getElementById('joy1'), p1, () => [90, innerHeight - 110 - safeBot()]),
+    makeJoy(document.getElementById('joy2'), p2, () => [innerWidth - 90, 165 + safeTop()])
   ];
   window.addEventListener('resize', () => joys.forEach(J => { if (J.id === null) J.reset(); }));
   const stickActive = () => controlMode === 'stick' && playing && menu.hidden && victoryEl.hidden;
@@ -2813,12 +2957,12 @@
     if (e.target.closest('button')) return; // «Меню», «Пробой»
     const W = innerWidth, H = innerHeight;
     // по сети весь экран — твой: снизу слева джойстик, справа огонь
-    const red = !NET.on && humanP2() && e.clientY < H / 2;
+    const red = !NET.on && humanP2() && e.clientY < scrMid();
     const J = red ? joys[1] : joys[0];
     const player = J.p;
     const leftSide = red ? e.clientX > W / 2 : e.clientX < W / 2;
     e.preventDefault();
-    if (leftSide && J.id === null) J.start(e);
+    if (leftSide) J.start(e); // даже если прошлый палец «завис» — берём джойстик новым
     else if (!leftSide) player.stickFire();
   });
   window.addEventListener('pointermove', e => joys.forEach(J => { if (J.id === e.pointerId) J.move(e); }));
@@ -2951,7 +3095,7 @@
     if (state.moving && !frozen) {
       const rad = (state.angle - 90) * Math.PI / 180;
       const margin = TANK_PAD + 1;
-      const sp = MOVE_SPEED * state.speedK * dt;
+      const sp = MOVE_SPEED * speedK() * state.speedK * dt;
       let nx = Math.max(margin, Math.min(fieldRect.width - margin, state.x + Math.cos(rad) * sp));
       let ny = Math.max(margin, Math.min(fieldRect.height - margin, state.y + Math.sin(rad) * sp));
       const walls = getWallsPx();
@@ -3051,6 +3195,8 @@
   function renderScore() {
     score1El.textContent = score1;
     score2El.textContent = score2;
+    document.getElementById('tabS1').textContent = score1;
+    document.getElementById('tabS2').textContent = score2;
     goalEl.textContent = 'до ' + settings.rounds;
   }
 
@@ -3187,7 +3333,7 @@
         x = px; y = py; left--; bounced = true;
       }
       if (Math.hypot(x - enemy.x, y - enemy.y) < HIT_RADIUS) return false;
-      const go = Math.min(t * MOVE_SPEED, moveDist);
+      const go = Math.min(t * MOVE_SPEED * speedK(), moveDist);
       if (bounced && Math.hypot(x - (b.x + dx0 * go), y - (b.y + dy0 * go)) < HIT_RADIUS + 4) return true;
     }
     return false;
@@ -3343,6 +3489,55 @@
     menu.scrollTop = 0;
   }
   function showHome() { showOnly(homeScreen); }
+
+  // --- окно «Настройки» (кнопка ⚙ рядом с названием) ---
+  const appSettings = document.getElementById('appSettings');
+  const fsSwitch = document.getElementById('fsSwitch');
+  const fsNote = document.getElementById('fsNote');
+  let fsWanted = false;
+  try { fsWanted = localStorage.getItem('pp-fullscreen') === '1'; } catch (e) {}
+  const tgFsOk = () => inTelegram && typeof tgApp.requestFullscreen === 'function' && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast('8.0');
+  const tgPhone = () => inTelegram && /^(ios|android)/.test(tgApp.platform || '');
+  const isFs = () => inTelegram ? !!tgApp.isFullscreen : !!document.fullscreenElement;
+  function renderFs() {
+    fsSwitch.setAttribute('aria-checked', String(isFs()));
+    let note = '';
+    if (inTelegram && !tgFsOk()) note = 'Нужна новая версия Telegram — обнови приложение.';
+    else if (inTelegram && !tgPhone()) note = 'Полный экран работает в Telegram на телефоне.';
+    fsNote.textContent = note; fsNote.hidden = !note;
+  }
+  function setFs(on) {
+    fsWanted = on;
+    try { localStorage.setItem('pp-fullscreen', on ? '1' : '0'); } catch (e) {}
+    if (inTelegram) {
+      if (!tgFsOk()) { renderFs(); return; }
+      try { on ? tgApp.requestFullscreen() : tgApp.exitFullscreen(); } catch (e) {}
+    } else {
+      // обычный браузер: полноэкранный режим самого браузера
+      try {
+        if (on && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+        if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      } catch (e) {}
+    }
+    setTimeout(renderFs, 300);
+  }
+  function onFsChange() {
+    updateSafe();
+    renderFs();
+    window.dispatchEvent(new Event('resize')); // все игры пересчитывают раскладку
+  }
+  if (inTelegram && tgApp.onEvent) {
+    ['fullscreenChanged', 'safeAreaChanged', 'contentSafeAreaChanged', 'viewportChanged'].forEach(ev => { try { tgApp.onEvent(ev, onFsChange); } catch (e) {} });
+    try { tgApp.onEvent('fullscreenFailed', () => { fsNote.textContent = 'Telegram не разрешил полный экран на этом устройстве.'; fsNote.hidden = false; }); } catch (e) {}
+  }
+  document.addEventListener('fullscreenchange', onFsChange);
+  fsSwitch.addEventListener('click', () => setFs(!isFs()));
+  document.getElementById('appSettingsBtn').addEventListener('click', () => { renderFs(); appSettings.hidden = false; });
+  document.getElementById('appSettingsClose').addEventListener('click', () => { appSettings.hidden = true; });
+  appSettings.addEventListener('click', e => { if (e.target === appSettings) appSettings.hidden = true; });
+  // при запуске: если раньше включили полный экран — включаем снова (только на телефоне)
+  if (fsWanted && tgFsOk() && tgPhone() && !tgApp.isFullscreen) { try { tgApp.requestFullscreen(); } catch (e) {} }
+  renderFs();
   // в быстрых танках (вкладка «Мини-игры») вместо экрана уровней — окошко настроек
   function showLevels() { if (quickMode) openQuick(); else showOnly(levelScreen); }
 
@@ -3426,6 +3621,7 @@
     document.querySelectorAll('#qOpp button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.opp === settings.opponent)));
     document.getElementById('qRico').setAttribute('aria-checked', String(settings.ricochet));
     document.getElementById('qSelf').setAttribute('aria-checked', String(settings.selfDamage));
+    renderFixed();
     document.getElementById('quickRandNote').textContent = quickRandOn ? 'Крепости, Сад камней, Пилорама или Прыжки' : 'Выбери карту ниже';
     document.querySelectorAll('#quickRounds button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === settings.rounds)));
   }
@@ -3469,7 +3665,19 @@
   document.querySelectorAll('#oppSeg button').forEach(bt => bt.addEventListener('click', () => {
     settings.opponent = bt.dataset.opp; saveOptions(); renderOptions();
   }));
+  // переключатель «Фиксированный джойстик» — только для танков с джойстиком
+  function renderFixed() {
+    const stick = controlMode === 'stick';
+    document.getElementById('fixedRow').hidden = !stick;
+    document.getElementById('qFixedRow').hidden = !stick;
+    document.getElementById('fixedSwitch').setAttribute('aria-checked', String(!!settings.fixedJoy));
+    document.getElementById('qFixed').setAttribute('aria-checked', String(!!settings.fixedJoy));
+  }
+  ['fixedSwitch', 'qFixed'].forEach(id => document.getElementById(id).addEventListener('click', () => {
+    settings.fixedJoy = !settings.fixedJoy; saveOptions(); renderFixed();
+  }));
   function renderOptions() {
+    renderFixed();
     document.querySelectorAll('#oppSeg button').forEach(bt =>
       bt.setAttribute('aria-pressed', String(bt.dataset.opp === settings.opponent)));
     document.getElementById('oppNote').textContent = oppNotes[settings.opponent] || oppNotes.human;
@@ -3493,6 +3701,16 @@
   document.getElementById('roundsMinus').addEventListener('click', () => {
     settings.rounds = Math.max(1, settings.rounds - 1); saveOptions(); renderOptions();
   });
+  // ползунок скорости
+  const speedRange = document.getElementById('speedRange');
+  function renderSpeed() {
+    const v = settings.speed == null ? 100 : settings.speed;
+    speedRange.value = v;
+    speedRange.style.setProperty('--fill', (v / 2) + '%');
+    document.getElementById('speedVal').textContent = v + '%';
+  }
+  speedRange.addEventListener('input', () => { settings.speed = +speedRange.value; renderSpeed(); saveOptions(); });
+  renderSpeed();
   document.getElementById('roundsPlus').addEventListener('click', () => {
     settings.rounds = Math.min(15, settings.rounds + 1); saveOptions(); renderOptions();
   });
@@ -3509,6 +3727,7 @@
   let lastLevel = 0;
   let playing = false; // уровень выбран и запущен
   function startLevel(i) {
+    document.body.classList.remove('drawer');
     lastLevel = i;
     playing = true;
     const stick = controlMode === 'stick';
@@ -3541,6 +3760,13 @@
   document.getElementById('rematchBtn').addEventListener('click', () => startLevel(quickRandom ? randomQuick() : lastLevel));
   document.getElementById('toLevelsBtn').addEventListener('click', () => { victoryEl.hidden = true; showLevels(); });
 
+  // створка со счётом и кнопкой «Меню»
+  const closeDrawer = () => document.body.classList.remove('drawer');
+  document.getElementById('scoreTab').addEventListener('click', () => document.body.classList.toggle('drawer'));
+  document.getElementById('menuBtn').addEventListener('click', closeDrawer);
+  document.addEventListener('pointerdown', e => {
+    if (document.body.classList.contains('drawer') && !e.target.closest('#scoreBar, #scoreTab')) closeDrawer();
+  }, true);
   function openMode(mode, quick = false) {
     controlMode = mode;
     quickMode = quick;
@@ -3610,14 +3836,14 @@
   const hkBot = { next: 0, tx: 0, ty: 0 };
 
   function hkLayout() {
-    const sw = innerWidth, sh = innerHeight;
-    T.dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = Math.round(sw * T.dpr); cv.height = Math.round(sh * T.dpr);
+    const sw = innerWidth, sh = scrH();
+    T.dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    cv.width = Math.round(sw * T.dpr); cv.height = Math.round(innerHeight * T.dpr);
     // стол подстраивается под вытянутость экрана, но в разумных пределах
     T.W = 360;
     T.H = Math.max(560, Math.min(760, (sh - 16) / (sw - 16) * T.W));
     T.k = Math.min((sw - 16) / T.W, (sh - 16) / T.H);
-    T.ox = (sw - T.W * T.k) / 2; T.oy = (sh - T.H * T.k) / 2;
+    T.ox = (sw - T.W * T.k) / 2; T.oy = safeTop() + (sh - T.H * T.k) / 2;
   }
   window.addEventListener('resize', () => { if (hkActive) hkLayout(); });
 
@@ -3659,7 +3885,7 @@
     e.preventDefault();
     const [x, y] = toTable(e);
     const b = y >= T.H / 2 || hkOpts.opp !== 'human' ? bats[0] : bats[1];
-    if (b.id !== null) return;
+    // даже если телефон «потерял» прошлое отпускание пальца — новое касание берёт биту
     b.id = e.pointerId;
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     [b.tx, b.ty] = clampBat(b, x, y);
@@ -3674,6 +3900,9 @@
   const hkUp = e => bats.forEach(b => { if (b.id === e.pointerId) b.id = null; });
   cv.addEventListener('pointerup', hkUp);
   cv.addEventListener('pointercancel', hkUp);
+  // страховка: пальцев на экране не осталось — биты свободны
+  window.addEventListener('touchend', e => { if (!e.touches.length) bats.forEach(b => b.id = null); });
+  window.addEventListener('touchcancel', e => { if (!e.touches.length) bats.forEach(b => b.id = null); });
 
   // --- бот за красного ---
   function hkBotThink(now) {
@@ -4097,14 +4326,14 @@
   ];
 
   function trLayout() {
-    const sw = innerWidth, sh = innerHeight;
-    G.dpr = Math.min(2, window.devicePixelRatio || 1);
-    tcv.width = Math.round(sw * G.dpr); tcv.height = Math.round(sh * G.dpr);
+    const sw = innerWidth, sh = scrH();
+    G.dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    tcv.width = Math.round(sw * G.dpr); tcv.height = Math.round(innerHeight * G.dpr);
     G.cols = 40; G.W = G.cols * G.cell;
     const H = Math.max(560, Math.min(780, (sh - 16) / (sw - 16) * G.W));
     G.rows = Math.floor(H / G.cell); G.H = G.rows * G.cell;
     G.k = Math.min((sw - 16) / G.W, (sh - 16) / G.H);
-    G.ox = (sw - G.W * G.k) / 2; G.oy = (sh - G.H * G.k) / 2;
+    G.ox = (sw - G.W * G.k) / 2; G.oy = safeTop() + (sh - G.H * G.k) / 2;
   }
   window.addEventListener('resize', () => { if (trActive && trState === 'menu') trLayout(); });
 
@@ -4175,7 +4404,7 @@
     if (!trActive) return;
     e.preventDefault();
     try { audioBus(); } catch (err) {}
-    const top = e.clientY < innerHeight / 2 && trOpts.opp === 'human';
+    const top = e.clientY < scrMid() && trOpts.opp === 'human';
     const r = riders[top ? 1 : 0];
     // красный сидит напротив: его «лево» — справа на экране
     const leftHalf = e.clientX < innerWidth / 2;
@@ -4654,14 +4883,14 @@
   ];
 
   function gvLayout() {
-    const sw = innerWidth, sh = innerHeight;
-    V.dpr = Math.min(2, window.devicePixelRatio || 1);
-    gcv.width = Math.round(sw * V.dpr); gcv.height = Math.round(sh * V.dpr);
+    const sw = innerWidth, sh = scrH();
+    V.dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    gcv.width = Math.round(sw * V.dpr); gcv.height = Math.round(innerHeight * V.dpr);
     V.W = 360;
     // по сети поле одинаковое у обоих, иначе снаряды летели бы по-разному
     V.H = NET.on && NET.game === 'grav' ? 680 : Math.max(580, Math.min(780, (sh - 16) / (sw - 16) * V.W));
     V.k = Math.min((sw - 16) / V.W, (sh - 16) / V.H);
-    V.ox = (sw - V.W * V.k) / 2; V.oy = (sh - V.H * V.k) / 2;
+    V.ox = (sw - V.W * V.k) / 2; V.oy = safeTop() + (sh - V.H * V.k) / 2;
   }
   window.addEventListener('resize', () => { if (gvActive && gvState === 'menu') gvLayout(); });
 
@@ -4866,9 +5095,9 @@
     if (!gvActive) return;
     e.preventDefault();
     try { audioBus(); } catch (err) {}
-    const top = e.clientY < innerHeight / 2 && gvOpts.opp === 'human' && !NET.on;
+    const top = e.clientY < scrMid() && gvOpts.opp === 'human' && !NET.on;
     const i = top ? 1 : 0, g = guns[i];
-    if (g.sling.id !== null) return;
+    // прошлый палец «завис» (телефон не сообщил, что его отпустили) — начинаем заново с нового
     try { gcv.setPointerCapture(e.pointerId); } catch (err) {}
     const [x, y] = toField(e);
     Object.assign(g.sling, { id: e.pointerId, ax: x, ay: y, fx: x, fy: y });
@@ -4896,6 +5125,7 @@
   });
   gcv.addEventListener('pointerup', gvUp);
   gcv.addEventListener('pointercancel', gvUp);
+  window.addEventListener('touchend', e => { if (!e.touches.length) guns.forEach(g => { if (g.sling && g.sling.id !== null) { g.sling.id = null; g.aiming = false; g.charge = 0; } }); });
   window.addEventListener('keydown', e => {
     if (!gvActive) return;
     // поворот ствола с клавиатуры: синий A/D, красный ←/→ (по экрану)
@@ -5771,7 +6001,7 @@
       holdLayout = false;
       p2.netPuppet = true; // красного двигает телефон гостя
       p2.nx = p2.x; p2.ny = p2.y; p2.na = p2.angle;
-      NET.send({ t: 'tstart', level: i, ctrl: controlMode, rounds: settings.rounds, rico: settings.ricochet, self: settings.selfDamage,
+      NET.send({ t: 'tstart', spd: speedK(), level: i, ctrl: controlMode, rounds: settings.rounds, rico: settings.ricochet, self: settings.selfDamage,
         modes: { lastShot: gm.lastShot, ricochet: gm.ricochet }, seq2: NET.seq2 });
       sendLayout();
       return;
@@ -5899,7 +6129,7 @@
       document.getElementById('quickSetup').hidden = true;
       controlMode = m.ctrl;
       settings.rounds = m.rounds; settings.ricochet = m.rico; settings.selfDamage = m.self;
-      NET.modes = m.modes; quickMode = false;
+      NET.modes = m.modes; quickMode = false; NET.spd = m.spd == null ? 1 : m.spd;
       NET.flip = true;
       document.body.classList.add('netGuest');
       origStartLevel(m.level);
@@ -6153,13 +6383,13 @@
     G.active = false;
 
     G.layout = function () {
-      const sw = innerWidth, sh = innerHeight;
-      G.dpr = Math.min(2, window.devicePixelRatio || 1);
-      cv.width = Math.round(sw * G.dpr); cv.height = Math.round(sh * G.dpr);
+      const sw = innerWidth, sh = scrH();
+      G.dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      cv.width = Math.round(sw * G.dpr); cv.height = Math.round(innerHeight * G.dpr);
       G.W = 360;
       G.H = Math.max(580, Math.min(780, (sh - 16) / (sw - 16) * G.W));
       G.k = Math.min((sw - 16) / G.W, (sh - 16) / G.H);
-      G.ox = (sw - G.W * G.k) / 2; G.oy = (sh - G.H * G.k) / 2;
+      G.ox = (sw - G.W * G.k) / 2; G.oy = safeTop() + (sh - G.H * G.k) / 2;
     };
     window.addEventListener('resize', () => { if (G.active && G.state === 'menu') G.layout(); });
 
@@ -6280,7 +6510,7 @@
     const JOY_R = 40, JOY_DEAD = 7;
     G.joyHome = i => i === 0 ? [70, G.H - 95] : [G.W - 70, 95];
     G.btnHome = i => i === 0 ? [G.W - 70, G.H - 95] : [70, 95];
-    const owner = e => (e.clientY < innerHeight / 2 ? 1 : 0);
+    const owner = e => (e.clientY < scrMid() ? 1 : 0);
     // сторона с точки зрения игрока: у красного «лево» — справа на экране
     const sideOf = (i, e) => { const left = e.clientX < innerWidth / 2; return (i === 1 ? !left : left) ? 'L' : 'R'; };
     const isLive = () => G.state === 'play' || G.state === 'countdown';
@@ -6295,12 +6525,11 @@
       if (ctl === 'raw') { cfg.down && cfg.down(G, i, x, y, e.pointerId); return; }
       if (ctl === 'joyBtn') {
         if (sideOf(i, e) === 'L') {
-          const j = G.joy[i];
-          if (j.id !== null) return;
+          const j = G.joy[i]; // новое касание всегда перехватывает джойстик (если прошлое «зависло»)
           Object.assign(j, { id: e.pointerId, cx: x, cy: y, fx: x, fy: y, x: 0, y: 0, on: false });
         } else {
           const b = G.btn[i];
-          if (b.id !== null) return;
+          if (b.down) cfg.release && cfg.release(G, i, 'B');
           b.id = e.pointerId; b.down = true;
           cfg.press && cfg.press(G, i, 'B');
         }
@@ -8218,7 +8447,7 @@
   })();
 
   // ======================= ФУТБОЛ-ЩЕЛБАН =======================
-  // У каждого фишки-игроки. Хватаешь свою фишку, тянешь назад, как рогатку, и отпускаешь —
+  // У каждого фишки-игроки. Хватаешь свою фишку (чужие не берутся), тянешь назад, как рогатку, и отпускаешь —
   // фишка летит и бьёт по мячу. Ходите одновременно. Мяч в чужих воротах — гол.
   (function () {
     const PR = 17, BR = 10;           // радиусы фишки и мяча
@@ -8243,7 +8472,7 @@
 
     partyGame({
       key: 'football', title: 'Футбол', bg: '#0f2a16',
-      desc: 'Хватай свою фишку, тяни назад и отпускай — она полетит и пнёт мяч. Играете одновременно, у каждой фишки небольшая перезарядка. Забей мяч в ворота соперника.',
+      desc: 'Хватай свою фишку, тяни назад и отпускай — она полетит и пнёт мяч. Фишки не заходят на чужую половину. Играете одновременно, у каждой фишки небольшая перезарядка. Забей мяч в ворота соперника.',
       icon: '<svg viewBox="0 0 60 60"><rect x="4" y="4" width="52" height="52" rx="6" fill="#2f8a3e"/><rect x="20" y="4" width="20" height="5" fill="#fff"/><rect x="20" y="51" width="20" height="5" fill="#fff"/><circle cx="30" cy="30" r="9" fill="none" stroke="#fff" stroke-width="2"/><circle cx="18" cy="42" r="7" fill="#4fa3ff"/><circle cx="42" cy="18" r="7" fill="#ff5a4f"/><circle cx="30" cy="30" r="4" fill="#fff"/></svg>',
       controls: 'raw',
       goalLabel: 'Голов до победы', goals: [3, 5, 7], goalDef: 5,
@@ -8256,17 +8485,15 @@
       newRound(G) { lineup(G); G.d.aim = {}; },
       down(G, i, x, y, id) {
         const D = G.d;
-        // берём ближайшую фишку любой команды; кто её тянет — тот её хозяин
+        // берём только СВОЮ фишку — ближайшую к пальцу
         let best = null, bd = GRAB;
         for (const p of D.pucks) {
           const d = Math.hypot(p.x - x, p.y - y);
           if (d < bd && p.team === i) { bd = d; best = p; }
         }
-        if (!best) for (const p of D.pucks) {
-          const d = Math.hypot(p.x - x, p.y - y);
-          if (d < bd) { bd = d; best = p; }
-        }
-        if (!best || Object.values(D.aim).some(a => a.p === best)) return;
+        if (!best) return;
+        // если эту фишку «держит» старое касание (телефон не сообщил, что палец отпущен) — забираем
+        for (const k of Object.keys(D.aim)) if (D.aim[k].p === best) delete D.aim[k];
         D.aim[id] = { p: best, x, y };
       },
       move(G, x, y, id) { const a = G.d.aim[id]; if (a) { a.x = x; a.y = y; } },
@@ -8302,6 +8529,11 @@
             if (!(o === D.ball && inMouth)) {
               if (o.y < r) { o.y = r; o.vy = Math.abs(o.vy) * 0.8; }
               if (o.y > H - r) { o.y = H - r; o.vy = -Math.abs(o.vy) * 0.8; }
+            }
+            // фишки не заходят на чужую половину (мяч — свободно): так каждый трогает только свои
+            if (o !== D.ball) {
+              if (o.team === 0 && o.y < H / 2 + r) { o.y = H / 2 + r; o.vy = Math.abs(o.vy) * 0.6; }
+              if (o.team === 1 && o.y > H / 2 - r) { o.y = H / 2 - r; o.vy = -Math.abs(o.vy) * 0.6; }
             }
           }
           // штанги
