@@ -253,11 +253,11 @@
   /* прошивающий снаряд: проходит сквозь дерево (полосатые стены) */
   .pierceShell {
     position: absolute;
-    width: 20px;
-    height: 7px;
-    border-radius: 4px 7px 7px 4px;
+    width: 34px;
+    height: 12px;
+    border-radius: 5px 9px 9px 5px;
     background: linear-gradient(90deg, rgba(255, 120, 40, 0) 0%, #ff7a2a 35%, #ffd27a 85%, #fff6d8 100%);
-    box-shadow: 0 0 6px rgba(255, 150, 60, 0.9);
+    box-shadow: 0 0 8px rgba(255, 150, 60, 0.9);
   }
 
   .shield-ring {
@@ -700,6 +700,14 @@
   .segmented button:focus-visible { outline: 2px solid var(--tank1); outline-offset: 2px; }
 
   /* --- режимы и настройки в меню --- */
+  /* сетевая игра: без ботов и сложностей */
+  body.netOn .oppBlock { display: none; }
+  #netTab { display: flex; flex-direction: column; gap: 14px; }
+  #netTab[hidden] { display: none; }
+  .netPanel { text-align: center; }
+  .netPanel.shake { animation: shake 0.3s ease-in-out; }
+  .netPanel .netTitle { font-weight: 800; font-size: 1.05rem; }
+  .netTiles .tile.dim { opacity: 0.55; }
   .panel {
     background: #20242e;
     border: 1px solid #2e3442;
@@ -807,10 +815,11 @@
     gap: 14px;
     pointer-events: none;
   }
-  #pad1 { left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + var(--sb, 0px)); justify-content: flex-end; }
+  #pad1 { left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + var(--sb, 0px)); justify-content: flex-start; }
   body.vsBot #joy2 { display: none; }
-  #pad2 { left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); top: calc(max(10px, env(safe-area-inset-top, 0px)) + 44px + var(--st, 0px)); justify-content: flex-end; transform: rotate(180deg); }
-  body.vsBot #pad2 { display: none; }
+  #pad2 { left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); top: calc(max(14px, env(safe-area-inset-top, 0px)) + var(--st, 0px)); justify-content: flex-start; transform: rotate(180deg); }
+  /* против бота его угол показывает перезарядку бота; по сети угол соперника скрыт */
+  body.netOn #pad2 { display: none; }
   /* джойстик появляется там, где коснулся палец; в покое — бледный в своём углу */
   .joy {
     position: fixed;
@@ -837,6 +846,40 @@
     box-shadow: 0 3px 8px rgba(0,0,0,0.35);
   }
   #joy2 .joyKnob { --knob: #e04f3f; }
+  /* индикатор пробоя в своём углу: перезарядку видит только хозяин */
+  .pierceInd {
+    width: 66px; height: 66px; line-height: 1.05; text-align: center;
+    border-radius: 50%;
+    pointer-events: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #ffb35c;
+    background:
+      radial-gradient(circle, rgba(42, 46, 56, 0.85) 56%, transparent 57%),
+      conic-gradient(#d9822b calc(var(--p, 1) * 360deg), rgba(255, 255, 255, 0.12) 0);
+    opacity: 0.8;
+  }
+  .pierceInd b { font-size: 0.5rem; font-weight: 800; letter-spacing: 0.03em; }
+  .pierceInd small { font-size: 0.5rem; font-weight: 700; color: #c9b39a; }
+  .pierceInd.cool { color: #7a6a58; }
+  .pierceInd.cool small { color: #9aa3b6; font-size: 0.7rem; }
+  .pierceInd.full { animation: indPulse 0.5s ease-in-out infinite alternate; opacity: 1; }
+  @keyframes indPulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+  /* заряд пробоя вокруг танка — видят все */
+  .chargeRing {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 30px; height: 30px;
+    margin: -15px 0 0 -15px;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    border: 2px solid rgba(255, 170, 60, 0.95);
+    box-shadow: 0 0 8px rgba(255, 140, 40, 0.9), inset 0 0 6px rgba(255, 200, 90, 0.7);
+    transform: scale(calc(1.6 - var(--ch, 0) * 0.6));
+  }
+  .tank.charging .chargeRing { opacity: calc(0.25 + var(--ch, 0) * 0.75); }
+  .tank.charged .chargeRing { opacity: 1; animation: ringPulse 0.25s ease-in-out infinite alternate; border-color: #fff2c4; }
+  @keyframes ringPulse { from { transform: scale(1); } to { transform: scale(1.15); } }
   .joyPad .pierceBtn {
     width: 58px; height: 58px; min-height: 0;
     border-radius: 50%;
@@ -1022,7 +1065,7 @@
     background: #9da2b0; box-shadow: 6px 4px 0 -1px #a9aebb;
   }
   .homeTabs { margin-top: -4px; }
-  .homeTabs button { flex: 1; padding: 10px 12px; font-size: 0.95rem; }
+  .homeTabs button { flex: 1; padding: 10px 6px; font-size: 0.9rem; white-space: nowrap; }
   #quickSetup { position: fixed; z-index: 101; }
   #quickTiles { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
   #quickTiles .tile { gap: 8px; font-size: 0.85rem; }
@@ -1149,7 +1192,7 @@
 
 <div class="ctrlRow" id="row2">
   <button class="fireBtn" id="btn2">ИГРОК 2 (красный)</button>
-  <button class="pierceBtn" id="pierce2">ПРОБОЙ</button>
+  <button class="pierceBtn" id="pierce2">СКВОЗЬ ДЕРЕВО</button>
 </div>
 <button id="scoreTab" aria-label="Счёт и меню"><span class="ammo" id="ammo2" hidden></span><span class="ts2" id="tabS2">0</span><span class="tline"></span><span class="ts1" id="tabS1">0</span><span class="ammo" id="ammo1" hidden></span><span class="tarrow">›</span></button>
 <div id="scoreBar"><div class="sbRow"><span class="s1" id="score1">0</span><span class="dash">—</span><span class="s2" id="score2">0</span></div><span class="goal" id="goal">до 3</span><button id="menuBtn">Меню</button></div>
@@ -1159,6 +1202,7 @@
   <div id="portalsLayer"></div>
   <div id="toast" hidden></div>
   <div class="tank p1" id="tank1">
+    <div class="chargeRing"></div>
     <div class="shield-ring"></div>
     <div class="tank-track left"></div>
     <div class="tank-track right"></div>
@@ -1167,6 +1211,7 @@
     <div class="tank-barrel"></div>
   </div>
   <div class="tank p2" id="tank2">
+    <div class="chargeRing"></div>
     <div class="shield-ring"></div>
     <div class="tank-track left"></div>
     <div class="tank-track right"></div>
@@ -1178,16 +1223,16 @@
 </div></div>
 <div class="ctrlRow" id="row1">
   <button class="fireBtn" id="btn1">ИГРОК 1 (синий)</button>
-  <button class="pierceBtn" id="pierce1">ПРОБОЙ</button>
+  <button class="pierceBtn" id="pierce1">СКВОЗЬ ДЕРЕВО</button>
 </div>
 
 <div id="stickLayer">
   <div id="touchPad"></div>
   <div class="joyPad" id="pad2">
-    <button class="pierceBtn" id="spierce2">ПРОБОЙ</button>
+    <div class="pierceInd" id="spierce2"><b>СКВОЗЬ<br>ДЕРЕВО</b><small>держи</small></div>
   </div>
   <div class="joyPad" id="pad1">
-    <button class="pierceBtn" id="spierce1">ПРОБОЙ</button>
+    <div class="pierceInd" id="spierce1"><b>СКВОЗЬ<br>ДЕРЕВО</b><small>держи</small></div>
   </div>
   <div class="joy" id="joy2"><div class="joyKnob"></div></div>
   <div class="joy" id="joy1"><div class="joyKnob"></div></div>
@@ -1321,7 +1366,7 @@
         </div>
         <p id="gvModeNote" style="margin-top:8px"></p>
       </div>
-      <div>
+      <div class="oppBlock">
         <h2 class="groupTitle">Соперник</h2>
         <div class="segmented" id="gvOpp">
           <button data-v="human">Вдвоём</button>
@@ -1351,7 +1396,6 @@
         <button class="backBtn" id="gvBack">← Назад</button>
         <button class="hkPlay" id="gvStart">Играть</button>
       </div>
-      <button class="netBtn" data-netgame="grav">Играть по сети</button>
     </div>
   </div>
   <div class="hkOverlay" id="gvWin" hidden>
@@ -1370,7 +1414,7 @@
   <div class="hkCard">
     <h1 class="menuTitle" id="quickTitle">Танки</h1>
     <p id="quickDesc"></p>
-    <div>
+    <div class="oppBlock">
       <h2 class="groupTitle">Соперник</h2>
       <div class="segmented" id="qOpp">
         <button data-opp="human">Вдвоём</button>
@@ -1409,7 +1453,6 @@
       <button class="backBtn" id="quickBack">← Назад</button>
       <button class="hkPlay" id="quickPlay">Играть</button>
     </div>
-    <button class="netBtn" data-netgame="tanks">Играть по сети</button>
   </div>
 </div>
 
@@ -1422,6 +1465,11 @@
     <div class="segmented homeTabs" id="homeTabs">
       <button data-tab="mini">Мини-игры</button>
       <button data-tab="tanks">Танки</button>
+      <button data-tab="net">По сети</button>
+    </div>
+    <div id="netTab" hidden>
+      <div class="panel netPanel" id="netPanel"></div>
+      <div class="tiles" id="tilesNet"></div>
     </div>
     <div class="tiles" id="tilesMini">
       <button class="tile" id="quickTanksTile">
@@ -1493,7 +1541,6 @@
   <div class="menuScreen" id="levelScreen" hidden>
     <button class="backBtn" id="backBtn">← Назад</button>
     <h1 class="menuTitle" id="levelTitle">Танки</h1>
-    <button class="netBtn" data-netgame="tanks">Играть по сети</button>
     <section class="panel">
       <h2 class="groupTitle">Режимы · можно включить несколько</h2>
       <div class="modes">
@@ -1613,7 +1660,11 @@
   const HIT_RADIUS = 12;
   const TANK_PAD = 11; // радиус танка для столкновений со стенами
   const RESPAWN_SHIELD = 3000; // мс неуязвимости после возрождения
-  const PIERCE_COOLDOWN = 5000; // мс перезарядки прошивающего снаряда
+  const PIERCE_COOLDOWN = 5000; // мс перезарядки прошивающего снаряда (танки «одной кнопкой»)
+  // танки с джойстиком: пробой — удержанием пальца на правой стороне
+  const HOLD_START = 300;       // через сколько мс удержания начинает копиться заряд
+  const HOLD_FULL = 2300;       // через сколько мс заряд готов (копится 2 с)
+  const STICK_PIERCE_CD = 10000; // перезарядка после пробоя
   const LAST_SHOT_AMMO = 3;     // выстрелов на раунд в режиме «Последний выстрел»
   const STICK_TURN = 360 / 0.6; // deg/sec — поворот к направлению джойстика
   const STICK_FIRE_CD = 0;      // мс между выстрелами в режиме «джойстик» (без задержки)
@@ -2772,6 +2823,8 @@
     function fire(pierce = false) {
       // по сети у гостя снаряд создаёт хост, а здесь — только вспышка и звук
       const netOwn = NET.on && NET.role === 'guest' && state.netOwn;
+      // у гостя синий танк — чужой: стрелять им отсюда нельзя (только хозяин комнаты)
+      if (NET.on && NET.role === 'guest' && state.netPuppet) return false;
       // «Последний выстрел»: патроны ограничены
       if (gm.lastShot) {
         if (state.ammo <= 0) { sound(140, 0.05, 'square', 0.04); return false; }
@@ -2782,7 +2835,7 @@
       const tipX = state.x + dx * BARREL_TIP;
       const tipY = state.y + dy * BARREL_TIP;
 
-      if (netOwn) NET.send({ t: 'fire', pierce, x: state.x, y: state.y, a: state.angle });
+      if (netOwn) NET.send({ t: 'fire', pierce, x: state.x, y: state.y, a: state.angle, seq: NET.seq2 });
       else {
       const el = document.createElement('div');
       el.className = pierce ? 'pierceShell' : 'shell';
@@ -2790,7 +2843,7 @@
       state.shells.push({
         id: ++shellSeq, owner: state === p1 ? 1 : 2,
         x: tipX, y: tipY, dx, dy, el, pierce,
-        hw: pierce ? 10 : 6.5, hh: pierce ? 3.5 : 6.5,
+        hw: pierce ? 17 : 6.5, hh: pierce ? 6 : 6.5,
         rot: Math.atan2(dy, dx) * 180 / Math.PI,
         left: pierce ? 0 : ricochetCount(), // сколько отскоков осталось
         bounces: 0,
@@ -2964,9 +3017,12 @@
     J.reset();
     return J;
   }
+  // места джойстиков в покое: красный — зеркальное отражение синего через центр экрана
+  const JOY_Y = 140; // выше индикатора «Сквозь дерево» в углу
+  const joyX = () => Math.max(78, Math.min(120, innerWidth * 0.23));
   const joys = [
-    makeJoy(document.getElementById('joy1'), p1, () => [90, innerHeight - 110 - safeBot()]),
-    makeJoy(document.getElementById('joy2'), p2, () => [innerWidth - 90, 165 + safeTop()])
+    makeJoy(document.getElementById('joy1'), p1, () => [joyX(), innerHeight - safeBot() - JOY_Y]),
+    makeJoy(document.getElementById('joy2'), p2, () => [innerWidth - joyX(), safeTop() + JOY_Y]) // зеркально синему
   ];
   window.addEventListener('resize', () => joys.forEach(J => { if (J.id === null) J.reset(); }));
   const stickActive = () => controlMode === 'stick' && playing && menu.hidden && victoryEl.hidden;
@@ -2981,7 +3037,7 @@
     const leftSide = red ? e.clientX > W / 2 : e.clientX < W / 2;
     e.preventDefault();
     if (leftSide) J.start(e); // даже если прошлый палец «завис» — берём джойстик новым
-    else if (!leftSide) player.stickFire();
+    else if (!leftSide) { player.stickFire(); holdStart(player, e.pointerId); }
   });
   window.addEventListener('pointermove', e => joys.forEach(J => { if (J.id === e.pointerId) J.move(e); }));
   const joyEnd = e => joys.forEach(J => { if (J.id === e.pointerId) J.reset(); });
@@ -3007,11 +3063,84 @@
   window.addEventListener('touchcancel', joyRelease);
   window.addEventListener('blur', () => joys.forEach(J => { if (J.id !== null) J.reset(); }));
   document.addEventListener('visibilitychange', () => { if (document.hidden) joys.forEach(J => { if (J.id !== null) J.reset(); }); });
-  [[p1, 'spierce1'], [p2, 'spierce2']].forEach(([p, id]) => {
-    const el = document.getElementById(id);
-    p.pierceEls.push(el);
-    el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); p.usePierce(); });
+  // ---------- пробой удержанием (танки с джойстиком) ----------
+  // Касание правой стороны — обычный выстрел. Держишь палец: через 0,3 с вокруг танка растёт заряд
+  // (видят все) и нарастает звук, ещё через 2 с заряд готов. Отпустил — летит снаряд «сквозь дерево».
+  // Перезарядка 10 с видна только в своём углу (слева, у джойстика).
+  [p1, p2].forEach(p => { p.hold = null; p.charge = 0; p.pierceCdUntil = 0; p.chargeSnd = null; });
+  function holdStart(p, id) {
+    if (p.hold || gameOver) return;
+    p.hold = { id, t0: performance.now(), full: false };
+  }
+  function stopChargeSound(p) {
+    const cs = p.chargeSnd; p.chargeSnd = null;
+    if (!cs) return;
+    try { const t = actx.currentTime; cs.gain.gain.cancelScheduledValues(t); cs.gain.gain.setValueAtTime(cs.gain.gain.value, t); cs.gain.gain.linearRampToValueAtTime(0, t + 0.08); cs.osc.stop(t + 0.1); } catch (e) {}
+  }
+  function holdEnd(p, fireIt) {
+    if (!p.hold) return;
+    const ready = p.hold.full;
+    p.hold = null;
+    stopChargeSound(p);
+    p.charge = 0;
+    if (fireIt && ready && !gameOver && playing) {
+      if (p.fire(true) !== false) p.pierceCdUntil = performance.now() + STICK_PIERCE_CD;
+    }
+  }
+  function updateHold(p, now) {
+    if (!p.hold) return;
+    if (now < p.pierceCdUntil || gameOver) { p.charge = 0; p.hold.t0 = now; return; } // перезарядка — копить нельзя, отсчёт заново
+    const el = now - p.hold.t0;
+    if (el < HOLD_START) { p.charge = 0; return; }
+    p.charge = Math.min(1, (el - HOLD_START) / (HOLD_FULL - HOLD_START));
+    if (!p.chargeSnd) {
+      // нарастающий гул: тон медленно ползёт вверх и становится громче
+      try {
+        audioBus();
+        const osc = actx.createOscillator(), gain = actx.createGain();
+        osc.type = 'triangle';
+        const t = actx.currentTime, left = (HOLD_FULL - el) / 1000;
+        osc.frequency.setValueAtTime(180, t); osc.frequency.linearRampToValueAtTime(620, t + Math.max(0.05, left));
+        gain.gain.setValueAtTime(0.005, t); gain.gain.linearRampToValueAtTime(0.045, t + Math.max(0.05, left));
+        osc.connect(gain).connect(out(fieldRect.width / 2));
+        osc.start();
+        p.chargeSnd = { osc, gain };
+      } catch (e) {}
+    }
+    if (p.charge >= 1 && !p.hold.full) {
+      p.hold.full = true;
+      sound(990, 0.12, 'triangle', 0.06); setTimeout(() => sound(1320, 0.14, 'triangle', 0.05), 90);
+      vibrate(25);
+    }
+  }
+  [p1, p2].forEach(p => {
+    const respawn = p.respawn;
+    p.respawn = function () { if (p.hold) holdEnd(p, false); p.charge = 0; return respawn.apply(this, arguments); };
   });
+  const holdEndBy = id => [p1, p2].forEach(p => { if (p.hold && p.hold.id === id) holdEnd(p, true); });
+  window.addEventListener('pointerup', e => holdEndBy(e.pointerId));
+  window.addEventListener('pointercancel', e => { [p1, p2].forEach(p => { if (p.hold && p.hold.id === e.pointerId) holdEnd(p, false); }); });
+  window.addEventListener('touchend', e => { if (!e.touches.length) [p1, p2].forEach(p => { if (p.hold && p.hold.id !== 'key' && p.hold.id !== 'bot') holdEnd(p, true); }); });
+  // индикаторы в углах: левый нижний — тот, кто играет снизу (у гостя по сети это красный)
+  const pierceInds = [document.getElementById('spierce1'), document.getElementById('spierce2')];
+  function renderPierceInds(now) {
+    pierceInds.forEach((el, k) => {
+      const p = joys[k].p;
+      const cd = Math.max(0, p.pierceCdUntil - now);
+      const cool = cd > 0, full = !!(p.hold && p.hold.full);
+      el.style.setProperty('--p', cool ? 1 - cd / STICK_PIERCE_CD : (p.charge > 0 ? p.charge : 1));
+      el.classList.toggle('cool', cool);
+      el.classList.toggle('full', full);
+      const txt = cool ? Math.ceil(cd / 1000) + 'с' : full ? 'отпусти!' : p.charge > 0 ? Math.round(p.charge * 100) + '%' : (p === p2 && botP() ? 'готово' : 'держи');
+      const sm = el.lastElementChild;
+      if (sm.textContent !== txt) sm.textContent = txt;
+    });
+  }
+  function renderCharge(p, el) {
+    el.style.setProperty('--ch', p.charge);
+    el.classList.toggle('charging', p.charge > 0 && p.charge < 1);
+    el.classList.toggle('charged', p.charge >= 1);
+  }
 
   // --- клавиатура ---
   // синий: WASD, пробел — огонь, E — пробой; красный: стрелки, Enter — огонь, правый Shift — пробой.
@@ -3041,7 +3170,7 @@
     if (e.repeat) return;
     const isPierce = e.code === 'KeyE' || e.code === 'ShiftRight';
     const isFire = e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter';
-    if (isPierce) { p.usePierce(); return; }
+    if (isPierce) { if (controlMode === 'stick') holdStart(p, 'key'); else p.usePierce(); return; }
     if (controlMode === 'stick') {
       if (isFire) p.stickFire();
       else { held.add(e.code); updateKeyVecs(); }
@@ -3051,6 +3180,8 @@
   });
   window.addEventListener('keyup', e => {
     if (held.delete(e.code)) updateKeyVecs();
+    if (e.code === 'KeyE' && p1.hold && p1.hold.id === 'key') holdEnd(p1, true);
+    if (e.code === 'ShiftRight' && p2.hold && p2.hold.id === 'key') holdEnd(p2, true);
     if (controlMode === 'classic') {
       if (e.code === 'Space') p1.release();
       if ((e.code === 'Enter' || e.code === 'NumpadEnter') && humanP2()) p2.release();
@@ -3128,66 +3259,73 @@
     }
     const walls = getWallsPx();
     const FW = fieldRect.width, FH = fieldRect.height;
-    for (let i = state.shells.length - 1; i >= 0; i--) {
-      const s = state.shells[i];
-      const px = s.x, py = s.y;
-      s.x += s.dx * SHELL_SPEED * dt;
-      s.y += s.dy * SHELL_SPEED * dt;
-      // рикошет от края поля
-      if (s.left > 0 && (s.x < 4 || s.x > FW - 4)) {
-        s.dx = -s.dx; s.x = Math.max(4, Math.min(FW - 4, s.x)); s.left--; s.bounces++; bounceSpark(s.x, s.y);
-      }
-      if (s.left > 0 && (s.y < 4 || s.y > FH - 4)) {
-        s.dy = -s.dy; s.y = Math.max(4, Math.min(FH - 4, s.y)); s.left--; s.bounces++; bounceSpark(s.x, s.y);
-      }
-      if (portals.length) portalShell(s);
-      s.el.style.transform = `translate(${s.x - s.hw}px, ${s.y - s.hh}px)` + (s.pierce ? ` rotate(${s.rot}deg)` : '');
-      if (s.x < -10 || s.x > FW + 10 || s.y < -10 || s.y > FH + 10) {
-        s.el.remove();
-        state.shells.splice(i, 1);
-        continue;
-      }
-      // прошивающий снаряд разбивается только о камень, сквозь дерево пролетает
-      const solid = s.pierce ? staticWalls : walls;
-      const hitWall = solid.find(w => rectHit(w, s.x, s.y, 0));
-      if (hitWall && s.left > 0) {
-        // отражаемся по той оси, с которой влетели в блок
-        const fromSideX = !(px > hitWall.x && px < hitWall.x + hitWall.w);
-        const fromSideY = !(py > hitWall.y && py < hitWall.y + hitWall.h);
-        if (fromSideX || !fromSideY) s.dx = -s.dx;
-        if (fromSideY || !fromSideX) s.dy = -s.dy;
-        s.x = px; s.y = py;
-        s.left--; s.bounces++;
-        bounceSpark(s.x, s.y);
-        continue;
-      }
-      if (hitWall) {
-        wallSpark(s.x, s.y);
-        s.el.remove();
-        state.shells.splice(i, 1);
-        continue;
-      }
-      if (!s.pierce && turnstiles.length) {
-        const h = turnHit(s.x, s.y, 0);
-        if (h && s.left > 0) {
-          // отражение от лопасти: v' = v − 2(v·n)n
-          const dot = s.dx * h.nx + s.dy * h.ny;
-          if (dot < 0) { s.dx -= 2 * dot * h.nx; s.dy -= 2 * dot * h.ny; }
-          s.x = px; s.y = py; s.left--; s.bounces++;
-          bounceSpark(s.x, s.y);
-          continue;
+    // снаряды летят мелкими шагами (не больше 6 px), иначе после подтормаживания телефона
+    // снаряд мог «перепрыгнуть» блок толщиной 28 px и пролететь сквозь него
+    const steps = Math.max(1, Math.ceil(SHELL_SPEED * dt / 6)), sdt = dt / steps;
+    for (let step = 0; step < steps && state.shells.length; step++) {
+      for (let i = state.shells.length - 1; i >= 0; i--) {
+        const s = state.shells[i];
+        const px = s.x, py = s.y;
+        s.x += s.dx * SHELL_SPEED * sdt;
+        s.y += s.dy * SHELL_SPEED * sdt;
+        // рикошет от края поля
+        if (s.left > 0 && (s.x < 4 || s.x > FW - 4)) {
+          s.dx = -s.dx; s.x = Math.max(4, Math.min(FW - 4, s.x)); s.left--; s.bounces++; bounceSpark(s.x, s.y);
         }
-        if (h) {
-          woodChips(s.x, s.y);
+        if (s.left > 0 && (s.y < 4 || s.y > FH - 4)) {
+          s.dy = -s.dy; s.y = Math.max(4, Math.min(FH - 4, s.y)); s.left--; s.bounces++; bounceSpark(s.x, s.y);
+        }
+        if (portals.length) portalShell(s);
+        s.el.style.transform = `translate(${s.x - s.hw}px, ${s.y - s.hh}px)` + (s.pierce ? ` rotate(${s.rot}deg)` : '');
+        if (s.x < -10 || s.x > FW + 10 || s.y < -10 || s.y > FH + 10) {
           s.el.remove();
           state.shells.splice(i, 1);
           continue;
         }
-      }
-      if (s.pierce) {
-        const inWood = movers.some(m => m.rect && rectHit(m.rect, s.x, s.y, 0)) || !!turnHit(s.x, s.y, 0);
-        if (inWood && !s.inWood) woodChips(s.x, s.y);
-        s.inWood = inWood;
+        // прошивающий снаряд разбивается только о камень, сквозь дерево пролетает
+        const solid = s.pierce ? staticWalls : walls;
+        // край блока тоже считается попаданием: иначе снаряд, летящий ровно по шву между
+        // двумя соседними блоками (например, прямо из середины поля после возрождения), пролетал насквозь
+        const hitWall = solid.find(w => rectHit(w, s.x, s.y, 0.5));
+        if (hitWall && s.left > 0) {
+          // отражаемся по той оси, с которой влетели в блок
+          const fromSideX = !(px > hitWall.x && px < hitWall.x + hitWall.w);
+          const fromSideY = !(py > hitWall.y && py < hitWall.y + hitWall.h);
+          if (fromSideX || !fromSideY) s.dx = -s.dx;
+          if (fromSideY || !fromSideX) s.dy = -s.dy;
+          s.x = px; s.y = py;
+          s.left--; s.bounces++;
+          bounceSpark(s.x, s.y);
+          continue;
+        }
+        if (hitWall) {
+          wallSpark(s.x, s.y);
+          s.el.remove();
+          state.shells.splice(i, 1);
+          continue;
+        }
+        if (!s.pierce && turnstiles.length) {
+          const h = turnHit(s.x, s.y, 0);
+          if (h && s.left > 0) {
+            // отражение от лопасти: v' = v − 2(v·n)n
+            const dot = s.dx * h.nx + s.dy * h.ny;
+            if (dot < 0) { s.dx -= 2 * dot * h.nx; s.dy -= 2 * dot * h.ny; }
+            s.x = px; s.y = py; s.left--; s.bounces++;
+            bounceSpark(s.x, s.y);
+            continue;
+          }
+          if (h) {
+            woodChips(s.x, s.y);
+            s.el.remove();
+            state.shells.splice(i, 1);
+            continue;
+          }
+        }
+        if (s.pierce) {
+          const inWood = movers.some(m => m.rect && rectHit(m.rect, s.x, s.y, 0)) || !!turnHit(s.x, s.y, 0);
+          if (inWood && !s.inWood) woodChips(s.x, s.y);
+          s.inWood = inWood;
+        }
       }
     }
   }
@@ -3247,7 +3385,7 @@
       const s = shooter.shells[i];
       for (const target of [p1, p2]) {
         if (target === shooter && (s.bounces === 0 || !settings.selfDamage)) continue;
-        if (Math.hypot(s.x - target.x, s.y - target.y) >= HIT_RADIUS) continue;
+        if (Math.hypot(s.x - target.x, s.y - target.y) >= (s.pierce ? HIT_RADIUS * 1.69 : HIT_RADIUS)) continue;
         s.el.remove();
         shooter.shells.splice(i, 1);
         if (target.shieldActive) blockSpark(target.x, target.y);
@@ -3342,7 +3480,7 @@
       x += dx * SHELL_SPEED * dt; y += dy * SHELL_SPEED * dt;
       if (x < 4 || x > FW - 4) { if (!left) return false; dx = -dx; x = Math.max(4, Math.min(FW - 4, x)); left--; bounced = true; }
       if (y < 4 || y > FH - 4) { if (!left) return false; dy = -dy; y = Math.max(4, Math.min(FH - 4, y)); left--; bounced = true; }
-      const w = walls.find(r => rectHit(r, x, y, 0));
+      const w = walls.find(r => rectHit(r, x, y, 0.5));
       if (w) {
         if (!left) return false;
         const sx = !(px > w.x && px < w.x + w.w), sy = !(py > w.y && py < w.y + w.h);
@@ -3361,6 +3499,8 @@
     const P = botP();
     if (!P || gameOver) return;
     const b = p2, t = p1, walls = getWallsPx();
+    // бот накопил заряд, но цель так и не показалась — сбрасывает
+    if (b.hold && b.hold.id === 'bot' && now - b.hold.t0 > HOLD_FULL + 3000) holdEnd(b, false);
 
     if (b.pressed) {
       // едем: отпускаем, когда доехали, проехали мимо точки или упёрлись
@@ -3429,7 +3569,14 @@
         if (now - bot.seeSince < P.react) return;
         if (t.shieldActive) return; // в щит не стреляем — ждём, держа на прицеле
         bot.aimOffset = (Math.random() * 2 - 1) * P.aimErr;
-        if (seeThroughWood) { b.usePierce(); return; }
+        if (seeThroughWood) {
+          if (controlMode !== 'stick') { b.usePierce(); return; }
+          // в танках с джойстиком бот тоже копит заряд (кольцо видно), потом перезарядка 10 с
+          if (now < b.pierceCdUntil) return;
+          if (!b.hold) { holdStart(b, 'bot'); return; }
+          if (b.hold.full) holdEnd(b, true);
+          return;
+        }
         if (shotHitsSelf(b, t, 20)) return;
         if ((bot.lastAct = 'shoot') && b.press()) { bot.holdUntil = now + 60 + Math.random() * 140; bot.waypoint = null; bot.stillSince = now; }
         return;
@@ -3661,7 +3808,7 @@
     const stick = controlMode === 'stick';
     document.getElementById('quickTitle').textContent = stick ? 'Танки: джойстик' : 'Танки';
     document.getElementById('quickDesc').textContent = stick
-      ? 'Слева на своей половине — джойстик, справа — тап: выстрел. Кнопка «Пробой» прошивает дерево.'
+      ? 'Слева на своей половине — джойстик, справа — тап: выстрел. Задержи палец справа — заряд, отпусти — снаряд «сквозь дерево».'
       : 'Танк крутится сам. Жми свою кнопку — выстрел и рывок вперёд, отпусти — танк закрутится в другую сторону.';
     renderQuick();
     quickSetup.hidden = false;
@@ -3746,6 +3893,7 @@
   let playing = false; // уровень выбран и запущен
   function startLevel(i) {
     document.body.classList.remove('drawer');
+    [p1, p2].forEach(p => { if (p.hold) holdEnd(p, false); p.charge = 0; p.pierceCdUntil = 0; });
     lastLevel = i;
     playing = true;
     const stick = controlMode === 'stick';
@@ -3805,7 +3953,10 @@
     document.querySelectorAll('#homeTabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tab === homeTab)));
     document.getElementById('tilesMini').hidden = homeTab !== 'mini';
     document.getElementById('tilesTanks').hidden = homeTab !== 'tanks';
+    document.getElementById('netTab').hidden = homeTab !== 'net';
   }
+  // перейти на вкладку «По сети» (для сетевого модуля)
+  NET.showNetTab = () => { homeTab = 'net'; try { localStorage.setItem('home-tab', homeTab); } catch (e) {} renderTabs(); showHome(); };
   document.querySelectorAll('#homeTabs button').forEach(b => b.addEventListener('click', () => {
     homeTab = b.dataset.tab;
     try { localStorage.setItem('home-tab', homeTab); } catch (e) {}
@@ -5621,7 +5772,7 @@
 
   // --- меню «Гравитации» ---
   function gvStartMatch() {
-    if (NET.on && NET.role === 'host') NET.gravSendStart();
+    if (NET.on && NET.role === 'host') { NET.game = 'grav'; NET.gravSendStart(); }
     gvLayout();
     gvScore = [0, 0];
     gvMatch++;
@@ -5658,6 +5809,7 @@
     document.getElementById('gvSetup').hidden = false;
   }
   document.getElementById('gravTile').addEventListener('click', () => {
+    if (NET.on && NET.role === 'host') NET.game = 'grav';
     playing = false;
     menu.hidden = true;
     gv.hidden = false;
@@ -5683,7 +5835,11 @@
   // BroadcastChannel между двумя вкладками одного браузера.
   const PEER_SRC = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';
   const BOT_NAME = 'pifpafgame';
-  const NET_ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
+  // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
+  const NET_VER = 5;
+  const OLD_VER_GUEST = 'У тебя старая версия игры. Закрой игру полностью (смахни Telegram из недавних приложений) и открой ссылку снова.';
+  const OLD_VER_HOST = 'У соперника другая версия игры. Пусть он полностью закроет Telegram и снова откроет ссылку — а ты тоже перезапусти игру.';
   const qs = new URLSearchParams(location.search);
   const NET_TEST = qs.get('nettest') === '1';
   const NET_LAG = +(qs.get('lag') || 0); // искусственная задержка для проверки, мс
@@ -5703,7 +5859,7 @@
       document.head.appendChild(sc);
     });
   }
-  const newCode = () => Array.from({ length: 4 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
+  const newCode = () => Array.from({ length: 5 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
 
   // --- отправка ---
   function rawSend(m) {
@@ -5722,7 +5878,8 @@
   // --- хост: создать комнату ---
   async function hostRoom(game) {
     netClose(true);
-    NET.role = 'host'; NET.game = game;
+    NET.hostNote = '';
+    NET.role = 'host'; NET.game = null;
     setLobby('creating');
     const code = newCode();
     if (NET_TEST) {
@@ -5737,11 +5894,15 @@
     NT.peer = peer;
     peer.on('open', () => { NET.code = code; setLobby('waiting'); });
     peer.on('connection', conn => {
-      if (NT.conn && NT.conn.open) { conn.on('open', () => { conn.send({ t: '_busy' }); setTimeout(() => conn.close(), 300); }); return; }
+      if (NT.conn && NT.conn.open && NET.on) { conn.on('open', () => { conn.send({ t: '_busy' }); setTimeout(() => conn.close(), 300); }); return; }
+      // прошлый «незаконченный» гость (например, со старой версией) — просто заменяем
+      if (NT.conn && !NET.on) { const old = NT.conn; NT.conn = null; try { old.close(); } catch (e) {} }
       NT.conn = conn;
       conn.on('data', onRaw);
-      conn.on('close', () => netLost());
-      conn.on('error', () => netLost());
+      // пока игра не началась, уход гостя комнату не закрывает — ждём следующего
+      const gone = () => { if (NT.conn !== conn) return; if (NET.on) netLost(); else NT.conn = null; };
+      conn.on('close', gone);
+      conn.on('error', gone);
     });
     peer.on('error', err => {
       if (err && err.type === 'unavailable-id') { peer.destroy(); hostRoom(game); return; } // код занят — другой
@@ -5757,7 +5918,7 @@
     if (NET_TEST) {
       NT.bc = new BroadcastChannel('pifpaf-' + code);
       NT.bc.onmessage = e => { const { from, m } = e.data || {}; if (from === 'host') onRaw(m); };
-      rawSend({ t: '_join' });
+      rawSend({ t: '_join', v: NET_VER });
       NT.joinTimer = setTimeout(() => { if (!NET.on) netError('Комната ' + code + ' не найдена'); }, 4000);
       return;
     }
@@ -5767,7 +5928,7 @@
     peer.on('open', () => {
       const conn = peer.connect('pifpaf-' + code, { reliable: true });
       NT.conn = conn;
-      conn.on('open', () => rawSend({ t: '_join' }));
+      conn.on('open', () => rawSend({ t: '_join', v: NET_VER }));
       conn.on('data', onRaw);
       conn.on('close', () => netLost());
       conn.on('error', () => netLost());
@@ -5786,22 +5947,27 @@
     switch (m.t) {
       case '_join':
         if (NET.role !== 'host') return;
+        if (m.v !== NET_VER) { rawSend({ t: '_badver', v: NET_VER }); NET.hostNote = OLD_VER_HOST; setLobby('waiting'); const c = NT.conn; setTimeout(() => { if (NT.conn === c && !NET.on) { try { c && c.close(); } catch (e) {} NT.conn = null; } }, 500); return; }
+        NET.hostNote = '';
         NET.on = true;
-        rawSend({ t: '_welcome', game: NET.game });
+        rawSend({ t: '_welcome', game: NET.game, v: NET_VER });
         connected();
         return;
       case '_welcome':
         if (NET.role !== 'guest') return;
         clearTimeout(NT.joinTimer);
+        if (m.v !== NET_VER) { rawSend({ t: '_bye' }); netError('У соперника другая версия игры. Попроси его полностью закрыть Telegram и снова открыть игру.'); return; }
         NET.on = true; NET.game = m.game;
         connected();
         return;
       case '_busy': netError('В этой комнате уже играют.'); return;
+      case '_badver': if (NET.role === 'guest') { clearTimeout(NT.joinTimer); netError(OLD_VER_GUEST); } return;
       case '_ping': rawSend({ t: '_pong', ts: m.ts }); return;
       case '_pong': { const r = performance.now() - m.ts; NET.rtt = NET.rtt * 0.7 + r * 0.3; return; }
       case '_bye': netLost('Соперник вышел из игры'); return;
     }
-    if (NET.game === 'tanks') tankMsg(m); else if (NET.game === 'grav') gravMsg(m);
+    if (m.t === '_lobby') { if (NET.role === 'guest') guestToLobby(); return; }
+    if (m.t[0] === 'g') gravMsg(m); else tankMsg(m);
   }
   function connected() {
     clearInterval(NT.pingTimer);
@@ -5830,13 +5996,25 @@
     gravNetReset();
   }
   // выйти из сетевой игры полностью — назад на главный экран
+  function stopNetGames() {
+    if (playing) { playing = false; victoryEl.hidden = true; document.body.classList.remove('drawer'); }
+    if (gvActive) { gvActive = false; gvState = 'menu'; gv.hidden = true; document.getElementById('gvWin').hidden = true; }
+    document.getElementById('quickSetup').hidden = true;
+  }
   function netLeave() {
-    const inTanks = playing, inGrav = gvActive;
     netClose(false);
-    lobbyEl.hidden = true; lostEl.hidden = true;
-    if (inTanks) { playing = false; victoryEl.hidden = true; }
-    if (inGrav) { gvActive = false; gvState = 'menu'; gv.hidden = true; }
-    showHome();
+    lostEl.hidden = true;
+    stopNetGames();
+    setLobby('idle');
+    NET.showNetTab();
+  }
+  // гость: хозяин комнаты вышел в меню — ждём, пока он выберет игру
+  function guestToLobby() {
+    stopNetGames();
+    tankNetReset(true); NET.flip = false; fitField();
+    document.body.classList.add('netOn');
+    setLobby('connected');
+    NET.showNetTab();
   }
   NET.askLeave = () => { leaveEl.hidden = false; };
   function netLost(text) {
@@ -5854,19 +6032,10 @@
     setLobby('error');
   }
 
-  // ======================= ОКНО ЛОББИ =======================
-  const lobbyEl = document.createElement('div');
-  lobbyEl.className = 'hkOverlay netOverlay';
-  lobbyEl.hidden = true;
-  lobbyEl.innerHTML = `
-    <div class="hkCard">
-      <h1 class="menuTitle">Игра по сети</h1>
-      <p class="netGame"></p>
-      <div class="netState"></div>
-      <div class="hkRow"><button class="backBtn netClose">← Закрыть</button></div>
-    </div>`;
-  document.body.appendChild(lobbyEl);
-  const stateBox = lobbyEl.querySelector('.netState');
+  // ======================= ВКЛАДКА «ПО СЕТИ» =======================
+  // Наверху вкладки — плашка: создать комнату / войти по коду / статус. Ниже — игры.
+  const lobbyEl = document.getElementById('netPanel');
+  const stateBox = lobbyEl;
   const mkModal = (title, text, btns) => {
     const el = document.createElement('div');
     el.className = 'hkOverlay netOverlay';
@@ -5881,10 +6050,8 @@
   leaveEl.querySelector('.netStay').addEventListener('click', () => { leaveEl.hidden = true; });
   leaveEl.querySelector('.netGo').addEventListener('click', () => { leaveEl.hidden = true; netLeave(); });
 
-  let lobbyGame = 'tanks';
-  function openLobby(game) {
-    lobbyGame = game || lobbyGame;
-    lobbyEl.hidden = false;
+  function openLobby() {
+    NET.showNetTab();
     if (!NET.on && NET.lobby !== 'waiting' && NET.lobby !== 'joining' && NET.lobby !== 'creating') setLobby('idle');
     else setLobby(NET.lobby);
   }
@@ -5893,7 +6060,7 @@
   }
   function share(code) {
     const link = linkFor(code);
-    const text = 'Сыграем в PifPaf? Комната ' + code;
+    const text = 'Сыграем в PifPaf? Код комнаты ' + code;
     if (tg && tg.openTelegramLink && tg.initData) { tg.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text)); return; }
     if (navigator.share) { navigator.share({ title: 'PifPaf', text, url: link }).catch(() => {}); return; }
     copy(link);
@@ -5904,68 +6071,84 @@
   }
   function setLobby(st) {
     NET.lobby = st;
-    const g = NET.on ? NET.game : lobbyGame;
-    lobbyEl.querySelector('.netGame').textContent = 'Игра: ' + (GAME_NAMES[g] || '');
-    const close = lobbyEl.querySelector('.netClose');
-    close.textContent = NET.on ? 'Готово' : '← Закрыть';
     let h = '';
     if (st === 'idle') {
-      h = `<p>Создай комнату и отправь ссылку другу — или введи код, который прислал друг.</p>
+      h = `<div class="netTitle">Игра по сети</div>
+        <p>Создай комнату и отправь ссылку другу — или введи код, который прислал друг.</p>
         <button class="hkPlay netHost">Создать комнату</button>
         <div class="netOr">или</div>
-        <div class="netJoin"><input class="netCode" maxlength="4" placeholder="КОД" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="hkPlay netJoinBtn">Войти</button></div>`;
+        <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>`;
     } else if (st === 'creating') {
       h = `<p class="netWait">Создаём комнату…</p>`;
     } else if (st === 'waiting') {
       h = `<p>Код комнаты:</p><div class="netBig">${NET.code}</div>
         <button class="hkPlay netShare">Отправить ссылку другу</button>
         <button class="backBtn netCopy">Скопировать ссылку</button>
-        <p class="netWait">Ждём соперника…</p>`;
+        <p class="netWait">Ждём соперника…</p>${NET.hostNote ? `<p class="netErr">${NET.hostNote}</p>` : ''}
+        <button class="backBtn netCancel">Отмена</button>`;
     } else if (st === 'joining') {
-      h = `<p class="netWait">Подключаемся к комнате ${NET.code || ''}…</p>`;
+      h = `<p class="netWait">Подключаемся к комнате ${NET.code || ''}…</p><button class="backBtn netCancel">Отмена</button>`;
     } else if (st === 'connected') {
       h = NET.role === 'host'
-        ? `<div class="netOk">Соперник подключился!</div><p>Закрой это окно, выбери настройки и нажми «Играть» — игра начнётся у обоих. Ты — синий, соперник — красный. Свою сторону каждый видит снизу.</p>`
-        : `<div class="netOk">Подключено!</div><p>Ждём, пока соперник выберет настройки и нажмёт «Играть». ${NET.game === 'tanks' ? 'Ты — красный, ' : 'Твоя пушка синяя, '}твоя сторона всегда снизу.</p>`;
+        ? `<div class="netOk">Соперник подключился!</div><p>Выбери игру ниже, настрой её и нажми «Играть» — игра начнётся у обоих.</p>`
+        : `<div class="netOk">Подключено!</div><p>Ждём, пока соперник выберет игру и нажмёт «Играть». Твоя сторона всегда снизу.</p>`;
       h += `<button class="backBtn netLeaveBtn">Отключиться</button>`;
     } else if (st === 'error') {
       h = `<p class="netErr">${NET.lobbyErr || 'Ошибка связи'}</p><button class="hkPlay netRetry">Попробовать ещё</button>`;
     }
     stateBox.innerHTML = h;
     const $ = s => stateBox.querySelector(s);
-    if ($('.netHost')) $('.netHost').addEventListener('click', () => { try { audioBus(); } catch (e) {} hostRoom(lobbyGame); });
+    if ($('.netHost')) $('.netHost').addEventListener('click', () => { try { audioBus(); } catch (e) {} hostRoom(); });
     if ($('.netJoinBtn')) {
       const inp = $('.netCode');
-      const go = () => { const c = inp.value.trim().toUpperCase(); if (/^[A-Z]{4}$/.test(c)) joinRoom(c); else inp.classList.add('bad'); };
+      const go = () => { const c = inp.value.trim(); if (/^\d{5}$/.test(c)) joinRoom(c); else inp.classList.add('bad'); };
       $('.netJoinBtn').addEventListener('click', go);
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
-      inp.addEventListener('input', () => { inp.value = inp.value.toUpperCase().replace(/[^A-Z]/g, ''); inp.classList.remove('bad'); });
+      inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 5); inp.classList.remove('bad'); });
     }
     if ($('.netShare')) $('.netShare').addEventListener('click', () => share(NET.code));
     if ($('.netCopy')) $('.netCopy').addEventListener('click', () => copy(linkFor(NET.code)));
-    if ($('.netLeaveBtn')) $('.netLeaveBtn').addEventListener('click', () => { lobbyEl.hidden = true; netLeave(); });
+    if ($('.netCancel')) $('.netCancel').addEventListener('click', () => { netClose(true); setLobby('idle'); });
+    if ($('.netLeaveBtn')) $('.netLeaveBtn').addEventListener('click', () => netLeave());
     if ($('.netRetry')) $('.netRetry').addEventListener('click', () => setLobby('idle'));
-    renderPill();
+    renderNetTiles();
   }
-  lobbyEl.querySelector('.netClose').addEventListener('click', () => {
-    // гость без игры не может «просто закрыть» окно — он ждёт хоста
-    if (NET.on && NET.role === 'guest') { NET.askLeave(); return; }
-    if (!NET.on && (NET.lobby === 'waiting' || NET.lobby === 'creating' || NET.lobby === 'joining')) netClose(true);
-    lobbyEl.hidden = true;
-    renderPill();
-  });
-  document.querySelectorAll('.netBtn').forEach(b => b.addEventListener('click', () => {
-    if (NET.on && NET.role === 'host' && NET.game !== b.dataset.netgame) { netClose(false); }
-    openLobby(b.dataset.netgame);
-  }));
-  // значок «онлайн» на кнопках «Играть по сети»
-  function renderPill() {
-    document.querySelectorAll('.netBtn').forEach(b => {
-      const mine = NET.on && NET.game === b.dataset.netgame;
-      b.classList.toggle('online', mine);
-      b.textContent = mine ? 'По сети: соперник подключён' : 'Играть по сети';
+  // подсказка в плашке (например, «сначала создай комнату»)
+  function panelHint(text) {
+    let el = stateBox.querySelector('.netHint');
+    if (!el) { el = document.createElement('p'); el.className = 'netErr netHint'; stateBox.appendChild(el); }
+    el.textContent = text;
+    lobbyEl.classList.remove('shake'); void lobbyEl.offsetWidth; lobbyEl.classList.add('shake');
+    vibrate(30);
+  }
+  // игры вкладки «По сети»: те же иконки, что в мини-играх
+  const NET_GAMES = [['tanks', 'quickTanksTile', 'Танки'], ['stick', 'quickStickTile', 'Танки: джойстик'], ['grav', 'gravTile', 'Гравитация']];
+  const tilesNet = document.getElementById('tilesNet');
+  NET_GAMES.forEach(([g, src, name]) => {
+    const t = document.createElement('button');
+    t.className = 'tile';
+    t.dataset.netgame = g;
+    const icon = document.getElementById(src).querySelector('.tileIcon');
+    t.innerHTML = (icon ? icon.outerHTML : '') + `<span>${name}</span>`;
+    t.addEventListener('click', () => {
+      if (!NET.on) { panelHint('Сначала создай комнату или войди по коду'); return; }
+      if (NET.role === 'guest') { panelHint('Игру выбирает тот, кто создал комнату'); return; }
+      NET.game = g === 'grav' ? 'grav' : 'tanks';
+      document.getElementById(src).click(); // откроются настройки игры (без ботов)
     });
+    tilesNet.appendChild(t);
+  });
+  function renderNetTiles() {
+    tilesNet.querySelectorAll('.tile').forEach(t => t.classList.toggle('dim', !NET.on || NET.role === 'guest'));
   }
+  // хозяин комнаты ушёл в меню — гость тоже возвращается во вкладку «По сети»
+  const origShowHome = showHome;
+  showHome = function () {
+    origShowHome();
+    if (NET.on && NET.role === 'host') NET.send({ t: '_lobby' });
+  };
+  function renderPill() {}
+  setLobby('idle');
 
   // ======================= ТАНКИ ПО СЕТИ =======================
   NET.seq2 = 0;          // номер «жизни» красного: после возрождения старые координаты не принимаются
@@ -6014,7 +6197,8 @@
   }
   const origStartLevel = startLevel;
   startLevel = function (i) {
-    if (NET.on && NET.role === 'host' && NET.game === 'tanks') {
+    if (NET.on && NET.role === 'host') {
+      NET.game = 'tanks';
       holdLayout = true;
       origStartLevel(i);
       holdLayout = false;
@@ -6025,6 +6209,7 @@
       sendLayout();
       return;
     }
+    if (NET.on && NET.role === 'guest') { showToast('Игру начинает тот, кто создал комнату'); return; }
     origStartLevel(i);
   };
   // хост: красный танк плавно следует за присланными координатами
@@ -6043,7 +6228,7 @@
     for (const p of [p1, p2]) for (const s of p.shells) sh.push([s.id, Math.round(s.x * 10) / 10, Math.round(s.y * 10) / 10, +s.dx.toFixed(3), +s.dy.toFixed(3), s.pierce ? 1 : 0]);
     NET.send({
       t: 's',
-      p1: [Math.round(p1.x * 10) / 10, Math.round(p1.y * 10) / 10, Math.round(p1.angle * 10) / 10, p1.shieldActive ? 1 : 0],
+      p1: [Math.round(p1.x * 10) / 10, Math.round(p1.y * 10) / 10, Math.round(p1.angle * 10) / 10, p1.shieldActive ? 1 : 0, +p1.charge.toFixed(2)],
       sh2: p2.shieldActive ? 1 : 0,
       sh, mv: movers.map(m => [Math.round(m.rect.x * 10) / 10, Math.round(m.rect.y * 10) / 10]),
       th: turnstiles.map(t => +t.theta.toFixed(3)),
@@ -6058,7 +6243,7 @@
       updatePlayer(p2, dt, now);
       guestPush(p2);
       updatePortals(dt, [p2]);
-      if (now - tLastPos > 33) { tLastPos = now; NET.send({ t: 'p', x: +p2.x.toFixed(1), y: +p2.y.toFixed(1), a: +p2.angle.toFixed(1), seq: NET.seq2 }); }
+      if (now - tLastPos > 33) { tLastPos = now; NET.send({ t: 'p', x: +p2.x.toFixed(1), y: +p2.y.toFixed(1), a: +p2.angle.toFixed(1), seq: NET.seq2, ch: +p2.charge.toFixed(2) }); }
     }
     renderGuest(now);
   };
@@ -6117,7 +6302,7 @@
       let el = guestShells.get(id);
       if (!el) { el = document.createElement('div'); el.className = pierce ? 'pierceShell' : 'shell'; field.appendChild(el); guestShells.set(id, el); }
       const sx = x + dx * SHELL_SPEED * age, sy = y + dy * SHELL_SPEED * age;
-      const hw = pierce ? 10 : 6.5, hh = pierce ? 3.5 : 6.5;
+      const hw = pierce ? 17 : 6.5, hh = pierce ? 6 : 6.5;
       el.style.transform = `translate(${sx - hw}px, ${sy - hh}px)` + (pierce ? ` rotate(${Math.atan2(dy, dx) * 180 / Math.PI}deg)` : '');
     }
     for (const [id, el] of guestShells) if (!seen.has(id)) { el.remove(); guestShells.delete(id); }
@@ -6132,8 +6317,9 @@
   }
   function tankMsg(m) {
     if (NET.role === 'host') {
-      if (m.t === 'p' && m.seq === NET.seq2 && playing) { p2.nx = m.x; p2.ny = m.y; p2.na = m.a; }
-      else if (m.t === 'fire' && playing && !gameOver && menu.hidden) {
+      if (m.t === 'p' && m.seq === NET.seq2 && playing) { p2.nx = m.x; p2.ny = m.y; p2.na = m.a; p2.charge = m.ch || 0; }
+      // выстрел из прошлой «жизни» (гость стрелял в момент взрыва) — не переносим танк назад и не стреляем
+      else if (m.t === 'fire' && playing && !gameOver && menu.hidden && (m.seq === undefined || m.seq === NET.seq2)) {
         // выстрел гостя — из того места, где был его танк
         p2.x = p2.nx = m.x; p2.y = p2.ny = m.y; p2.angle = p2.na = m.a;
         p2.fire(m.pierce);
@@ -6142,7 +6328,8 @@
     }
     // --- гость ---
     if (m.t === 'tstart') {
-      lobbyEl.hidden = true; leaveEl.hidden = true;
+      NET.game = 'tanks';
+      leaveEl.hidden = true;
       // закрыть всё, что могло быть открыто, и войти в танки
       if (gvActive) { gvActive = false; gvState = 'menu'; gv.hidden = true; }
       document.getElementById('quickSetup').hidden = true;
@@ -6154,6 +6341,11 @@
       origStartLevel(m.level);
       NET.seq2 = m.seq2;
       p1.netPuppet = true; p2.netOwn = true; p2.netPuppet = false;
+      // на iPhone нажатие может сначала дойти до кнопки синего — поэтому синий у гостя просто
+      // передаёт все команды красному (своему) танку
+      if (!p1.orig) p1.orig = { press: p1.press, release: p1.release, stickFire: p1.stickFire, usePierce: p1.usePierce };
+      p1.press = () => p2.press(); p1.release = () => p2.release();
+      p1.stickFire = () => p2.stickFire(); p1.usePierce = () => p2.usePierce();
       p2.ctrl = m.ctrl === 'stick' ? 'stick' : 'classic';
       joys[0].p = p2; joys[0].flip = -1; p2.resetJoy = joys[0].reset;
       document.getElementById('btn1').textContent = 'ТЫ (красный)';
@@ -6170,6 +6362,7 @@
       if (m.sc[0] !== score1 || m.sc[1] !== score2) { score1 = m.sc[0]; score2 = m.sc[1]; renderScore(); }
       if (m.am[0] !== p1.ammo || m.am[1] !== p2.ammo) { p1.ammo = m.am[0]; p2.ammo = m.am[1]; renderAmmo(); }
       tank1El.classList.toggle('shielded', !!m.p1[3]);
+      p1.charge = m.p1[4] || 0;
       if (!p2.shieldActive) tank2El.classList.toggle('shielded', !!m.sh2);
       if (blinking !== !!m.bl) { blinking = !!m.bl; wallsLayer.querySelectorAll('.wall.jumpy').forEach(el => el.classList.toggle('blink', blinking)); }
       for (const e of m.ev || []) guestEvent(e);
@@ -6199,12 +6392,11 @@
   }, true);
   redirect('#btn1', () => { if (p2.press()) document.getElementById('btn1').classList.add('active'); });
   redirect('#pierce1', () => p2.usePierce());
-  redirect('#spierce1', () => p2.usePierce());
   ['pointerup', 'pointercancel'].forEach(t => document.getElementById('btn1').addEventListener(t, e => {
     if (!(NET.on && NET.role === 'guest' && NET.game === 'tanks')) return;
     p2.release(); document.getElementById('btn1').classList.remove('active'); e.stopImmediatePropagation();
   }, true));
-  p2.pierceEls.push(document.getElementById('pierce1'), document.getElementById('spierce1'));
+  p2.pierceEls.push(document.getElementById('pierce1'));
   document.addEventListener('click', e => {
     if (!(NET.on && NET.role === 'guest' && NET.game === 'tanks')) return;
     const id = e.target && e.target.id;
@@ -6212,6 +6404,7 @@
     else if (id === 'toLevelsBtn' || id === 'menuBtn') { e.stopImmediatePropagation(); NET.askLeave(); }
   }, true);
   function tankNetReset(wasGuest) {
+    if (p1.orig) { Object.assign(p1, p1.orig); delete p1.orig; }
     p1.netPuppet = false; p2.netPuppet = false; p2.netOwn = false;
     NET.flip = false; NET.modes = null;
     joys[0].p = p1; joys[0].flip = 1; p2.resetJoy = joys[1].reset; p1.resetJoy = joys[0].reset;
@@ -6250,7 +6443,8 @@
       if (gvState === 'over') gvStartMatch();
     } else if (NET.role === 'guest') {
       if (m.t === 'gstart') {
-        lobbyEl.hidden = true; leaveEl.hidden = true;
+        NET.game = 'grav';
+        leaveEl.hidden = true;
         if (playing) { playing = false; victoryEl.hidden = true; }
         document.getElementById('quickSetup').hidden = true;
         if (!gvBackup) gvBackup = { mode: gvOpts.mode, goal: gvOpts.goal, hole: gvOpts.hole, opp: gvOpts.opp };
@@ -6292,6 +6486,9 @@
     const g = guns[0];
     NET.send({ t: 'gaim', a: +g.angle.toFixed(1), c: +g.charge.toFixed(2), on: (g.aiming || g.holding) ? 1 : 0 });
   }, 100);
+  document.getElementById('gvStart').addEventListener('click', e => {
+    if (NET.on && NET.role === 'guest') { e.stopImmediatePropagation(); openLobby(); }
+  }, true);
   function gravNetReset() {
     if (gvBackup) { Object.assign(gvOpts, gvBackup); gvBackup = null; }
     guns[1] && (guns[1].botAim = false);
@@ -6301,8 +6498,8 @@
   // --- вход по ссылке: t.me/pifpafgame?startapp=КОД или сайт ?room=КОД ---
   {
     const sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
-    const code = String(sp || qs.get('room') || '').toUpperCase();
-    if (/^[A-Z]{4}$/.test(code)) setTimeout(() => { openLobby('tanks'); joinRoom(code); }, 300);
+    const code = String(sp || qs.get('room') || '').trim();
+    if (/^\d{5}$/.test(code)) setTimeout(() => { openLobby(); joinRoom(code); }, 300);
   }
   NET.openLobby = openLobby;
 
@@ -9273,7 +9470,7 @@
 
   let last = performance.now();
   function loop(now) {
-    const dt = (now - last) / 1000;
+    const dt = Math.min(0.05, (now - last) / 1000); // после долгой паузы не «прыгаем» далеко
     last = now;
 
     if (NET.on && NET.role === 'guest' && playing) {
@@ -9293,6 +9490,11 @@
     }
     if (NET.on && NET.role === 'host' && playing) NET.tankHostSend(now);
 
+    if (controlMode === 'stick' && playing) {
+      [p1, p2].forEach(p => { if (!p.netPuppet) updateHold(p, now); });
+      renderPierceInds(now);
+    }
+    renderCharge(p1, tank1El); renderCharge(p2, tank2El);
     tank1El.style.transform = `translate(${p1.x - 9.5}px, ${p1.y - 8.5}px) rotate(${p1.angle}deg) scale(${TANK_SCALE})`;
     tank2El.style.transform = `translate(${p2.x - 9.5}px, ${p2.y - 8.5}px) rotate(${p2.angle}deg) scale(${TANK_SCALE})`;
 
