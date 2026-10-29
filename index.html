@@ -798,6 +798,8 @@
   body.stick #scoreBar { z-index: 41; }
   body.stick .ctrlRow { display: none; }
   body.stick { padding-left: max(4px, env(safe-area-inset-left, 0px)); padding-right: max(4px, env(safe-area-inset-right, 0px)); }
+  /* танки с джойстиком: поле поднимается до полоски телефона, кнопки Telegram лежат поверх углов поля */
+  body.stick { padding-top: calc(4px + var(--sst, 0px)); padding-bottom: calc(4px + var(--sb, 0px)); }
   .joyPad {
     position: absolute;
     display: flex;
@@ -1565,6 +1567,9 @@
       t = (s.top || 0) + (c.top || 0); b = (s.bottom || 0) + (c.bottom || 0);
     }
     SAFE = { t, b };
+    // --sst — только полоска телефона (часы, батарея), без кнопок Telegram: до неё может доходить поле танков
+    const sst = inTelegram && tgApp.isFullscreen ? ((tgApp.safeAreaInset || {}).top || 0) : 0;
+    document.documentElement.style.setProperty('--sst', sst + 'px');
     document.documentElement.style.setProperty('--st', t + 'px');
     document.documentElement.style.setProperty('--sb', b + 'px');
   }
@@ -1577,6 +1582,19 @@
   const fieldRect = { width: 336, height: 616 };
   const arena = document.getElementById('arena');
   const scaler = document.getElementById('scaler');
+  // Высота поля подстраивается под экран: ширина всегда 12 клеток, а рядов — от 22 до 30,
+  // чтобы на длинных телефонах поле занимало весь экран. Карты сами растягиваются по рядам.
+  // По сети ряды задаёт тот, кто создал комнату.
+  function fitRows() {
+    let rows = 22;
+    if (NET.on && NET.role === 'guest' && NET.rows) rows = NET.rows;
+    else {
+      const r = arena.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) rows = Math.max(22, Math.min(30, Math.floor(r.height / (r.width / 12))));
+    }
+    fieldRect.height = rows * 28;
+    field.style.height = fieldRect.height + 'px';
+  }
   function fitField() {
     const r = arena.getBoundingClientRect();
     const k = Math.min(r.width / fieldRect.width, r.height / fieldRect.height) || 1;
@@ -3743,6 +3761,7 @@
     gameOver = false;
     roundResetting = false;
     toastEl.hidden = true;
+    fitRows();
     fitField();
     currentLevel = i;
     if (LEVELS[i].onStart) LEVELS[i].onStart();
@@ -6001,7 +6020,7 @@
       holdLayout = false;
       p2.netPuppet = true; // красного двигает телефон гостя
       p2.nx = p2.x; p2.ny = p2.y; p2.na = p2.angle;
-      NET.send({ t: 'tstart', spd: speedK(), level: i, ctrl: controlMode, rounds: settings.rounds, rico: settings.ricochet, self: settings.selfDamage,
+      NET.send({ t: 'tstart', rows: Math.round(fieldRect.height / 28), spd: speedK(), level: i, ctrl: controlMode, rounds: settings.rounds, rico: settings.ricochet, self: settings.selfDamage,
         modes: { lastShot: gm.lastShot, ricochet: gm.ricochet }, seq2: NET.seq2 });
       sendLayout();
       return;
@@ -6129,7 +6148,7 @@
       document.getElementById('quickSetup').hidden = true;
       controlMode = m.ctrl;
       settings.rounds = m.rounds; settings.ricochet = m.rico; settings.selfDamage = m.self;
-      NET.modes = m.modes; quickMode = false; NET.spd = m.spd == null ? 1 : m.spd;
+      NET.modes = m.modes; quickMode = false; NET.spd = m.spd == null ? 1 : m.spd; NET.rows = m.rows || 22;
       NET.flip = true;
       document.body.classList.add('netGuest');
       origStartLevel(m.level);
