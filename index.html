@@ -859,7 +859,7 @@
     opacity: 0.8;
   }
   .pierceInd b { font-size: 0.5rem; font-weight: 800; letter-spacing: 0.03em; }
-  .pierceInd small { font-size: 0.5rem; font-weight: 700; color: #c9b39a; }
+  .pierceInd small { font-size: 0.48rem; font-weight: 700; color: #c9b39a; max-width: 56px; }
   .pierceInd.cool { color: #7a6a58; }
   .pierceInd.cool small { color: #9aa3b6; font-size: 0.7rem; }
   .pierceInd.full { animation: indPulse 0.5s ease-in-out infinite alternate; opacity: 1; }
@@ -1229,10 +1229,10 @@
 <div id="stickLayer">
   <div id="touchPad"></div>
   <div class="joyPad" id="pad2">
-    <div class="pierceInd" id="spierce2"><b>СКВОЗЬ<br>ДЕРЕВО</b><small>держи</small></div>
+    <div class="pierceInd" id="spierce2"><b>СКВОЗЬ<br>ДЕРЕВО</b><small>зажми атаку</small></div>
   </div>
   <div class="joyPad" id="pad1">
-    <div class="pierceInd" id="spierce1"><b>СКВОЗЬ<br>ДЕРЕВО</b><small>держи</small></div>
+    <div class="pierceInd" id="spierce1"><b>СКВОЗЬ<br>ДЕРЕВО</b><small>зажми атаку</small></div>
   </div>
   <div class="joy" id="joy2"><div class="joyKnob"></div></div>
   <div class="joy" id="joy1"><div class="joyKnob"></div></div>
@@ -3098,10 +3098,11 @@
       try {
         audioBus();
         const osc = actx.createOscillator(), gain = actx.createGain();
-        osc.type = 'triangle';
+        // мягкий низкий гул: тон чуть-чуть поднимается, громкость едва нарастает
+        osc.type = 'sine';
         const t = actx.currentTime, left = (HOLD_FULL - el) / 1000;
-        osc.frequency.setValueAtTime(180, t); osc.frequency.linearRampToValueAtTime(620, t + Math.max(0.05, left));
-        gain.gain.setValueAtTime(0.005, t); gain.gain.linearRampToValueAtTime(0.045, t + Math.max(0.05, left));
+        osc.frequency.setValueAtTime(110, t); osc.frequency.linearRampToValueAtTime(150, t + Math.max(0.05, left));
+        gain.gain.setValueAtTime(0.002, t); gain.gain.linearRampToValueAtTime(0.018, t + Math.max(0.05, left));
         osc.connect(gain).connect(out(fieldRect.width / 2));
         osc.start();
         p.chargeSnd = { osc, gain };
@@ -3109,7 +3110,7 @@
     }
     if (p.charge >= 1 && !p.hold.full) {
       p.hold.full = true;
-      sound(990, 0.12, 'triangle', 0.06); setTimeout(() => sound(1320, 0.14, 'triangle', 0.05), 90);
+      sound(520, 0.12, 'sine', 0.03); setTimeout(() => sound(660, 0.16, 'sine', 0.025), 90); // тихое «готово»
       vibrate(25);
     }
   }
@@ -3131,7 +3132,7 @@
       el.style.setProperty('--p', cool ? 1 - cd / STICK_PIERCE_CD : (p.charge > 0 ? p.charge : 1));
       el.classList.toggle('cool', cool);
       el.classList.toggle('full', full);
-      const txt = cool ? Math.ceil(cd / 1000) + 'с' : full ? 'отпусти!' : p.charge > 0 ? Math.round(p.charge * 100) + '%' : (p === p2 && botP() ? 'готово' : 'держи');
+      const txt = cool ? Math.ceil(cd / 1000) + 'с' : full ? 'отпусти!' : p.charge > 0 ? Math.round(p.charge * 100) + '%' : (p === p2 && botP() ? 'готово' : 'зажми атаку');
       const sm = el.lastElementChild;
       if (sm.textContent !== txt) sm.textContent = txt;
     });
@@ -3150,12 +3151,23 @@
     KeyW: [p1, 0, -1], KeyS: [p1, 0, 1], KeyA: [p1, -1, 0], KeyD: [p1, 1, 0],
     ArrowUp: [p2, 0, -1], ArrowDown: [p2, 0, 1], ArrowLeft: [p2, -1, 0], ArrowRight: [p2, 1, 0]
   };
+  // по сети у каждого один свой танк: им управляют и WASD, и стрелки (у гостя поле перевёрнуто)
+  const netOwnP = () => NET.on && playing ? (NET.role === 'guest' ? p2 : p1) : null;
   function updateKeyVecs() {
     [p1, p2].forEach(p => { p.keyVec.x = 0; p.keyVec.y = 0; });
-    held.forEach(code => { const d = DIRS[code]; if (d) { d[0].keyVec.x += d[1]; d[0].keyVec.y += d[2]; } });
+    const own = netOwnP(), k = NET.on && NET.role === 'guest' ? -1 : 1;
+    held.forEach(code => {
+      const d = DIRS[code];
+      if (!d) return;
+      const p = own || d[0], m = own ? k : 1;
+      p.keyVec.x += d[1] * m; p.keyVec.y += d[2] * m;
+    });
     [p1, p2].forEach(p => { const m = Math.hypot(p.keyVec.x, p.keyVec.y); if (m) { p.keyVec.x /= m; p.keyVec.y /= m; } });
   }
+  const ACT_KEYS = ['Space', 'KeyE', 'Enter', 'NumpadEnter', 'ShiftRight'];
   const keyPlayer = code => {
+    const own = netOwnP();
+    if (own) return (DIRS[code] || ACT_KEYS.includes(code)) ? own : null;
     if (code === 'Space' || code === 'KeyE') return p1;
     if (code === 'Enter' || code === 'NumpadEnter' || code === 'ShiftRight') return humanP2() ? p2 : null;
     const d = DIRS[code];
@@ -3170,21 +3182,24 @@
     if (e.repeat) return;
     const isPierce = e.code === 'KeyE' || e.code === 'ShiftRight';
     const isFire = e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter';
-    if (isPierce) { if (controlMode === 'stick') holdStart(p, 'key'); else p.usePierce(); return; }
     if (controlMode === 'stick') {
-      if (isFire) p.stickFire();
-      else { held.add(e.code); updateKeyVecs(); }
+      // пробел / Enter: нажал — выстрел, держишь — копится заряд «сквозь дерево» (как палец справа)
+      if (isFire || isPierce) {
+        if (isFire) p.stickFire();
+        if (!p.hold) { holdStart(p, 'key'); if (p.hold) p.hold.code = e.code; }
+      } else { held.add(e.code); updateKeyVecs(); }
+    } else if (isPierce) {
+      p.usePierce();
     } else if (isFire) {
       p.press();
     }
   });
   window.addEventListener('keyup', e => {
     if (held.delete(e.code)) updateKeyVecs();
-    if (e.code === 'KeyE' && p1.hold && p1.hold.id === 'key') holdEnd(p1, true);
-    if (e.code === 'ShiftRight' && p2.hold && p2.hold.id === 'key') holdEnd(p2, true);
-    if (controlMode === 'classic') {
-      if (e.code === 'Space') p1.release();
-      if ((e.code === 'Enter' || e.code === 'NumpadEnter') && humanP2()) p2.release();
+    [p1, p2].forEach(p => { if (p.hold && p.hold.id === 'key' && p.hold.code === e.code) holdEnd(p, true); });
+    if (controlMode === 'classic' && (e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter')) {
+      const p = keyPlayer(e.code);
+      if (p) p.release();
     }
   });
   window.addEventListener('blur', () => { held.clear(); updateKeyVecs(); });
@@ -3808,7 +3823,7 @@
     const stick = controlMode === 'stick';
     document.getElementById('quickTitle').textContent = stick ? 'Танки: джойстик' : 'Танки';
     document.getElementById('quickDesc').textContent = stick
-      ? 'Слева на своей половине — джойстик, справа — тап: выстрел. Задержи палец справа — заряд, отпусти — снаряд «сквозь дерево».'
+      ? 'Слева на своей половине — джойстик, справа — тап: выстрел. Зажми атаку (палец справа или пробел) — копится заряд, отпусти — снаряд «сквозь дерево».'
       : 'Танк крутится сам. Жми свою кнопку — выстрел и рывок вперёд, отпусти — танк закрутится в другую сторону.';
     renderQuick();
     quickSetup.hidden = false;
