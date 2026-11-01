@@ -1278,8 +1278,8 @@
   .preview .pw { background: #9eabc4; }
   .preview .pm { background: #c79153; }
   /* ===== ЭКСПЕРИМЕНТ: обойма под танком ===== */
-  .txAmmo { position: absolute; left: 0; top: 0; z-index: 3; display: flex; gap: 2px; margin: -2px 0 0 -11px; pointer-events: none; transition: opacity 0.25s; }
-  .txAmmo i { width: 6px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--c) calc(var(--f, 1) * 100%), rgba(30, 30, 40, 0.35) calc(var(--f, 1) * 100%)); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55); }
+  .txAmmo { position: absolute; left: 0; top: 0; z-index: 3; display: flex; gap: 2px; margin: -2px 0 0 -16.5px; pointer-events: none; transition: opacity 0.25s; }
+  .txAmmo i { width: 5px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--c) calc(var(--f, 1) * 100%), rgba(30, 30, 40, 0.35) calc(var(--f, 1) * 100%)); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55); }
   .txAmmo.blue { --c: #3f7fe0; }
   .txAmmo.red { --c: #e04f3f; }
   .txAmmo.full { opacity: 0.5; }
@@ -1439,6 +1439,11 @@
       <div class="settingRow">
         <div class="label">Зона ворот<small>Бита в своей зоне ворот сжимается на 10% каждые 5 с, вне зоны растёт обратно на 10% за 10 с</small></div>
         <button class="switch" id="hkZone" role="switch" aria-checked="false" aria-label="Зона ворот"><span></span></button>
+      </div>
+      <div id="hkTestBox" hidden>
+        <h2 class="groupTitle">Тестирование · 100% — как в обычном хоккее</h2>
+        <div id="hkTestSliders"></div>
+        <button class="backBtn" id="hkTestReset" style="width:100%;margin-top:6px">Сбросить на 100%</button>
       </div>
       <div class="hkRow">
         <button class="backBtn" id="hkBack">← Назад</button>
@@ -1626,7 +1631,7 @@
     </div>
     <div class="segmented homeTabs" id="homeTabs">
       <button data-tab="mini">Мини-игры</button>
-      <button data-tab="tanks">Танки</button>
+      <button data-tab="tanks">Тестирование</button>
       <button data-tab="net">По сети</button>
     </div>
     <div id="netTab" hidden>
@@ -1698,6 +1703,10 @@
         </div>
         <span>Танки: джойстик</span>
       </button>
+      <button class="tile" id="hockeyTestTile">
+        <div class="tileIcon"><div class="puckIcon"></div></div>
+        <span>Аэрохоккей · тест</span>
+      </button>
     </div>
   </div>
   <div class="menuScreen" id="levelScreen" hidden>
@@ -1765,6 +1774,50 @@
 </div>
 
 <script>
+// ======================= ОБЛАЧНОЕ СОХРАНЕНИЕ (Telegram CloudStorage) =======================
+// Настройки игр лежат в памяти браузера внутри Telegram, а её иногда очищают.
+// Всё, что игра записывает, копируем ещё и в облако Telegram (привязано к аккаунту, есть на всех телефонах).
+// На новом телефоне или после очистки при первом запуске берём настройки из облака.
+(function () {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const cs = tg && tg.initData && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9') ? tg.CloudStorage : null;
+  if (!cs) return;
+  const okKey = k => /^[A-Za-z0-9_-]{1,128}$/.test(k);
+  // запись: копим изменения и отправляем пачкой раз в секунду
+  const queue = new Map();
+  let timer = 0;
+  const flush = () => { timer = 0; queue.forEach((v, k) => { try { cs.setItem(k, v); } catch (e) {} }); queue.clear(); };
+  const protoSet = Storage.prototype.setItem;
+  Storage.prototype.setItem = function (k, v) {
+    protoSet.call(this, k, v);
+    try {
+      if (this === window.localStorage && okKey(k) && String(v).length <= 4096) {
+        queue.set(k, String(v));
+        if (!timer) timer = setTimeout(flush, 1000);
+      }
+    } catch (e) {}
+  };
+  // чтение: в памяти ничего нет, а в облаке есть — переносим и один раз перезапускаем игру
+  let localEmpty = true;
+  try { localEmpty = localStorage.length === 0; } catch (e) {}
+  try {
+    cs.getKeys((err, keys) => {
+      if (err || !keys || !keys.length) return;
+      cs.getItems(keys, (err2, items) => {
+        if (err2 || !items) return;
+        let changed = false;
+        try {
+          for (const k of keys) if (items[k] != null && localStorage.getItem(k) === null) { protoSet.call(localStorage, k, items[k]); changed = true; }
+        } catch (e) { return; }
+        let reloaded = false;
+        try { reloaded = sessionStorage.getItem('cloud-restored') === '1'; sessionStorage.setItem('cloud-restored', '1'); } catch (e) {}
+        if (changed && localEmpty && !reloaded) location.reload();
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<script>
 (function() {
   const NET = { on: false, role: null, game: null, flip: false, modes: null, send() {}, ev() {} };
   // ЭКСПЕРИМЕНТ: бонусы, «ощущение удара», комментатор, итоги (модуль tankx.js)
@@ -1797,16 +1850,12 @@
   const fieldRect = { width: 336, height: 616 };
   const arena = document.getElementById('arena');
   const scaler = document.getElementById('scaler');
-  // Высота поля подстраивается под экран: ширина всегда 12 клеток, а рядов — от 22 до 30,
-  // чтобы на длинных телефонах поле занимало весь экран. Карты сами растягиваются по рядам.
-  // По сети ряды задаёт тот, кто создал комнату.
+  // Все карты танков — ровно 12 × 22 клетки на любом телефоне (и по сети у обоих одинаково).
+  // На длинных экранах поле целиком помещается по ширине, сверху и снизу остаётся немного места.
+  let forceRows = null;
   function fitRows() {
     let rows = 22;
     if (NET.on && NET.role === 'guest' && NET.rows) rows = NET.rows;
-    else {
-      const r = arena.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) rows = Math.max(22, Math.min(30, Math.floor(r.height / (r.width / 12))));
-    }
     fieldRect.height = rows * 28;
     field.style.height = fieldRect.height + 'px';
   }
@@ -1868,7 +1917,16 @@
   let gameOver = false;
 
   // --- вибрация ---
+  // Вибрация: в Telegram — через его отдачу (работает и на iPhone, где обычная вибрация браузера не работает)
+  const haptic = tgApp && tgApp.initData && tgApp.HapticFeedback && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast('6.1') ? tgApp.HapticFeedback : null;
   function vibrate(pattern) {
+    if (haptic) {
+      // длительность (мс) превращаем в силу толчка; в серии — толчок на каждое «включение»
+      const kick = ms => { try { haptic.impactOccurred(ms <= 12 ? 'light' : ms <= 35 ? 'medium' : 'heavy'); } catch (e) {} };
+      if (Array.isArray(pattern)) { let t = 0; pattern.forEach((ms, i) => { if (i % 2 === 0) setTimeout(() => kick(ms), t); t += ms; }); }
+      else if (pattern) kick(pattern);
+      return;
+    }
     try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
   }
 
@@ -2375,7 +2433,86 @@
       }
     }
   );
-  const GROUPS = ['Обычные', 'Двери', 'Механики', 'Смешанные', 'Каша', 'Турникеты', 'Порталы', 'Авторские'];
+  // --- «Мои карты»: карты из редактора (текст карты вставляется сюда как есть) ---
+  // Поле ровно 12 × 22, ничего не отражается (в редакторе уже зеркально). Танки стоят, где их поставили.
+  // Прыгуны в начале стоят на своих местах, потом перескакивают в случайные свободные клетки парами.
+  const MY_MAPS = [
+    {"pifpafMap":1,"name":"Случайная","cols":12,"rows":22,
+      "stone":[[2,3],[2,4],[9,4],[10,4],[11,4],[0,5],[1,5],[2,5],[9,5],[9,6],[2,15],[2,16],[9,16],[10,16],[11,16],[0,17],[1,17],[2,17],[9,17],[9,18]],
+      "jumpy":[[3,0],[3,1],[3,2],[3,3],[8,18],[8,19],[8,20],[8,21]],"jumpEvery":8,
+      "doors":[{"size":[2,1],"closed":[8,7],"open":[10,7],"period":4.5,"offset":0},{"size":[2,1],"closed":[2,14],"open":[0,14],"period":4.5,"offset":0}],
+      "turnstiles":[{"cell":[5,5],"big":true,"dir":1},{"cell":[6,16],"big":true,"dir":1}],
+      "portals":[{"a":[11,18],"b":[11,6],"color":"#3fd0ff"},{"a":[0,3],"b":[0,15],"color":"#3fd0ff"}],
+      "randomDoors":0,"tanks":[{"x":294,"y":574,"dir":0},{"x":42,"y":42,"dir":2}]}
+  ];
+  function fromEditor(m) {
+    const B = BLOCK, ck = (c, r) => key(c, r);
+    const COLS = 12, ROWS = 22;
+    const stone = (m.stone || []).map(([c, r]) => [c, r]);
+    const jumpy0 = (m.jumpy || []).map(([c, r]) => { const a = [c, r]; a.jumpy = true; return a; });
+    // клетки, занятые дверями (оба положения), осями вертушек и порталами — прыгуны туда не прыгают
+    const busy = new Set();
+    (m.doors || []).forEach(d => { for (const p of [d.closed, d.open]) for (let x = 0; x < d.size[0]; x++) for (let y = 0; y < d.size[1]; y++) busy.add(ck(p[0] + x, p[1] + y)); });
+    (m.turnstiles || []).forEach(t => busy.add(ck(t.cell[0], t.cell[1])));
+    (m.portals || []).forEach(p => { busy.add(ck(p.a[0], p.a[1])); busy.add(ck(p.b[0], p.b[1])); });
+    const tanks = Array.isArray(m.tanks) && m.tanks.length === 2 ? m.tanks : null;
+    const tankCells = (tanks || [{ x: 168, y: 492.8 }, { x: 168, y: 123.2 }]).map(t => [Math.min(COLS - 1, Math.floor(t.x / B)), Math.min(ROWS - 1, Math.floor(t.y / B))]);
+    const nearT = (c, r) => tankCells.some(([tc, tr]) => Math.abs(c - tc) <= 1 && Math.abs(r - tr) <= 1);
+    const canReach = blocked => {
+      const [s, e] = tankCells, seen = new Set([ck(s[0], s[1])]), q = [s];
+      while (q.length) {
+        const [c, r] = q.shift();
+        if (c === e[0] && r === e[1]) return true;
+        for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nc = c + dc, nr = r + dr, k = ck(nc, nr);
+          if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || seen.has(k) || blocked.has(k)) continue;
+          seen.add(k); q.push([nc, nr]);
+        }
+      }
+      return false;
+    };
+    return {
+      name: m.name || 'Моя карта', group: 'Мои карты', raw: true, rows: ROWS, tanks,
+      jumping: jumpy0.length > 0, jumpEvery: (m.jumpEvery || 5) * 1000,
+      doorsRandom: m.randomDoors || 0,
+      build(g, exclude) {
+        if (!exclude) return stone.concat(jumpy0); // первая расстановка — как в редакторе
+        const taken = new Set(stone.map(([c, r]) => ck(c, r)));
+        const ok = (c, r) => !taken.has(ck(c, r)) && !busy.has(ck(c, r)) && !nearT(c, r) && !exclude(c, r);
+        const cand = [];
+        for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+          const mc = COLS - 1 - c, mr = ROWS - 1 - r;
+          if ((c === mc && r === mr) || r > mr || !ok(c, r) || !ok(mc, mr)) continue;
+          cand.push([c, r]);
+        }
+        for (let attempt = 0; attempt < 200; attempt++) {
+          for (let i = cand.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cand[i], cand[j]] = [cand[j], cand[i]]; }
+          const pick = [];
+          for (const [c, r] of cand) { if (pick.length >= jumpy0.length) break; const a = [c, r], b = [COLS - 1 - c, ROWS - 1 - r]; a.jumpy = b.jumpy = true; pick.push(a, b); }
+          const jumps = pick.slice(0, jumpy0.length);
+          if (canReach(new Set([...taken, ...jumps.map(([c, r]) => ck(c, r))]))) return stone.concat(jumps);
+        }
+        return stone.concat(jumpy0);
+      },
+      checkBlocked: () => (m.doors || []).flatMap(d => { const out = []; for (let x = 0; x < d.size[0]; x++) for (let y = 0; y < d.size[1]; y++) out.push([d.closed[0] + x, d.closed[1] + y]); return out; }),
+      noRandom: (g, c, r) => busy.has(ck(c, r)),
+      movers: () => (m.doors || []).map(d => ({
+        w: d.size[0] * B, h: d.size[1] * B,
+        from: { x: d.open[0] * B, y: d.open[1] * B }, to: { x: d.closed[0] * B, y: d.closed[1] * B },
+        phase: cycle(d.period || 4.5, d.offset || 0)
+      })),
+      turnstiles: () => (m.turnstiles || []).map(t => ({ x: t.cell[0] * B + B / 2, y: t.cell[1] * B + B / 2, big: !!t.big, dir: t.dir < 0 ? -1 : 1 })),
+      portals: () => (m.portals || []).map(p => ({ a: p.a, b: p.b, color: p.color || PORTAL_COLORS[0] }))
+    };
+  }
+  MY_MAPS.forEach(m => LEVELS.push(fromEditor(m)));
+  // у карт со своими точками появления «рядом с танком» считается от этих точек
+  function withSpawns(g, L) {
+    if (!L || !L.tanks) return g;
+    const [s1, s2] = L.tanks.map(t => g.cellOf(t.x, t.y));
+    return Object.assign({}, g, { s1, s2, nearSpawn: (c, r) => (Math.abs(c - s1[0]) <= 1 && Math.abs(r - s1[1]) <= 1) || (Math.abs(c - s2[0]) <= 1 && Math.abs(r - s2[1]) <= 1) });
+  }
+  const GROUPS = ['Обычные', 'Двери', 'Механики', 'Смешанные', 'Каша', 'Турникеты', 'Порталы', 'Авторские', 'Мои карты'];
 
   // Постоянная часть уровня + случайные одиночные блоки (зеркальными парами).
   // Каждый случайный блок стоит минимум в клетке от любого другого — свободнее проезжать.
@@ -2430,6 +2567,7 @@
   const JUMP_BLINK = 700;    // мс мигания перед прыжком
 
   function buildCells(L, g, exclude) {
+    if (L.raw) return L.build(g, exclude);
     if (L.doorsRandom && !L.build) return [];
     if (L.extraRandom) return withExtras(L, g, exclude);
     if (!L.random) return finalizeCells(g, L.build(g));
@@ -2616,8 +2754,8 @@
 
   function buildLevelWalls(exclude) {
     const W = fieldRect.width, H = fieldRect.height;
-    const g = makeGrid(W, H);
     const L = LEVELS[currentLevel];
+    const g = withSpawns(makeGrid(W, H), L);
     const cells = buildCells(L, g, exclude);
     staticWalls = cellsToPx(g, cells);
     if (L.random) staticWalls.forEach(w => w.jumpy = true);
@@ -2963,9 +3101,12 @@
       frozenUntil: 0
     };
 
+    // карта из редактора может задать свои места танков и куда они смотрят
+    const mySpawn = () => { const L = LEVELS[currentLevel]; return L && L.tanks ? L.tanks[startFrac > 0.5 ? 0 : 1] : null; };
     function initPos() {
-      state.x = fieldRect.width / 2;
-      state.y = fieldRect.height * startFrac;
+      const sp = mySpawn();
+      state.x = sp ? sp.x : fieldRect.width / 2;
+      state.y = sp ? sp.y : fieldRect.height * startFrac;
     }
     initPos();
 
@@ -2973,7 +3114,8 @@
       state.shells.forEach(s => s.el.remove());
       state.shells = [];
       initPos();
-      state.angle = initialAngle;
+      const sp = mySpawn();
+      state.angle = sp ? ((sp.dir || 0) * 90) % 360 : initialAngle;
       state.moving = false;
       state.rotating = true;
       state.rotateDir = 1;
@@ -3003,7 +3145,7 @@
         if (!netOwn) { state.ammo--; renderAmmo(); }
       }
       // ЭКСПЕРИМЕНТ: в танках с джойстиком обойма из 3 снарядов (сквозь дерево — без обоймы)
-      if (!pierce && !netOwn && !TX.ammoUse(state)) return false;
+      if (!pierce && !TX.ammoUse(state)) return false;
       const rad = (state.angle - 90) * Math.PI / 180;
       const dx = Math.cos(rad), dy = Math.sin(rad);
       const tipX = state.x + dx * BARREL_TIP;
@@ -3850,6 +3992,26 @@
   }
   function showHome() { showOnly(homeScreen); }
 
+  // --- кнопка «Назад» Telegram: на любом экране, кроме главного, ведёт на шаг назад ---
+  if (inTelegram && tgApp.BackButton && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast('6.1')) {
+    const seen = el => el && el.getClientRects().length > 0 && !el.closest('[hidden]');
+    // порядок важен: сначала окна поверх всего, потом «Назад» в меню игры, потом пауза в самой игре
+    const BACK_ORDER = [
+      '.netOverlay:not([hidden]) .netStay', '.netOverlay:not([hidden]) .netToMenu', '#appSettingsClose',
+      '#hkBack', '#trBack', '#gvBack', '.pg:not([hidden]) .pgBack', '#quickBack', '#backBtn',
+      '#hkToSetup', '#trToSetup', '#gvToSetup', '.pg:not([hidden]) .pgToMenu', '#toLevelsBtn',
+      '#hkMenuBtn', '#trMenuBtn', '#gvMenuBtn', '.pg:not([hidden]) .pgMenu'
+    ];
+    const onHome = () => !menu.hidden && !homeScreen.hidden && document.getElementById('quickSetup').hidden && appSettings.hidden;
+    tgApp.BackButton.onClick(() => {
+      // идёт матч в танках — выходим в меню уровней (как кнопка «Меню»)
+      if (playing && menu.hidden) { document.getElementById('menuBtn').click(); return; }
+      for (const sel of BACK_ORDER) { const el = document.querySelector(sel); if (seen(el)) { el.click(); return; } }
+      showHome();
+    });
+    setInterval(() => { try { if (onHome()) tgApp.BackButton.hide(); else tgApp.BackButton.show(); } catch (e) {} }, 300);
+  }
+
   // --- окно «Настройки» (кнопка ⚙ рядом с названием) ---
   const appSettings = document.getElementById('appSettings');
   const fsSwitch = document.getElementById('fsSwitch');
@@ -3909,7 +4071,7 @@
     const prev = document.createElement('div');
     prev.className = 'preview';
     const PW = 12 * BLOCK, PH = 22 * BLOCK;
-    const pg = makeGrid(PW, PH);
+    const pg = withSpawns(makeGrid(PW, PH), L);
     const addRect = (cls, x, y, w, h) => {
       const d = document.createElement('div');
       d.className = cls;
@@ -3948,7 +4110,7 @@
         prev.appendChild(d);
       }));
     }
-    [[PW / 2, PH * 0.8, 'var(--tank1)'], [PW / 2, PH * 0.2, 'var(--tank2)']].forEach(([x, y, col]) => {
+    (L.tanks ? [[L.tanks[0].x, L.tanks[0].y, 'var(--tank1)'], [L.tanks[1].x, L.tanks[1].y, 'var(--tank2)']] : [[PW / 2, PH * 0.8, 'var(--tank1)'], [PW / 2, PH * 0.2, 'var(--tank2)']]).forEach(([x, y, col]) => {
       const d = document.createElement('div');
       d.className = 'ps';
       d.style.left = (x / PW) * 100 + '%';
@@ -4105,6 +4267,7 @@
     gameOver = false;
     roundResetting = false;
     toastEl.hidden = true;
+    forceRows = LEVELS[i].rows || null;
     fitRows();
     fitField();
     currentLevel = i;
@@ -4170,14 +4333,29 @@
   const cv = document.getElementById('hkCanvas');
   const ctx = cv.getContext('2d');
   const T = { W: 360, H: 640, k: 1, ox: 0, oy: 0, dpr: 1, GW: 150 }; // логический стол
-  const MR = 27, PR = 15;            // радиусы биты и шайбы
+  // радиусы биты и шайбы: шайба на 20% и бита на 40% больше прежних (15 и 27)
+  const MR0 = 27 * 1.4, PR0 = 15 * 1.2;
+  let MR = MR0, PR = PR0;
   // мод «Зона ворот»: полукруг у своих ворот; внутри бита сжимается, снаружи растёт обратно
   const CREASE = 72;
   const ZONE_SHRINK = 0.10 / 5, ZONE_GROW = 0.10 / 10, ZONE_MIN = 0.4; // доля размера в секунду
   const br = b => MR * (b.scale || 1); // текущий радиус биты
   const PUCK_MAX = 1500;             // px/с
   const MALLET_MAX = 2600;           // px/с — бита догоняет палец, но не телепортируется
-  const E_WALL = 0.9, E_HIT = 0.95;  // упругость борта и удара
+  // борт гасит 20% скорости шайбы (раньше 10%); сила удара биты — множитель
+  const E_WALL0 = 0.8, E_HIT = 0.95;
+  let E_WALL = E_WALL0, HIT_POWER = 1;
+  // вкладка «Тестирование»: те же параметры можно крутить в процентах (100% — как в обычном хоккее)
+  let hkTest = false;
+  const HK_TEST_DEF = { puck: 100, mallet: 100, absorb: 20, power: 100 };
+  const hkTestOpts = { ...HK_TEST_DEF };
+  try { Object.assign(hkTestOpts, JSON.parse(localStorage.getItem('hockey-test') || '{}')); } catch (e) {}
+  function hkApply() {
+    const o = hkTest ? hkTestOpts : HK_TEST_DEF;
+    PR = PR0 * o.puck / 100; MR = MR0 * o.mallet / 100;
+    E_WALL = 1 - o.absorb / 100; HIT_POWER = o.power / 100;
+  }
+  const hkWallHits = []; // вспышки на бортах: { x, y, t, f }
   const HK_BOTS = {
     // track — насколько бот смещается за шайбой в защите, predict — считает ли отскоки
     easy:   { speed: 300, think: 260, err: 45, track: 0.55, predict: false },
@@ -4205,9 +4383,9 @@
     const sw = innerWidth, sh = scrH();
     T.dpr = Math.min(1.5, window.devicePixelRatio || 1);
     cv.width = Math.round(sw * T.dpr); cv.height = Math.round(innerHeight * T.dpr);
-    // стол подстраивается под вытянутость экрана, но в разумных пределах
+    // стол всегда в пропорции поля танков 12 × 22 (360 × 660) на любом телефоне
     T.W = 360;
-    T.H = Math.max(560, Math.min(760, (sh - 16) / (sw - 16) * T.W));
+    T.H = 360 / 12 * 22;
     T.k = Math.min((sw - 16) / T.W, (sh - 16) / T.H);
     T.ox = (sw - T.W * T.k) / 2; T.oy = safeTop() + (sh - T.H * T.k) / 2;
   }
@@ -4224,6 +4402,7 @@
     p.vx = 0; p.vy = 0; p.trail = []; p.out = false;
   }
   function hkReset() {
+    hkApply();
     [bats[0].x, bats[0].y] = [T.W / 2, T.H - 70];
     [bats[1].x, bats[1].y] = [T.W / 2, 70];
     bats.forEach(b => { b.tx = b.x; b.ty = b.y; b.vx = b.vy = 0; b.id = null; b.scale = 1; b.zone = null; });
@@ -4416,9 +4595,9 @@
           const rvn = (p.vx - b.vx) * nx + (p.vy - b.vy) * ny;
           if (rvn < 0) {
             const inSp = Math.hypot(p.vx, p.vy);
-            p.vx -= (1 + E_HIT) * rvn * nx; p.vy -= (1 + E_HIT) * rvn * ny;
+            p.vx -= (1 + E_HIT) * rvn * nx * HIT_POWER; p.vy -= (1 + E_HIT) * rvn * ny * HIT_POWER;
             // без «накачки»: шайба, зажатая у борта, не разгоняется от дрожания биты
-            const cap = Math.max(inSp * E_HIT, Math.hypot(b.vx, b.vy) * 2 + 80);
+            const cap = Math.max(inSp * E_HIT, (Math.hypot(b.vx, b.vy) * 2 + 80) * HIT_POWER);
             const outSp = Math.hypot(p.vx, p.vy);
             if (outSp > cap) { p.vx *= cap / outSp; p.vy *= cap / outSp; }
             if (-rvn > 90) {
@@ -4442,6 +4621,7 @@
         // борта и штанги
         const inGoalX = Math.abs(p.x - T.W / 2) < T.GW / 2;
         let wall = false;
+        const vin = Math.hypot(p.vx, p.vy);
         if (p.x < PR) { p.x = PR; p.vx = Math.abs(p.vx) * E_WALL; wall = true; }
         if (p.x > T.W - PR) { p.x = T.W - PR; p.vx = -Math.abs(p.vx) * E_WALL; wall = true; }
         if (!inGoalX) {
@@ -4469,9 +4649,17 @@
             p.y = b.y + ey / e * (br(b) + PR);
           }
         }
-        if (wall && now - lastWallSound > 40 && Math.hypot(p.vx, p.vy) > 80) {
+        if (wall && now - lastWallSound > 50 && vin > 80) {
           lastWallSound = now;
-          sound(170, 0.05, 'square', 0.03, panX(p.x));
+          const f = Math.min(1, vin / 1100);
+          // глухой удар о борт + короткий щелчок, громче при сильном ударе
+          sound(120 + f * 60, 0.09, 'sine', 0.05 + f * 0.08, panX(p.x));
+          sound(420 + f * 260, 0.035, 'triangle', 0.02 + f * 0.04, panX(p.x));
+          const wx = p.x < PR + 2 ? 0 : p.x > T.W - PR - 2 ? T.W : p.x;
+          const wy = wx === p.x ? (p.y < T.H / 2 ? 0 : T.H) : p.y;
+          hkWallHits.push({ x: wx, y: wy, t: now, f });
+          if (hkWallHits.length > 12) hkWallHits.shift();
+          if (f > 0.6) vibrate(8);
         }
         const sp = Math.hypot(p.vx, p.vy);
         if (sp > PUCK_MAX) { p.vx *= PUCK_MAX / sp; p.vy *= PUCK_MAX / sp; }
@@ -4539,9 +4727,21 @@
     rr(W / 2 - T.GW / 2, H - 4, T.GW, 12, 5); ctx.fill();
     ctx.fillStyle = '#e04f3f'; rr(W / 2 - T.GW / 2 + 6, -6, T.GW - 12, 4, 2); ctx.fill();
     ctx.fillStyle = '#3f7fe0'; rr(W / 2 - T.GW / 2 + 6, H + 2, T.GW - 12, 4, 2); ctx.fill();
-    // борт
-    ctx.lineWidth = 4; ctx.strokeStyle = '#c3d1dc';
-    rr(0, 0, W, H, 26); ctx.stroke();
+    // борт: толстый и яркий, при ударе в месте удара вспыхивает
+    ctx.lineWidth = 12; ctx.strokeStyle = '#2f6fa8';
+    rr(-4, -4, W + 8, H + 8, 30); ctx.stroke();
+    ctx.lineWidth = 4; ctx.strokeStyle = '#7fc4ff';
+    rr(1, 1, W - 2, H - 2, 25); ctx.stroke();
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    rr(-6, -6, W + 12, H + 12, 32); ctx.stroke();
+    for (let i = hkWallHits.length - 1; i >= 0; i--) {
+      const w = hkWallHits[i], age = (now - w.t) / 380;
+      if (age >= 1) { hkWallHits.splice(i, 1); continue; }
+      const r = 18 + w.f * 40 + age * 20;
+      const gl = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, r);
+      gl.addColorStop(0, `rgba(170, 230, 255, ${(1 - age) * (0.55 + w.f * 0.45)})`); gl.addColorStop(1, 'rgba(170,230,255,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(w.x, w.y, r, 0, Math.PI * 2); ctx.fill();
+    }
     // шайбы со шлейфом
     for (const p of pucks) {
       if (p.out) continue;
@@ -4630,7 +4830,32 @@
     document.getElementById('hkWin').hidden = true;
     document.getElementById('hkSetup').hidden = false;
   }
-  document.getElementById('hockeyTile').addEventListener('click', () => {
+  // ползунки тестирования (в процентах)
+  const HK_SLIDERS = [
+    ['puck', 'Размер шайбы', 50, 200, 5, ''],
+    ['mallet', 'Размер биты', 50, 200, 5, ''],
+    ['absorb', 'Поглощение удара о борт', 0, 60, 5, 'Сколько скорости шайба теряет о борт. Обычно 20%'],
+    ['power', 'Сила удара биты', 50, 200, 5, '']
+  ];
+  const hkSliderBox = document.getElementById('hkTestSliders');
+  HK_SLIDERS.forEach(([key, label, min, max, step, small]) => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<div class="settingRow"><div class="label">${label}${small ? `<small>${small}</small>` : ''}</div><span class="speedVal"></span></div>
+      <input type="range" class="speedRange" min="${min}" max="${max}" step="${step}" aria-label="${label}">`;
+    const inp = wrap.querySelector('input'), val = wrap.querySelector('.speedVal');
+    const show = () => { inp.value = hkTestOpts[key]; val.textContent = hkTestOpts[key] + '%'; inp.style.setProperty('--fill', ((hkTestOpts[key] - min) / (max - min) * 100) + '%'); };
+    inp.addEventListener('input', () => { hkTestOpts[key] = +inp.value; show(); try { localStorage.setItem('hockey-test', JSON.stringify(hkTestOpts)); } catch (e) {} });
+    wrap.show = show; show();
+    hkSliderBox.appendChild(wrap);
+  });
+  document.getElementById('hkTestReset').addEventListener('click', () => {
+    Object.assign(hkTestOpts, HK_TEST_DEF);
+    try { localStorage.setItem('hockey-test', JSON.stringify(hkTestOpts)); } catch (e) {}
+    [...hkSliderBox.children].forEach(w => w.show());
+  });
+  document.getElementById('hockeyTestTile').addEventListener('click', () => { hkTest = true; document.getElementById('hkTestBox').hidden = false; openHockey(); });
+  document.getElementById('hockeyTile').addEventListener('click', () => { hkTest = false; document.getElementById('hkTestBox').hidden = true; openHockey(); });
+  function openHockey() {
     playing = false; // танки на паузе
     menu.hidden = true;
     hk.hidden = false;
@@ -4640,7 +4865,7 @@
     hkScore = [0, 0];
     hkMsg = null;
     hkShowSetup();
-  });
+  }
   document.getElementById('hkStart').addEventListener('click', hkStartMatch);
   document.getElementById('hkRematch').addEventListener('click', hkStartMatch);
   document.getElementById('hkToSetup').addEventListener('click', hkShowSetup);
@@ -6343,21 +6568,24 @@
   };
 
   // ======================= ОБОЙМА (танки с джойстиком) =======================
-  // 3 снаряда, восполняются по одному каждые 0,75 с. Пустая обойма — сухой щелчок.
+  // 5 снарядов, восполняются по одному каждые 0,75 с. Пустая обойма — сухой щелчок.
+  // Работает и по сети: каждый телефон считает свою обойму сам, а соперник видит чужую по сообщениям.
   // Пилюли видны под танком (у красного — со стороны красного), их видит и соперник.
-  const AMMO_MAX = 3, AMMO_RELOAD = 750;
-  const ammoOn = () => TXON() && controlMode === 'stick';
+  const AMMO_MAX = 5, AMMO_RELOAD = 750;
+  const ammoOn = () => controlMode === 'stick';
+  // по сети чужой танк стреляет со своего телефона — его обойму считает тот телефон
+  const remoteTank = () => NET.on ? (NET.role === 'guest' ? p1 : p2) : null;
   [p1, p2].forEach(p => { p.ammoS = AMMO_MAX; });
   const ammoEls = [p1, p2].map((p, k) => {
     const el = document.createElement('div');
     el.className = 'txAmmo ' + (k ? 'red' : 'blue');
-    el.innerHTML = '<i></i><i></i><i></i>';
+    el.innerHTML = '<i></i>'.repeat(AMMO_MAX);
     field.appendChild(el);
     return el;
   });
   let dryAt = 0;
   TX.ammoUse = p => {
-    if (!ammoOn()) return true;
+    if (!ammoOn() || p === remoteTank()) return true;
     if (p.ammoS >= 1) { p.ammoS -= 1; return true; }
     const now = performance.now();
     if (now - dryAt > 120) { dryAt = now; sound(170, 0.035, 'square', 0.02, p.x); }
@@ -6375,7 +6603,7 @@
       const el = ammoEls[k];
       el.hidden = !on;
       if (!on) return;
-      if (!gameOver) p.ammoS = Math.min(AMMO_MAX, p.ammoS + dt * 1000 / AMMO_RELOAD * TX.scale(now));
+      if (!gameOver && p !== remoteTank()) p.ammoS = Math.min(AMMO_MAX, p.ammoS + dt * 1000 / AMMO_RELOAD * TX.scale(now));
       const y = k ? p.y - 17 : p.y + 17;
       el.style.transform = `translate(${p.x}px, ${y}px)`;
       el.classList.toggle('full', p.ammoS >= AMMO_MAX);
@@ -6574,7 +6802,7 @@
   const BOT_NAME = 'pifpafgame';
   const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
   // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
-  const NET_VER = 6;
+  const NET_VER = 7;
   const OLD_VER_GUEST = 'У тебя старая версия игры. Закрой игру полностью (смахни Telegram из недавних приложений) и открой ссылку снова.';
   const OLD_VER_HOST = 'У соперника другая версия игры. Пусть он полностью закроет Telegram и снова откроет ссылку — а ты тоже перезапусти игру.';
   const qs = new URLSearchParams(location.search);
@@ -6982,7 +7210,7 @@
       sh2: p2.shieldActive ? 1 : 0,
       sh, mv: movers.map(m => [Math.round(m.rect.x * 10) / 10, Math.round(m.rect.y * 10) / 10]),
       th: turnstiles.map(t => +t.theta.toFixed(3)),
-      sc: [score1, score2], am: [p1.ammo, p2.ammo], bl: blinking ? 1 : 0,
+      sc: [score1, score2], am: [p1.ammo, p2.ammo], a1: +(p1.ammoS || 0).toFixed(2), bl: blinking ? 1 : 0,
       pz: menu.hidden ? 0 : 1,
       ev: evQueue.splice(0)
     });
@@ -6993,7 +7221,7 @@
       updatePlayer(p2, dt, now);
       guestPush(p2);
       updatePortals(dt, [p2]);
-      if (now - tLastPos > 33) { tLastPos = now; NET.send({ t: 'p', x: +p2.x.toFixed(1), y: +p2.y.toFixed(1), a: +p2.angle.toFixed(1), seq: NET.seq2, ch: +p2.charge.toFixed(2) }); }
+      if (now - tLastPos > 33) { tLastPos = now; NET.send({ t: 'p', x: +p2.x.toFixed(1), y: +p2.y.toFixed(1), a: +p2.angle.toFixed(1), seq: NET.seq2, ch: +p2.charge.toFixed(2), a2: +(p2.ammoS || 0).toFixed(2) }); }
     }
     renderGuest(now);
   };
@@ -7067,7 +7295,7 @@
   }
   function tankMsg(m) {
     if (NET.role === 'host') {
-      if (m.t === 'p' && m.seq === NET.seq2 && playing) { p2.nx = m.x; p2.ny = m.y; p2.na = m.a; p2.charge = m.ch || 0; }
+      if (m.t === 'p' && m.seq === NET.seq2 && playing) { p2.nx = m.x; p2.ny = m.y; p2.na = m.a; p2.charge = m.ch || 0; if (m.a2 != null) p2.ammoS = m.a2; }
       // выстрел из прошлой «жизни» (гость стрелял в момент взрыва) — не переносим танк назад и не стреляем
       else if (m.t === 'fire' && playing && !gameOver && menu.hidden && (m.seq === undefined || m.seq === NET.seq2)) {
         // выстрел гостя — из того места, где был его танк
@@ -7114,6 +7342,7 @@
       if (m.am[0] !== p1.ammo || m.am[1] !== p2.ammo) { p1.ammo = m.am[0]; p2.ammo = m.am[1]; renderAmmo(); }
       tank1El.classList.toggle('shielded', !!m.p1[3]);
       p1.charge = m.p1[4] || 0;
+      if (m.a1 != null) p1.ammoS = m.a1;
       if (!p2.shieldActive) tank2El.classList.toggle('shielded', !!m.sh2);
       if (blinking !== !!m.bl) { blinking = !!m.bl; wallsLayer.querySelectorAll('.wall.jumpy').forEach(el => el.classList.toggle('blink', blinking)); }
       for (const e of m.ev || []) guestEvent(e);
