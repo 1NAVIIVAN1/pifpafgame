@@ -6951,7 +6951,7 @@
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   const RELAY_HOST = 'pifpaf-m3ivan.mia0.amvera.tech';
   const RELAY_URL = qs_relay();
-  const NET_BUILD = '2.11-4';
+  const NET_BUILD = '2.11-5';
   const RELAY_NAME = /\.msk\d*\./.test(RELAY_HOST) ? 'Москва' : /\.waw\d*\./.test(RELAY_HOST) ? 'Варшава' : /\.mia\d*\./.test(RELAY_HOST) ? 'Майами' : RELAY_HOST;
   // строчка внизу плашки: через что идёт связь и какая версия — чтобы было видно, обновилась ли игра
   const netInfo = () => 'Связь: ' + (RELAY_URL ? 'сервер ' + RELAY_NAME + (NET.relayFail ? ' — не ответил, в прошлый раз было напрямую' : '') : 'напрямую') + ' · версия ' + NET_BUILD;
@@ -7228,7 +7228,7 @@
       const t = performance.now();
       try {
         const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 4000);
-        const r = await fetch('https://' + host + '/health?r=' + Math.random(), { cache: 'no-store', signal: ctl.signal });
+        const r = await fetch('https://' + host + '/health', { cache: 'no-store', signal: ctl.signal });
         await r.text(); clearTimeout(to);
         if (!r.ok) return null;
       } catch (e) { return null; }
