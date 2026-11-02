@@ -3164,7 +3164,7 @@
       const tipX = state.x + dx * BARREL_TIP;
       const tipY = state.y + dy * BARREL_TIP;
 
-      if (netOwn) NET.send({ t: 'fire', pierce, x: state.x, y: state.y, a: state.angle, seq: NET.seq2 });
+      if (netOwn) { NET.send({ t: 'fire', pierce, x: state.x, y: state.y, a: state.angle, seq: NET.seq2 }); NET.tankGhost && NET.tankGhost(tipX, tipY, dx, dy, pierce, Math.max(ricochetCount(), TX.rico(state))); }
       else {
       TX.shot(state);
       // бонус «Тройной выстрел»: ещё два снаряда веером
@@ -6949,7 +6949,7 @@
   const NET_VER = 7;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
-  const RELAY_HOST = 'pifpaf-m3ivan.waw0.amvera.tech';
+  const RELAY_HOST = 'pifpaf-m3ivan.msk1.amvera.tech';
   const RELAY_URL = qs_relay();
   function qs_relay() { const q = new URLSearchParams(location.search).get('relay'); return q || (RELAY_HOST ? 'wss://' + RELAY_HOST + '/' : ''); }
   const OLD_VER_GUEST = 'У тебя старая версия игры. Закрой игру полностью (смахни Telegram из недавних приложений) и открой ссылку снова.';
@@ -7596,7 +7596,7 @@
     if (now - tLastSend < 33) return;
     tLastSend = now;
     const sh = [];
-    for (const p of [p1, p2]) for (const s of p.shells) sh.push([s.id, Math.round(s.x * 10) / 10, Math.round(s.y * 10) / 10, +s.dx.toFixed(3), +s.dy.toFixed(3), s.pierce ? 1 : 0]);
+    for (const p of [p1, p2]) for (const s of p.shells) sh.push([s.id, Math.round(s.x * 10) / 10, Math.round(s.y * 10) / 10, +s.dx.toFixed(3), +s.dy.toFixed(3), s.pierce ? 1 : 0, s.owner, s.left]);
     NET.send({
       t: 's',
       p1: [Math.round(p1.x * 10) / 10, Math.round(p1.y * 10) / 10, Math.round(p1.angle * 10) / 10, p1.shieldActive ? 1 : 0, +p1.charge.toFixed(2)],
@@ -7664,20 +7664,64 @@
       t.theta = a.th[i] + d * f;
       if (t.el) t.el.style.transform = `translate(${t.cx}px, ${t.cy}px) rotate(${t.theta}rad)`;
     });
-    // снаряды: из последнего снимка, с досчётом полёта до «сейчас»
+    // снаряды: из последнего снимка, с досчётом полёта до «сейчас».
+    // Свои снаряды гость видит сразу (призрак при выстреле), а настоящие от хоста досчитываем
+    // ещё на время пути туда-обратно — тогда призрак плавно сменяется настоящим.
     const L = tSnap[tSnap.length - 1];
-    const age = Math.min(0.2, (now - L.at) / 1000) + 0.0;
+    const age = Math.min(0.2, (now - L.at) / 1000);
+    const lat = Math.min(0.45, NET.rtt / 1000);
     const seen = new Set();
-    for (const [id, x, y, dx, dy, pierce] of L.d.sh) {
+    for (const [id, x, y, dx, dy, pierce, own, left] of L.d.sh) {
       seen.add(id);
       let el = guestShells.get(id);
-      if (!el) { el = document.createElement('div'); el.className = pierce ? 'pierceShell' : 'shell'; field.appendChild(el); guestShells.set(id, el); }
-      const sx = x + dx * SHELL_SPEED * age, sy = y + dy * SHELL_SPEED * age;
+      if (!el) {
+        el = document.createElement('div'); el.className = pierce ? 'pierceShell' : 'shell'; field.appendChild(el); guestShells.set(id, el);
+        if (own === 2 && ghostShells.length) { const g = ghostShells.shift(); g.el.remove(); }
+      }
+      const pos = traceShell(x, y, dx, dy, SHELL_SPEED * (age + (own === 2 ? lat : 0)), left || 0, pierce);
+      if (!pos) { el.style.display = 'none'; continue; }
+      el.style.display = '';
       const hw = pierce ? 17 : 5, hh = pierce ? 6 : 5;
-      el.style.transform = `translate(${sx - hw}px, ${sy - hh}px)` + (pierce ? ` rotate(${Math.atan2(dy, dx) * 180 / Math.PI}deg)` : '');
+      el.style.transform = `translate(${pos[0] - hw}px, ${pos[1] - hh}px)` + (pierce ? ` rotate(${Math.atan2(pos[3], pos[2]) * 180 / Math.PI}deg)` : '');
     }
     for (const [id, el] of guestShells) if (!seen.has(id)) { el.remove(); guestShells.delete(id); }
+    for (let i = ghostShells.length - 1; i >= 0; i--) {
+      const g = ghostShells[i], t = (now - g.t0) / 1000;
+      const pos = t < 1.2 ? traceShell(g.x, g.y, g.dx, g.dy, SHELL_SPEED * t, g.left, g.pierce) : null;
+      if (!pos) { g.el.remove(); ghostShells.splice(i, 1); continue; }
+      const hw = g.pierce ? 17 : 5, hh = g.pierce ? 6 : 5;
+      g.el.style.transform = `translate(${pos[0] - hw}px, ${pos[1] - hh}px)` + (g.pierce ? ` rotate(${Math.atan2(pos[3], pos[2]) * 180 / Math.PI}deg)` : '');
+    }
   }
+  // полёт снаряда на dist пикселей с отскоками (как у хоста). null — снаряд разбился
+  function traceShell(x, y, dx, dy, dist, left, pierce) {
+    const FW = fieldRect.width, FH = fieldRect.height, R = 5, st = 4;
+    const solid = pierce ? staticWalls : allWalls;
+    for (let d = 0; d < dist; d += st) {
+      const k = Math.min(st, dist - d), px = x, py = y;
+      x += dx * k; y += dy * k;
+      if (left > 0 && (x < R || x > FW - R)) { dx = -dx; x = Math.max(R, Math.min(FW - R, x)); left--; }
+      if (left > 0 && (y < R || y > FH - R)) { dy = -dy; y = Math.max(R, Math.min(FH - R, y)); left--; }
+      if (x < -10 || x > FW + 10 || y < -10 || y > FH + 10) return null;
+      const w = solid.find(w => w && rectHit(w, x, y, R));
+      if (w) {
+        if (left <= 0) return null;
+        const sx = !(px > w.x && px < w.x + w.w), sy = !(py > w.y && py < w.y + w.h);
+        if (sx || !sy) dx = -dx;
+        if (sy || !sx) dy = -dy;
+        x = px; y = py; left--;
+      }
+    }
+    return [x, y, dx, dy];
+  }
+  // гость выстрелил — сразу показываем снаряд, не дожидаясь хоста
+  const ghostShells = [];
+  NET.tankGhost = (x, y, dx, dy, pierce, left) => {
+    const el = document.createElement('div'); el.className = pierce ? 'pierceShell' : 'shell'; field.appendChild(el);
+    ghostShells.push({ x, y, dx, dy, pierce, left: pierce ? 0 : left, t0: performance.now(), el });
+    if (ghostShells.length > 6) ghostShells.shift().el.remove();
+  };
+  NET.tankGhostClear = () => { ghostShells.forEach(g => g.el.remove()); ghostShells.length = 0; };
   function applyLayout(m) {
     staticWalls = m.sw.map(([x, y, w, h, j]) => ({ x, y, w, h, jumpy: !!j }));
     movers = m.mv.map(([w, h, j, horiz, x, y]) => ({ w, h, jumpy: !!j, horiz: !!horiz, rect: { x, y, w, h }, from: { x: 0, y: 0 }, to: horiz ? { x: 1, y: 0 } : { x: 0, y: 1 } }));
@@ -7724,6 +7768,7 @@
       tSnap = [];
       for (const [, el] of guestShells) el.remove();
       guestShells.clear();
+      NET.tankGhostClear();
       fitField();
     } else if (m.t === 'layout') {
       applyLayout(m);
@@ -7784,7 +7829,7 @@
     document.getElementById('btn1').textContent = 'ИГРОК 1 (синий)';
     document.getElementById('rematchBtn').textContent = 'Реванш';
     for (const [, el] of guestShells) el.remove();
-    guestShells.clear(); tSnap = [];
+    guestShells.clear(); tSnap = []; NET.tankGhostClear && NET.tankGhostClear();
     delete p2.nx;
     fitField();
     renderPill();
