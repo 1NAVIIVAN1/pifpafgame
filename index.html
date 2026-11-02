@@ -6951,7 +6951,7 @@
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   const RELAY_HOST = 'pifpaf-m3ivan.mia0.amvera.tech';
   const RELAY_URL = qs_relay();
-  const NET_BUILD = '2.11-3';
+  const NET_BUILD = '2.11-4';
   const RELAY_NAME = /\.msk\d*\./.test(RELAY_HOST) ? 'Москва' : /\.waw\d*\./.test(RELAY_HOST) ? 'Варшава' : /\.mia\d*\./.test(RELAY_HOST) ? 'Майами' : RELAY_HOST;
   // строчка внизу плашки: через что идёт связь и какая версия — чтобы было видно, обновилась ли игра
   const netInfo = () => 'Связь: ' + (RELAY_URL ? 'сервер ' + RELAY_NAME + (NET.relayFail ? ' — не ответил, в прошлый раз было напрямую' : '') : 'напрямую') + ' · версия ' + NET_BUILD;
@@ -7212,10 +7212,42 @@
     let txt, cls;
     if (NT.reconnSince) { txt = 'Связь прервалась — переподключаемся…'; cls = 'bad'; }
     else if (NT.peerWait) { txt = 'Соперник переподключается…'; cls = 'bad'; }
-    else { const r = Math.round(NET.rtt); txt = r + ' мс' + (NT.via === 'relay' ? '' : ' · P2P'); cls = r < 90 ? 'ok' : r < 180 ? 'mid' : 'bad'; }
+    else {
+      const r = Math.round(NET.rtt);
+      // «до соперника» — круг туда-обратно через обоих игроков; «сервер» — только мой путь до сервера и обратно
+      txt = (NT.via === 'relay' ? 'соперник ' + r + ' мс' + (NET.srvRtt ? ' · сервер ' + NET.srvRtt + ' мс' : '') : r + ' мс · P2P');
+      cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
+    }
     badgeEl.textContent = txt; badgeEl.className = cls;
   }
   NET.badge = netBadge;
+  // свой пинг до сервера: короткий запрос /health (не зависит от второго телефона)
+  async function pingHost(host, n = 4) {
+    let best = Infinity;
+    for (let i = 0; i < n; i++) {
+      const t = performance.now();
+      try {
+        const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 4000);
+        const r = await fetch('https://' + host + '/health?r=' + Math.random(), { cache: 'no-store', signal: ctl.signal });
+        await r.text(); clearTimeout(to);
+        if (!r.ok) return null;
+      } catch (e) { return null; }
+      if (i > 0) best = Math.min(best, performance.now() - t); // первый запрос — ещё с установкой соединения
+    }
+    return Math.round(best);
+  }
+  setInterval(async () => {
+    if (!NET.on || NT.via !== 'relay' || document.hidden || !RELAY_HOST) return;
+    const v = await pingHost(RELAY_HOST, 2);
+    if (v) { NET.srvRtt = v; netBadge(); }
+  }, 5000);
+  // проверка всех серверов из вкладки «По сети»
+  const SERVERS = [['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'], ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech']];
+  async function checkServers(el) {
+    el.textContent = 'Проверяем…';
+    const res = await Promise.all(SERVERS.map(async ([n, h]) => [n, await pingHost(h)]));
+    el.innerHTML = res.map(([n, v]) => `${n}: <b>${v == null ? 'выключен' : v + ' мс'}</b>`).join(' · ') + '<br><small>Это твой путь до сервера и обратно. Сейчас игра использует: ' + RELAY_NAME + '</small>';
+  }
 
   // --- гость: войти по коду ---
   async function joinRoom(code, tries = 0, p2p = false) {
@@ -7451,7 +7483,8 @@
         <button class="hkPlay netHost">Создать комнату</button>
         <div class="netOr">или</div>
         <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
-        <p class="netTip">${netInfo()}</p>`;
+        <p class="netTip">${netInfo()}</p>
+        <button class="backBtn netCheck">Проверить серверы</button><p class="netTip netCheckRes"></p>`;
     } else if (st === 'creating') {
       h = `<p class="netWait">Создаём комнату…</p><p class="netStage">${NET.stage || ''}</p><button class="backBtn netCancel">Отмена</button>`;
     } else if (st === 'waiting') {
@@ -7486,6 +7519,7 @@
     if ($('.netCancel')) $('.netCancel').addEventListener('click', () => { netClose(true); setLobby('idle'); });
     if ($('.netLeaveBtn')) $('.netLeaveBtn').addEventListener('click', () => netLeave());
     if ($('.netRetry')) $('.netRetry').addEventListener('click', () => setLobby('idle'));
+    if ($('.netCheck')) $('.netCheck').addEventListener('click', () => checkServers($('.netCheckRes')));
     renderNetTiles();
   }
   // подсказка в плашке (например, «сначала создай комнату»)
