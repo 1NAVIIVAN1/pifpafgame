@@ -6951,6 +6951,10 @@
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   const RELAY_HOST = 'pifpaf-m3ivan.msk1.amvera.tech';
   const RELAY_URL = qs_relay();
+  const NET_BUILD = '2.11-2';
+  const RELAY_NAME = /\.msk\d*\./.test(RELAY_HOST) ? 'Москва' : /\.waw\d*\./.test(RELAY_HOST) ? 'Варшава' : /\.mia\d*\./.test(RELAY_HOST) ? 'Майами' : RELAY_HOST;
+  // строчка внизу плашки: через что идёт связь и какая версия — чтобы было видно, обновилась ли игра
+  const netInfo = () => 'Связь: ' + (RELAY_URL ? 'сервер ' + RELAY_NAME + (NET.relayFail ? ' — не ответил, в прошлый раз было напрямую' : '') : 'напрямую') + ' · версия ' + NET_BUILD;
   function qs_relay() { const q = new URLSearchParams(location.search).get('relay'); return q || (RELAY_HOST ? 'wss://' + RELAY_HOST + '/' : ''); }
   const OLD_VER_GUEST = 'У тебя старая версия игры. Закрой игру полностью (смахни Telegram из недавних приложений) и открой ссылку снова.';
   const OLD_VER_HOST = 'У соперника другая версия игры. Пусть он полностью закроет Telegram и снова откроет ссылку — а ты тоже перезапусти игру.';
@@ -7130,6 +7134,7 @@
     if (!NET.role || NT.via !== 'relay') return;
     // сервер ни разу не ответил — падаем на старый способ
     if (!wasUp && !NT.relayOk) {
+      NET.relayFail = true;
       const code = NET.code || NT.hostCode;
       if (NET.role === 'host') { NT.hostCode = null; hostP2P(NT.relayCode); }
       else joinRoom(code, 0, true);
@@ -7150,7 +7155,7 @@
     }, document.hidden ? 4000 : 900);
   }
   function relayBack() {
-    NT.reconnSince = 0; NT.relayOk = true;
+    NT.reconnSince = 0; NT.relayOk = true; NET.relayFail = false;
     if (NET.hostNote === RECONNECTING) { NET.hostNote = ''; if (NET.lobby === 'waiting') setLobby('waiting'); }
     netBadge();
   }
@@ -7445,7 +7450,8 @@
         <p>Создай комнату и отправь ссылку другу — или введи код, который прислал друг.</p>
         <button class="hkPlay netHost">Создать комнату</button>
         <div class="netOr">или</div>
-        <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>`;
+        <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
+        <p class="netTip">${netInfo()}</p>`;
     } else if (st === 'creating') {
       h = `<p class="netWait">Создаём комнату…</p><p class="netStage">${NET.stage || ''}</p><button class="backBtn netCancel">Отмена</button>`;
     } else if (st === 'waiting') {
