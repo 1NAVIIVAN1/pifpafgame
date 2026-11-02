@@ -6949,9 +6949,9 @@
   const NET_VER = 7;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
-  const RELAY_HOST = 'pifpaf-m3ivan.msk1.amvera.tech';
+  const RELAY_HOST = 'pifpaf-m3ivan.mia0.amvera.tech';
   const RELAY_URL = qs_relay();
-  const NET_BUILD = '2.11-2';
+  const NET_BUILD = '2.11-3';
   const RELAY_NAME = /\.msk\d*\./.test(RELAY_HOST) ? 'Москва' : /\.waw\d*\./.test(RELAY_HOST) ? 'Варшава' : /\.mia\d*\./.test(RELAY_HOST) ? 'Майами' : RELAY_HOST;
   // строчка внизу плашки: через что идёт связь и какая версия — чтобы было видно, обновилась ли игра
   const netInfo = () => 'Связь: ' + (RELAY_URL ? 'сервер ' + RELAY_NAME + (NET.relayFail ? ' — не ответил, в прошлый раз было напрямую' : '') : 'напрямую') + ' · версия ' + NET_BUILD;
