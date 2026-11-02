@@ -6951,10 +6951,12 @@
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   const RELAY_HOST = 'pifpaf-m3ivan.msk1.amvera.tech';
   const RELAY_URL = qs_relay();
-  const NET_BUILD = '2.11-6';
+  const NET_BUILD = '2.11-7';
+  // как подключаться: по умолчанию напрямую (P2P); сервер Москва — по кнопке, когда VPN выключен
+  NET.mode = 'p2p';
   const RELAY_NAME = /\.msk\d*\./.test(RELAY_HOST) ? 'Москва' : /\.waw\d*\./.test(RELAY_HOST) ? 'Варшава' : /\.mia\d*\./.test(RELAY_HOST) ? 'Майами' : RELAY_HOST;
   // строчка внизу плашки: через что идёт связь и какая версия — чтобы было видно, обновилась ли игра
-  const netInfo = () => 'Связь: ' + (RELAY_URL ? 'сервер ' + RELAY_NAME + (NET.relayFail ? ' — не ответил, в прошлый раз было напрямую' : '') : 'напрямую') + ' · версия ' + NET_BUILD;
+  const netInfo = () => 'Связь: ' + (NET.mode === 'relay' ? 'через сервер ' + RELAY_NAME + (NET.relayFail ? ' — не ответил, в прошлый раз было напрямую' : '') : 'напрямую (P2P)') + ' · версия ' + NET_BUILD;
   function qs_relay() { const q = new URLSearchParams(location.search).get('relay'); return q || (RELAY_HOST ? 'wss://' + RELAY_HOST + '/' : ''); }
   const OLD_VER_GUEST = 'У тебя старая версия игры. Закрой игру полностью (смахни Telegram из недавних приложений) и открой ссылку снова.';
   const OLD_VER_HOST = 'У соперника другая версия игры. Пусть он полностью закроет Telegram и снова откроет ссылку — а ты тоже перезапусти игру.';
@@ -7032,7 +7034,7 @@
       return;
     }
     NT.key = Math.random().toString(36).slice(2);
-    if (RELAY_URL && !p2p) { relayHost(code, true); return; }
+    if (RELAY_URL && !p2p && NET.mode === 'relay') { relayHost(code, true); return; }
     hostP2P(code);
   }
   async function hostP2P(code) {
@@ -7134,8 +7136,9 @@
     if (!NET.role || NT.via !== 'relay') return;
     // сервер ни разу не ответил — падаем на старый способ
     if (!wasUp && !NT.relayOk) {
-      NET.relayFail = true;
       const code = NET.code || NT.hostCode;
+      if (NT.probe) { NT.probe = false; NT.via = 'p2p'; if (!window.Peer) return netError('Комната ' + code + ' не найдена или связь недоступна. Проверь код; если у кого-то включён VPN — попробуйте без него.'); joinRoom(code, 1, true); return; } // сервер недоступен — дальше напрямую
+      NET.relayFail = true;
       if (NET.role === 'host') { NT.hostCode = null; hostP2P(NT.relayCode); }
       else joinRoom(code, 0, true);
       return;
@@ -7174,7 +7177,8 @@
       relaySys(m);
     }, ws => ws.send(JSON.stringify({ t: '_host', code, key: NT.key })));
   }
-  function relayJoin(code, tries, resume) {
+  function relayJoin(code, tries, resume, probe) {
+    NT.probe = !!probe;
     NT.joinStep = 'server';
     if (!resume) {
       stage(tries ? `Ищем комнату ${code}… (попытка ${tries + 1})` : 'Связываемся с сервером…');
@@ -7193,6 +7197,7 @@
         NT.relayOk = true;
         const ws = NT.ws; NT.ws = null; try { ws && ws.close(); } catch (e) {}
         if (NET.on) return netLost();
+        if (probe) { NT.probe = false; NT.via = 'p2p'; if (!window.Peer) return netError('Комната ' + code + ' не найдена или связь недоступна. Проверь код; если у кого-то включён VPN — попробуйте без него.'); joinRoom(code, 1, true); return; } // на сервере нет — дальше напрямую
         // комнаты нет на нашем сервере — может, хозяин на старом способе; потом пробуем и его
         if (tries < 3) { stage(`Комната ${code} пока не отвечает — пробуем ещё (${tries + 1}/3)…`); setTimeout(() => { if (NET.role === 'guest' && NET.code === code && !NET.on) relayJoin(code, tries + 1); }, 2000); return; }
         joinRoom(code, 0, true); return;
@@ -7261,11 +7266,16 @@
       NT.joinTimer = setTimeout(() => { if (!NET.on) netError('Комната ' + code + ' не найдена'); }, 4000);
       return;
     }
-    if (!tries && !p2p && RELAY_URL) { NT.key = Math.random().toString(36).slice(2); relayJoin(code, 0); return; }
+    if (!tries) NT.key = Math.random().toString(36).slice(2);
+    if (!tries && !p2p && RELAY_URL && NET.mode === 'relay') { relayJoin(code, 0); return; }
     NT.via = 'p2p';
     if (!tries) {
       stage('Загружаем модуль связи…');
-      try { await loadPeer(); } catch (e) { return netError(e.message); }
+      try { await loadPeer(); } catch (e) {
+        // модуль прямой связи не загрузился — пробуем комнату на сервере
+        if (RELAY_URL && !NT.probed) { NT.probed = true; return relayJoin(code, 0, false, true); }
+        return netError(e.message);
+      }
       if (NET.role !== 'guest' || NET.code !== code) return;
       // общий таймер на всё подключение
       clearTimeout(NT.joinTimer);
@@ -7294,6 +7304,7 @@
         // комнаты пока нет: возможно, хозяин свернул игру, пока отправлял ссылку, и она сейчас восстанавливается
         try { peer.destroy(); } catch (e) {}
         NT.peer = null; NT.conn = null;
+        if (RELAY_URL && !NT.probed) { NT.probed = true; stage('Проверяем, нет ли комнаты на сервере ' + RELAY_NAME + '…'); relayJoin(code, 0, false, true); return; }
         if (tries < 6) {
           stage(`Комната ${code} пока не отвечает — пробуем ещё (${tries + 1}/6)…`);
           setTimeout(() => { if (NET.role === 'guest' && NET.code === code && !NET.on) joinRoom(code, tries + 1); }, 2500);
@@ -7384,7 +7395,7 @@
     { const ws = NT.ws; NT.ws = null; try { ws && ws.close(); } catch (e) {} }
     clearTimeout(NT.relayTimer); NT.via = null; NT.reconnSince = 0; NT.peerWait = 0; NT.relayOk = false; NT.relayCode = null;
     NT.conn = NT.peer = NT.bc = null;
-    NT.hostCode = null; NT.hostRetries = 0; NT.joinStep = null; NT.iceFail = false; NET.stage = '';
+    NT.hostCode = null; NT.hostRetries = 0; NT.probed = false; NT.probe = false; NT.joinStep = null; NT.iceFail = false; NET.stage = '';
     const wasGuest = NET.role === 'guest';
     NET.on = false; NET.role = null; NET.code = null;
     document.body.classList.remove('netOn', 'netGuest');
@@ -7484,7 +7495,14 @@
         <div class="netOr">или</div>
         <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
         <p class="netTip">${netInfo()}</p>
-        <button class="backBtn netCheck">Проверить серверы</button><p class="netTip netCheckRes"></p>`;
+        ${!RELAY_URL ? '' : NET.mode === 'relay'
+          ? `<p class="netTip" style="color:#4fd17a;opacity:1">${NET.srvMsg || 'Подключение через сервер ' + RELAY_NAME + ' включено.'}</p><button class="backBtn netToP2P">Вернуться на P2P</button>`
+          : `<button class="backBtn netToSrv">Подключение через сервер ${RELAY_NAME}</button>
+             <div class="netSrvBox" hidden>
+               <p class="netErr">Сервер ${RELAY_NAME} работает только без VPN. Выключи VPN и предупреди друга, чтобы он тоже отключил VPN.</p>
+               <button class="hkPlay netTrySrv">Попробовать подключиться к серверу ${RELAY_NAME}</button>
+               <p class="netTip netTryRes"></p>
+             </div>`}`;
     } else if (st === 'creating') {
       h = `<p class="netWait">Создаём комнату…</p><p class="netStage">${NET.stage || ''}</p><button class="backBtn netCancel">Отмена</button>`;
     } else if (st === 'waiting') {
@@ -7519,7 +7537,16 @@
     if ($('.netCancel')) $('.netCancel').addEventListener('click', () => { netClose(true); setLobby('idle'); });
     if ($('.netLeaveBtn')) $('.netLeaveBtn').addEventListener('click', () => netLeave());
     if ($('.netRetry')) $('.netRetry').addEventListener('click', () => setLobby('idle'));
-    if ($('.netCheck')) $('.netCheck').addEventListener('click', () => checkServers($('.netCheckRes')));
+    if ($('.netToSrv')) $('.netToSrv').addEventListener('click', () => { $('.netToSrv').hidden = true; $('.netSrvBox').hidden = false; });
+    if ($('.netToP2P')) $('.netToP2P').addEventListener('click', () => { NET.mode = 'p2p'; NET.srvMsg = ''; setLobby('idle'); });
+    if ($('.netTrySrv')) $('.netTrySrv').addEventListener('click', async () => {
+      const btn = $('.netTrySrv'), res = $('.netTryRes');
+      btn.disabled = true; res.textContent = 'Подключаемся к серверу ' + RELAY_NAME + '…';
+      const v = await pingHost(RELAY_HOST, 3);
+      if (NET.lobby !== 'idle') return;
+      if (v) { NET.mode = 'relay'; NET.relayFail = false; NET.srvMsg = '✓ Сервер ' + RELAY_NAME + ' доступен (' + v + ' мс). Создавай комнату или входи по коду.'; setLobby('idle'); }
+      else { btn.disabled = false; res.innerHTML = '<span style="color:#ff8a7a">Не получилось подключиться.</span> Выключи VPN (проверь, что значок VPN пропал), подожди пару секунд и нажми ещё раз.'; }
+    });
     renderNetTiles();
   }
   // подсказка в плашке (например, «сначала создай комнату»)
