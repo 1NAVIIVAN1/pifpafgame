@@ -7615,12 +7615,12 @@
   const BOT_NAME = 'pifpafgame';
   const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
   // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
-  const NET_VER = 7;
+  const NET_VER = 8;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   const RELAY_HOST = ''; // свои серверы отключены — только P2P (код сервера оставлен на будущее)
   const RELAY_URL = qs_relay();
-  const NET_BUILD = '2.14-6';
+  const NET_BUILD = '2.15';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -7708,7 +7708,39 @@
       return;
     }
     if (NT.via === 'relay') { if (NT.ws && NT.ws.readyState === 1) { try { NT.ws.send(JSON.stringify(m)); } catch (e) {} } return; }
+    if (FAST_T.has(m.t) && NT.fast && NT.fast.readyState === 'open') {
+      // события (выстрелы, взрывы, звуки, победа) терять нельзя — они идут отдельно по надёжному каналу
+      if (m.ev && m.ev.length) { const ev = m.ev; m.ev = []; if (NT.conn && NT.conn.open) { try { NT.conn.send({ t: '_ev', of: m.t, key: m.key, ev }); } catch (e) {} } }
+      // очередь забита — этот снимок пропускаем, следующий будет свежее
+      if (NT.fast.bufferedAmount > 24000 && m.t[0] !== '_') return;
+      m._n = (FAST_N[m.t] = (FAST_N[m.t] || 0) + 1);
+      try { NT.fast.send(JSON.stringify(m)); } catch (e) {}
+      return;
+    }
     if (NT.conn && NT.conn.open) { try { NT.conn.send(m); } catch (e) {} }
+  }
+  // БЫСТРЫЙ КАНАЛ — как UDP в настоящих сетевых играх: снимки и движение летят без очереди.
+  // Потерялся пакет — не ждём его повторной отправки (через 33 мс придёт новый, свежее).
+  // Раньше всё шло по одному надёжному каналу: один потерянный пакет задерживал все следующие.
+  const FAST_T = new Set(['s', 'qs', 'ns', 'p', 'qi', '_ping', '_pong']);
+  let FAST_N = {}, FAST_LAST = {};
+  function setupFast() {
+    try { NT.fast && NT.fast.close(); } catch (e) {}
+    NT.fast = null; FAST_N = {}; FAST_LAST = {};
+    const pc = NT.conn && NT.conn.peerConnection;
+    if (!pc || !pc.createDataChannel) return;
+    try {
+      // оба телефона создают канал с одинаковым номером — договариваться через сервер не нужно
+      const dc = pc.createDataChannel('pp-fast', { negotiated: true, id: 77, ordered: false, maxRetransmits: 0 });
+      dc.onmessage = e => {
+        let m; try { m = JSON.parse(e.data); } catch (err) { return; }
+        if (!m || !m.t) return;
+        if (m._n) { if (m._n <= (FAST_LAST[m.t] || 0)) return; FAST_LAST[m.t] = m._n; } // старый (пришёл позже нового) — выбрасываем
+        onRaw(m);
+      };
+      dc.onopen = () => { if (NT.fast === dc) netBadge(); };
+      NT.fast = dc;
+    } catch (e) { NT.fast = null; }
   }
   NET.send = m => { if (NET.on || m.t && m.t[0] === '_') rawSend(m); };
   // ЗАТОР: канал надёжный — если связь медленная (VPN, пересылка через TURN), снимки копятся в очереди,
@@ -7717,11 +7749,12 @@
   NET.buffered = () => {
     try {
       if (NT.via === 'relay') return NT.ws ? NT.ws.bufferedAmount : 0;
+      if (NT.fast && NT.fast.readyState === 'open') return NT.fast.bufferedAmount || 0;
       const dc = NT.conn && (NT.conn.dataChannel || NT.conn._dc);
       return dc ? dc.bufferedAmount || 0 : 0;
     } catch (e) { return 0; }
   };
-  NET.congested = () => NET.buffered() > 16000;
+  NET.congested = () => NET.buffered() > 24000;
   // как часто слать снимки: на плохой связи — реже (меньше очередь)
   NET.snapGap = () => NET.rtt > 400 ? 66 : NET.rtt > 220 ? 45 : 33;
   const evQueue = [];
@@ -8013,7 +8046,7 @@
       const r = Math.round(NET.rtt);
       // какая связь: напрямую телефон-телефон или через пересылающий сервер (TURN), если напрямую не пробиться
       const via = NT.via === 'relay' ? 'Сервер' : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
-      txt = via + ' · ' + r + ' мс' + (NET.buffered() > 16000 ? ' · затор' : '');
+      txt = via + ' · ' + r + ' мс' + (NET.buffered() > 24000 ? ' · затор' : '') + (NT.fast && NT.fast.readyState === 'open' ? ' ⚡' : '');
       cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
     }
     badgeEl.textContent = txt; badgeEl.className = cls;
@@ -8153,6 +8186,11 @@
       case '_busy': netError('В этой комнате уже играют.'); return;
       case '_badver': if (NET.role === 'guest') { clearTimeout(NT.joinTimer); netError(OLD_VER_GUEST); } return;
       case '_ping': rawSend({ t: '_pong', ts: m.ts }); return;
+      case '_ev':
+        if (m.of === 's') { for (const e of m.ev || []) guestEvent(e); }
+        else if (m.of === 'ns') { if (trActive && NET.game === 'neon') for (const e of m.ev || []) neonEvent(e); }
+        else if (m.of === 'qs') { const g = pgByKey(m.key); if (g && g.G.active && NET.game === m.key) qsEvents(g.G, m.ev || []); }
+        return;
       case '_pong': { const r = performance.now() - m.ts; NET.rtt = NET.rtt * 0.7 + r * 0.3; return; }
       case '_bye': netLost('Соперник вышел из игры'); return;
       case '_direct': netError('У соперника включено «Только напрямую», а напрямую соединиться не получилось. Попробуйте другую сеть (например, Wi-Fi) или пусть соперник выключит этот переключатель.'); return;
@@ -8197,6 +8235,7 @@
     }, 1000);
     document.body.classList.add('netOn');
     NT.route = null; NT.routeAt = performance.now(); setTimeout(checkRoute, 600);
+    if (!NET_TEST && NT.via !== 'relay') setupFast();
     setLobby('connected');
     vibrate([20, 40, 20]);
     sound(660, 0.1, 'triangle', 0.06); setTimeout(() => sound(990, 0.14, 'triangle', 0.06), 110);
@@ -8204,6 +8243,7 @@
   function netClose(silent) {
     if (NET.on && !silent) rawSend({ t: '_bye' });
     clearInterval(NT.pingTimer); clearTimeout(NT.joinTimer);
+    try { NT.fast && NT.fast.close(); } catch (e) {} NT.fast = null;
     try { NT.conn && NT.conn.close(); } catch (e) {}
     try { NT.peer && NT.peer.destroy(); } catch (e) {}
     try { NT.bc && NT.bc.close(); } catch (e) {}
@@ -8827,6 +8867,18 @@
   // присылает всё состояние игры и эффекты. Время в игре — по часам хоста.
   const pgByKey = k => pgGames.find(g => g.G.net && g.G.net.key === k);
   let qLastSend = 0, qSnapN = 0, qLastRound = -1, qLastIn = 0, qLastInStr = '', qSnaps = [], qBackup = null;
+  function qsEvents(G, ev) {
+    for (const e of ev) {
+      if (e[0] === 'V') { G.net.victory(e[1]); continue; }
+      const fn = G['_' + e[0]];
+      if (!fn) continue;
+      const a = e.slice(1);
+      // звук слева/справа — у гостя наоборот
+      if (e[0] === 'sound' && typeof a[4] === 'number') a[4] = fieldRect.width - a[4];
+      if (e[0] === 'boom' && typeof a[0] === 'number') a[0] = G.W - a[0];
+      fn.apply(null, a);
+    }
+  }
   NET.partyStart = G => {
     qSnapN = 0; qLastRound = -1;
     NET.send({ t: 'qstart', key: G.net.key, o: Object.assign({}, G.net.opts) });
@@ -8935,16 +8987,7 @@
       const G = g.G, now = performance.now();
       const est = m.hn + oneWay() - now;
       G.netOff = G.netOff == null ? est : G.netOff + (est - G.netOff) * 0.1;
-      for (const e of m.ev || []) {
-        if (e[0] === 'V') { G.net.victory(e[1]); continue; }
-        const fn = G['_' + e[0]];
-        if (!fn) continue;
-        const a = e.slice(1);
-        // звук слева/справа — у гостя наоборот
-        if (e[0] === 'sound' && typeof a[4] === 'number') a[4] = fieldRect.width - a[4];
-        if (e[0] === 'boom' && typeof a[0] === 'number') a[0] = G.W - a[0];
-        fn.apply(null, a);
-      }
+      qsEvents(G, m.ev || []);
       if (G.round !== m.rd) { G.parts.length = 0; G.rings.length = 0; G.pops.length = 0; qSnaps = []; }
       if (G.state !== 'over') G.state = m.st;
       G.stateAt = m.sa; G.round = m.rd; G.score = m.sc; G.result = m.res; G.msg = m.msg || [null, null];
