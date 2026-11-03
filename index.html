@@ -7619,14 +7619,14 @@
   const BOT_NAME = 'pifpafgame';
   const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
   // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
-  const NET_VER = 8;
+  const NET_VER = 9;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   // свои серверы связи — выбираются переключателями во вкладке «По сети» (до подключения)
-  const SERVERS = { mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
+  const SERVERS = { msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.16';
+  const NET_BUILD = '2.18';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -7701,7 +7701,7 @@
   async function loadPeer() {
     if (window.Peer) return;
     for (const src of PEER_SRCS) { try { await loadOne(src); return; } catch (e) {} }
-    throw new Error('Не удалось загрузить модуль связи. Проверь интернет и попробуй ещё.');
+    throw new Error('Не удалось загрузить модуль прямой связи. Включи переключатель «Сервер Москва» и создай комнату ещё раз.');
   }
   // строка «что сейчас происходит» в плашке
   function stage(text) {
@@ -7843,7 +7843,7 @@
       }
       // ждём гостя, а связь с сервером оборвалась — тихо восстанавливаем ту же комнату
       if (NET.code && (NT.hostRetries || 0) < 8) { hostRevive(); return; }
-      netError('Не получилось создать комнату. Проверь интернет и попробуй ещё.' + errInfo(err));
+      netError('Не получилось создать комнату напрямую. Включи переключатель «Сервер Москва» и попробуй ещё раз.' + errInfo(err));
     });
     peer.on('disconnected', () => {
       if (NT.peer !== peer || peer.destroyed) return;
@@ -8151,7 +8151,7 @@
     });
   }
   function joinFailText(code) {
-    if (NT.joinStep === 'server') return 'Не получилось связаться с сервером игры. Проверь интернет и попробуй ещё.';
+    if (NT.joinStep === 'server') return 'Не получилось связаться с сервером знакомства. Включи переключатель «Сервер Москва» (у обоих) и попробуй ещё раз.';
     if (NT.joinStep === 'room' || NT.iceFail) return iceFailText();
     if (NT.joinStep === 'hello') return 'Телефоны соединились, но соперник не ответил. Пусть оба полностью закроют Telegram и откроют игру заново.';
     return 'Не получилось подключиться к комнате ' + code;
@@ -8999,6 +8999,8 @@
       if (m.t === 'qi') G.remote = { x: m.x, y: m.y, on: !!m.on, mag: m.mag || 0 };
       else if (m.t === 'qb') { if (G.state === 'play' || G.state === 'countdown') G.remotePress(m.s, !!m.d); }
       else if (m.t === 'qp') G.remoteRaw(m.k, m.x, m.y, m.id);
+      else if (m.t === 'qshot') { if (G.cfg.netShot && Array.isArray(m.a)) G.cfg.netShot(G, m.a); }
+      else if (m.t === 'qsweep') { if (G.cfg.netSweep) G.cfg.netSweep(G, +m.x || 0, +m.y || 0); }
       else if (m.t === 'qre') { if (G.state === 'over') G.net.start(); }
       return;
     }
@@ -9449,6 +9451,8 @@
       if (G.bot && i === 1 && !cfg.anyHalf) return; // верх — у бота (кроме игр по очереди)
       const [x, y] = G.toField(e);
       // по сети гость отдаёт касания хосту (игры с «сырым» управлением: гольф, футбол, кёрлинг)
+      // игры по очереди (гольф, кёрлинг): гость целится У СЕБЯ — без задержки; хосту уходит только готовый удар
+      if (ctl === 'raw' && G.netMode() === 'guest' && cfg.localAim) { cfg.down && cfg.down(G, 1, x, y, 'L' + e.pointerId); return; }
       if (ctl === 'raw' && G.netMode() === 'guest') { NET.send({ t: 'qp', k: 0, x: +x.toFixed(1), y: +y.toFixed(1), id: e.pointerId }); return; }
       if (ctl === 'raw') { cfg.down && cfg.down(G, i, x, y, e.pointerId); return; }
       if (ctl === 'joyBtn') {
@@ -9474,6 +9478,7 @@
     cv.addEventListener('pointermove', e0 => {
       if (!G.active) return;
       const e = flipE(e0);
+      if (ctl === 'raw' && G.netMode() === 'guest' && cfg.localAim) { const [x, y] = G.toField(e); cfg.move && cfg.move(G, x, y, 'L' + e.pointerId); return; }
       if (ctl === 'raw' && G.netMode() === 'guest') {
         const [x, y] = G.toField(e), t = performance.now();
         if (t - (G.qpAt || 0) > 30) { G.qpAt = t; NET.send({ t: 'qp', k: 1, x: +x.toFixed(1), y: +y.toFixed(1), id: e.pointerId }); }
@@ -9499,6 +9504,7 @@
     const up = e0 => {
       if (!G.active) return;
       const e = flipE(e0);
+      if (ctl === 'raw' && G.netMode() === 'guest' && cfg.localAim) { const [x, y] = G.toField(e); cfg.up && cfg.up(G, x, y, 'L' + e.pointerId); return; }
       if (ctl === 'raw' && G.netMode() === 'guest') { const [x, y] = G.toField(e); NET.send({ t: 'qp', k: 2, x: +x.toFixed(1), y: +y.toFixed(1), id: e.pointerId }); return; }
       if (ctl === 'raw') { const [x, y] = G.toField(e); cfg.up && cfg.up(G, x, y, e.pointerId); return; }
       G.joy.forEach(j => { if (j.id === e.pointerId) { j.id = null; j.on = false; j.x = j.y = 0; } });
@@ -9514,6 +9520,7 @@
       G.btn.forEach((b, i) => { if (b.down) { b.id = null; b.down = false; btnRelease(i, 'B'); } });
       G.sideIds.forEach((m, i) => { Object.keys(m).forEach(id => { const s = m[id]; delete m[id]; btnRelease(i, s); }); });
       if (ctl === 'raw' && cfg.upAll && G.netMode() !== 'guest') cfg.upAll(G);
+      if (ctl === 'raw' && cfg.localAim && G.netMode() === 'guest') { G.loc = null; G.lptr = {}; }
     });
 
     // клавиатура: синий WASD + пробел, красный стрелки + Enter
@@ -13034,11 +13041,25 @@
 
     function allStopped(D) { return D.stones.every(s => s.out || (s.vx === 0 && s.vy === 0)); }
 
+  function throwStone(G, i, ux, uy, pow) {
+      const D = G.d;
+      const v = V_MIN + (V_MAX - V_MIN) * pow;
+      const [sx, sy] = startPos(G, i);
+      const st = { team: i, x: sx, y: sy, vx: ux * v, vy: uy * v, out: false, passedHog: false, rot: 0, thrown: G.now };
+      D.stones.push(st);
+      D.thrown[i]++;
+      D.phase = 'moving'; D.mover = i; D.moving = st;
+      G.sound(160, 0.25, 'triangle', 0.05, G.pan(sx));
+      G.vibrate(10);
+      if (G.opts.sweep) G.flash('Три лёд!', '#9be3ff', 900, i);
+  }
+
     partyGame({
       key: 'curling', title: 'Кёрлинг', bg: '#0f1d2b',
       desc: 'Дом — в центре. Бросаете по очереди, по 4 камня. Свой ход: коснись своей половины и тяни назад, отпусти — бросок. Пока камень едет, быстро води пальцем — натираешь лёд, и камень катится дальше. Очки — у того, чей камень ближе к центру.',
       icon: '<svg viewBox="0 0 60 60"><rect x="4" y="4" width="52" height="52" rx="6" fill="#e8f4fb"/><circle cx="30" cy="30" r="20" fill="#2fb0a8"/><circle cx="30" cy="30" r="13" fill="#fff"/><circle cx="30" cy="30" r="7" fill="#ffd23f"/><circle cx="24" cy="36" r="6" fill="#8a8f9c"/><circle cx="24" cy="36" r="3.5" fill="#4fa3ff"/><circle cx="38" cy="24" r="6" fill="#8a8f9c"/><circle cx="38" cy="24" r="3.5" fill="#ff5a4f"/></svg>',
       controls: 'raw',
+      localAim: true, // по сети гость целится у себя, хосту уходит только бросок
       netLerp: ['stones'],
       netPack(D, full) { const o = Object.assign({}, D); if (!full) delete o.pebble; return o; },
       netUnpack(old, o) { const D = Object.assign({}, o); if (!D.pebble && old) D.pebble = old.pebble; return D; },
@@ -13061,6 +13082,14 @@
       },
       down(G, i, x, y, id) {
         const D = G.d;
+        if (G.netMode() === 'guest') {
+          G.lptr = G.lptr || {}; G.lptr[id] = { x, y, t: G.now };
+          if (G.state !== 'play' || D.phase !== 'aim') return;
+          if (D.turn !== 1) { G.flash('Ход соперника', 'rgba(255,255,255,0.8)', 600, 1); return; }
+          if (G.sentShot && G.now - G.sentShot < 2500) return;
+          G.loc = { id, ax: x, ay: y, x, y };
+          return;
+        }
         D.ptr[id] = { i, x, y, t: G.now };
         if (G.state !== 'play' || D.phase !== 'aim' || i !== D.turn) {
           if (G.state === 'play' && D.phase === 'aim' && i !== D.turn) G.flash('Ход соперника', 'rgba(255,255,255,0.8)', 600, i);
@@ -13069,6 +13098,19 @@
         D.aim = { id, ax: x, ay: y, x, y };
       },
       move(G, x, y, id) {
+        if (G.netMode() === 'guest') {
+          const D = G.d, pt = (G.lptr || {})[id];
+          if (G.loc && G.loc.id === id) { G.loc.x = x; G.loc.y = y; }
+          if (!pt) return;
+          const dt = Math.max(1, G.now - pt.t) / 1000, sp = Math.hypot(x - pt.x, y - pt.y) / dt;
+          // натирание гостя: эффект считает хост — шлём ему «тру лёд» (не чаще 12 раз в секунду)
+          if (G.opts.sweep && D.phase === 'moving' && D.mover === 1 && sp > 260 && G.now - (G.sweepSent || 0) > 80) {
+            G.sweepSent = G.now; NET.send({ t: 'qsweep', key: 'curling', x: +x.toFixed(1), y: +y.toFixed(1) });
+            if (Math.random() < 0.3) G.sound(2000 + Math.random() * 1500, 0.02, 'triangle', 0.01);
+          }
+          pt.x = x; pt.y = y; pt.t = G.now;
+          return;
+        }
         const D = G.d, pt = D.ptr[id];
         if (D.aim && D.aim.id === id) { D.aim.x = x; D.aim.y = y; }
         if (!pt) return;
@@ -13084,6 +13126,19 @@
       },
       up(G, x, y, id) {
         const D = G.d;
+        if (G.netMode() === 'guest') {
+          if (G.lptr) delete G.lptr[id];
+          const a = G.loc;
+          if (!a || a.id !== id) return;
+          G.loc = null;
+          const dx = a.ax - x, dy = a.ay - y, d = Math.hypot(dx, dy);
+          if (d < 14 || G.state !== 'play' || D.phase !== 'aim' || D.turn !== 1) return;
+          const ux = dx / d, uy = dy / d;
+          if (uy < 0.2) { G.flash('Бросай к дому', '#ffffff', 700, 1); return; }
+          NET.send({ t: 'qshot', key: 'curling', a: [+ux.toFixed(4), +uy.toFixed(4), +Math.min(1, d / PULL_MAX).toFixed(4)] });
+          G.sentShot = G.now; G.sound(160, 0.25, 'triangle', 0.05); G.vibrate(10);
+          return;
+        }
         delete D.ptr[id];
         if (!D.aim || D.aim.id !== id) return;
         const a = D.aim; D.aim = null;
@@ -13093,16 +13148,21 @@
         // нельзя бросить «назад» к своему краю
         const ux = dx / d, uy = dy / d;
         if ((i === 0 && uy > -0.2) || (i === 1 && uy < 0.2)) { G.flash('Бросай к дому', '#ffffff', 700, i); return; }
-        const pow = Math.min(1, d / PULL_MAX);
-        const v = V_MIN + (V_MAX - V_MIN) * pow;
-        const [sx, sy] = startPos(G, i);
-        const st = { team: i, x: sx, y: sy, vx: ux * v, vy: uy * v, out: false, passedHog: false, rot: 0, thrown: G.now };
-        D.stones.push(st);
-        D.thrown[i]++;
-        D.phase = 'moving'; D.mover = i; D.moving = st;
-        G.sound(160, 0.25, 'triangle', 0.05, G.pan(sx));
-        G.vibrate(10);
-        if (G.opts.sweep) G.flash('Три лёд!', '#9be3ff', 900, i);
+        throwStone(G, i, ux, uy, Math.min(1, d / PULL_MAX));
+      },
+      // хост: пришёл готовый бросок гостя
+      netShot(G, a) {
+        const D = G.d;
+        if (G.state !== 'play' || D.phase !== 'aim' || D.turn !== 1) return;
+        const d = Math.hypot(a[0], a[1]) || 1, ux = a[0] / d, uy = a[1] / d;
+        if (uy < 0.2) return;
+        throwStone(G, 1, ux, uy, Math.max(0, Math.min(1, +a[2] || 0)));
+      },
+      netSweep(G, x, y) {
+        const D = G.d;
+        if (!G.opts.sweep || D.phase !== 'moving' || D.mover !== 1) return;
+        D.sweepUntil = G.now + 160;
+        D.sweepPts.push({ x, y, t: G.now });
       },
       upAll(G) { G.d.aim = null; G.d.ptr = {}; },
       update(G, dt, now) {
@@ -13216,8 +13276,9 @@
           c.strokeStyle = '#ffd23f'; c.lineWidth = 3; c.beginPath(); c.arc(st.x, st.y, SR + 5 + Math.sin(now / 120) * 2, 0, Math.PI * 2); c.stroke();
         }
         // прицел
-        if (D.aim && D.phase === 'aim') {
-          const i = D.turn, a = D.aim;
+        const aimA = G.netMode() === 'guest' && G.loc ? G.loc : D.aim;
+        if (aimA && D.phase === 'aim') {
+          const i = D.turn, a = aimA;
           const dx = a.ax - a.x, dy = a.ay - a.y, d = Math.hypot(dx, dy);
           if (d > 14) {
             const pow = Math.min(1, d / PULL_MAX), v = V_MIN + (V_MAX - V_MIN) * pow;
@@ -14626,6 +14687,7 @@
       desc: 'Оба мяча стартуют с одной площадки. Бьёте по очереди: коснись своей половины и держи — сила качается. Тяни назад и отпусти: мяч полетит вперёд. На трассах — отбойники, мельницы, порталы, ворота с кнопкой, горки, лёд, ускорители и ездящие блоки. В воду упал — +1 удар и назад. Звезда — минус один удар. Лунку берёт тот, кто попал меньшим числом ударов.',
       icon: '<svg viewBox="0 0 60 60"><rect x="4" y="4" width="52" height="52" rx="8" fill="#5fc46a"/><rect x="18" y="20" width="24" height="9" rx="3" fill="#8f8787"/><rect x="18" y="20" width="9" height="26" rx="3" fill="#8f8787"/><rect x="34" y="34" width="14" height="9" rx="3" fill="#f0d48a"/><circle cx="33" cy="38" r="4.5" fill="#1a1d24"/><line x1="33" y1="38" x2="33" y2="22" stroke="#fff" stroke-width="2"/><path d="M33 22 L44 25 L33 28Z" fill="#e04f3f"/><circle cx="12" cy="12" r="6" fill="#7c7474" stroke="#ffcc55" stroke-width="2"/><circle cx="14" cy="48" r="4" fill="#3f7fe0"/><circle cx="46" cy="14" r="4" fill="#e04f3f"/></svg>',
       controls: 'raw', anyHalf: true, scoreCorner: false,
+      localAim: true, // по сети гость целится у себя, хосту уходит только удар
       // по сети: трассу передаём номером (в ней есть функции), мячи сглаживаем
       netLerp: ['balls'],
       netPack(D) { const o = Object.assign({}, D); delete o.course; delete o.flow; return o; },
@@ -14675,6 +14737,16 @@
       },
       down(G, i, x, y, id) {
         const D = G.d;
+        if (G.netMode() === 'guest') {
+          // гость: прицел и качание силы — на своём телефоне, по своим часам
+          if (G.state !== 'play' || D.phase !== 'aim' || G.loc) return;
+          if (D.turn !== 1) { G.flash('Ход соперника', 'rgba(255,255,255,0.85)', 600, 1); return; }
+          if (G.sentShot && G.now - G.sentShot < 2500) return; // удар уже отправлен
+          const [jx, jy] = joyBase(G, 1);
+          G.loc = { id, i: 1, t0: G.now, dx: x - jx, dy: y - jy };
+          G.sound(520, 0.03, 'square', 0.02);
+          return;
+        }
         if (G.state !== 'play' || D.aim || D.phase !== 'aim') return;
         if (G.bot && i === 1) return;
         if (i !== D.turn) { G.flash('Ход соперника', 'rgba(255,255,255,0.85)', 600, i); return; }
@@ -14683,18 +14755,37 @@
         G.sound(520, 0.03, 'square', 0.02);
       },
       move(G, x, y, id) {
+        if (G.netMode() === 'guest') { const a = G.loc; if (a && a.id === id) { const [jx, jy] = joyBase(G, 1); a.dx = x - jx; a.dy = y - jy; } return; }
         const D = G.d, a = D.aim;
         if (!a || a.id !== id) return;
         const [jx, jy] = joyBase(G, a.i);
         a.dx = x - jx; a.dy = y - jy;
       },
       up(G, x, y, id) {
+        if (G.netMode() === 'guest') {
+          const a = G.loc, D = G.d;
+          if (!a || a.id !== id) return;
+          G.loc = null;
+          if (G.state !== 'play' || D.phase !== 'aim' || D.turn !== 1) return;
+          const [ux, uy] = aimDir(G, D, a), p = powerAt(G.now - a.t0);
+          NET.send({ t: 'qshot', key: 'golf', a: [+ux.toFixed(4), +uy.toFixed(4), +p.toFixed(4)] });
+          G.sentShot = G.now;
+          G.sound(240 + p * 260, 0.08, 'triangle', 0.05 + p * 0.05); G.vibrate(8 + Math.round(p * 18));
+          return;
+        }
         const D = G.d, a = D.aim;
         if (!a || a.id !== id || G.state !== 'play' || D.phase !== 'aim') return;
         const [ux, uy] = aimDir(G, D, a);
         shoot(G, a.i, ux, uy, powerAt(G.now - a.t0));
       },
       upAll(G) { const a = G.d.aim; if (a && !a.bot) G.d.aim = null; },
+      // хост: пришёл готовый удар гостя
+      netShot(G, a) {
+        const D = G.d;
+        if (G.state !== 'play' || D.phase !== 'aim' || D.turn !== 1) return;
+        const d = Math.hypot(a[0], a[1]) || 1;
+        shoot(G, 1, a[0] / d, a[1] / d, Math.max(0.04, Math.min(1, +a[2] || 0)));
+      },
       update(G, dt, now) {
         const D = G.d, C = D.course;
         if (G.state !== 'play') return;
@@ -14789,7 +14880,7 @@
         const [hx, hy] = C.hole;
         GolfCore.draw(c, C, roundT(G, now), { now, gateOpen: C.gateOpen, starsTaken: D.stars, bumpHit: D.bumpHit, btnHit: D.btnHit });
         // стрелка силы
-        const a = D.aim;
+        const a = G.netMode() === 'guest' && G.loc ? G.loc : D.aim;
         if (a && D.phase === 'aim') {
           const b = D.balls[a.i], [ux, uy] = aimDir(G, D, a), p = powerAt(now - a.t0);
           drawArrow(G, b.x, b.y, ux, uy, C.BR + 4, RAY_MIN + RAY_LEN, RAY_MIN + RAY_LEN * p, p, a.i, now);
