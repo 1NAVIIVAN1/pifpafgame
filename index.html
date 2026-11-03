@@ -1444,6 +1444,9 @@
   .preview .ptb.gate { background: repeating-linear-gradient(45deg, #e04f3f 0 2px, #fff 2px 4px); }
   .preview .ptb.mud { background: rgba(110, 72, 30, 0.6); border-radius: 40%; }
   .preview .ptb.button { background: #e04f3f; border-radius: 50%; transform: scale(0.6); }
+
+  .netDirectRow { margin-top: 14px; text-align: left; }
+  .netDirectRow .label small { font-size: 0.72rem; font-weight: 500; opacity: 0.75; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -7617,7 +7620,7 @@
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   const RELAY_HOST = ''; // свои серверы отключены — только P2P (код сервера оставлен на будущее)
   const RELAY_URL = qs_relay();
-  const NET_BUILD = '2.14-4';
+  const NET_BUILD = '2.14-6';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -7661,6 +7664,14 @@
     { urls: 'stun:stun.cloudflare.com:3478' },
     { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' },
   ], sdpSemantics: 'unified-plan' } };
+  // переключатель «Только напрямую»: без пересылающих серверов (TURN). Не получилось напрямую — честно
+  // говорим об этом, а не играем с большой задержкой через пересылку
+  NET.directOnly = false;
+  try { NET.directOnly = localStorage.getItem('pp-direct') === '1'; } catch (e) {}
+  const peerOpts = () => NET.directOnly
+    ? { debug: 0, config: { iceServers: PEER_OPTS.config.iceServers.filter(s => !String(s.urls).includes('turn:')), sdpSemantics: 'unified-plan' } }
+    : PEER_OPTS;
+  const DIRECT_FAIL = 'Напрямую соединиться не получилось. Попробуйте другую сеть (например, Wi-Fi) или выключите «Только напрямую» — тогда игра пойдёт через пересылку, но с задержкой.';
   function loadOne(src) {
     return new Promise((res, rej) => {
       const sc = document.createElement('script');
@@ -7676,7 +7687,7 @@
   async function loadPeer() {
     if (window.Peer) return;
     for (const src of PEER_SRCS) { try { await loadOne(src); return; } catch (e) {} }
-    throw new Error('Не удалось загрузить модуль связи. Проверь интернет или выключи VPN и попробуй ещё.');
+    throw new Error('Не удалось загрузить модуль связи. Проверь интернет и попробуй ещё.');
   }
   // строка «что сейчас происходит» в плашке
   function stage(text) {
@@ -7700,6 +7711,19 @@
     if (NT.conn && NT.conn.open) { try { NT.conn.send(m); } catch (e) {} }
   }
   NET.send = m => { if (NET.on || m.t && m.t[0] === '_') rawSend(m); };
+  // ЗАТОР: канал надёжный — если связь медленная (VPN, пересылка через TURN), снимки копятся в очереди,
+  // и каждый следующий ждёт все прошлые: задержка росла до 10 секунд. Теперь, пока очередь не ушла,
+  // новые снимки просто пропускаем — до соперника доходит самый свежий, а не старый.
+  NET.buffered = () => {
+    try {
+      if (NT.via === 'relay') return NT.ws ? NT.ws.bufferedAmount : 0;
+      const dc = NT.conn && (NT.conn.dataChannel || NT.conn._dc);
+      return dc ? dc.bufferedAmount || 0 : 0;
+    } catch (e) { return 0; }
+  };
+  NET.congested = () => NET.buffered() > 16000;
+  // как часто слать снимки: на плохой связи — реже (меньше очередь)
+  NET.snapGap = () => NET.rtt > 400 ? 66 : NET.rtt > 220 ? 45 : 33;
   const evQueue = [];
   NET.ev = e => { if (NET.on && NET.role === 'host') evQueue.push(e); };
 
@@ -7732,7 +7756,7 @@
   // создать «точку» хоста с этим кодом. first=true — новая комната (если код занят, берём другой);
   // иначе — восстанавливаем ту же комнату после обрыва (друг уже знает код)
   function hostPeer(code, first, tries = 0) {
-    const peer = new window.Peer('pifpaf-' + code, PEER_OPTS);
+    const peer = new window.Peer('pifpaf-' + code, peerOpts());
     NT.peer = peer;
     NT.hostCode = code;
     peer.on('open', () => {
@@ -7772,7 +7796,7 @@
       }
       // ждём гостя, а связь с сервером оборвалась — тихо восстанавливаем ту же комнату
       if (NET.code && (NT.hostRetries || 0) < 8) { hostRevive(); return; }
-      netError('Не получилось создать комнату. Проверь интернет или выключи VPN.' + errInfo(err));
+      netError('Не получилось создать комнату. Проверь интернет и попробуй ещё.' + errInfo(err));
     });
     peer.on('disconnected', () => {
       if (NT.peer !== peer || peer.destroyed) return;
@@ -7821,7 +7845,7 @@
     // сервер ни разу не ответил — падаем на старый способ
     if (!wasUp && !NT.relayOk) {
       const code = NET.code || NT.hostCode;
-      if (NT.probe) { NT.probe = false; NT.via = 'p2p'; if (!window.Peer) return netError('Комната ' + code + ' не найдена или связь недоступна. Проверь код; если у кого-то включён VPN — попробуйте без него.'); joinRoom(code, 1, true); return; } // сервер недоступен — дальше напрямую
+      if (NT.probe) { NT.probe = false; NT.via = 'p2p'; if (!window.Peer) return netError('Комната ' + code + ' не найдена или связь недоступна. Проверь код и попробуй ещё.'); joinRoom(code, 1, true); return; } // сервер недоступен — дальше напрямую
       NET.relayFail = true;
       if (NET.role === 'host') { NT.hostCode = null; hostP2P(NT.relayCode); }
       else joinRoom(code, 0, true);
@@ -7881,7 +7905,7 @@
         NT.relayOk = true;
         const ws = NT.ws; NT.ws = null; try { ws && ws.close(); } catch (e) {}
         if (NET.on) return netLost();
-        if (probe) { NT.probe = false; NT.via = 'p2p'; if (!window.Peer) return netError('Комната ' + code + ' не найдена или связь недоступна. Проверь код; если у кого-то включён VPN — попробуйте без него.'); joinRoom(code, 1, true); return; } // на сервере нет — дальше напрямую
+        if (probe) { NT.probe = false; NT.via = 'p2p'; if (!window.Peer) return netError('Комната ' + code + ' не найдена или связь недоступна. Проверь код и попробуй ещё.'); joinRoom(code, 1, true); return; } // на сервере нет — дальше напрямую
         // комнаты нет на нашем сервере — может, хозяин на старом способе; потом пробуем и его
         if (tries < 3) { stage(`Комната ${code} пока не отвечает — пробуем ещё (${tries + 1}/3)…`); setTimeout(() => { if (NET.role === 'guest' && NET.code === code && !NET.on) relayJoin(code, tries + 1); }, 2000); return; }
         joinRoom(code, 0, true); return;
@@ -7987,8 +8011,9 @@
     else if (NT.peerWait) { txt = 'Соперник переподключается…'; cls = 'bad'; }
     else {
       const r = Math.round(NET.rtt);
-      // «до соперника» — круг туда-обратно через обоих игроков; «сервер» — только мой путь до сервера и обратно
-      txt = r + ' мс';
+      // какая связь: напрямую телефон-телефон или через пересылающий сервер (TURN), если напрямую не пробиться
+      const via = NT.via === 'relay' ? 'Сервер' : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
+      txt = via + ' · ' + r + ' мс' + (NET.buffered() > 16000 ? ' · затор' : '');
       cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
     }
     badgeEl.textContent = txt; badgeEl.className = cls;
@@ -8050,7 +8075,7 @@
     }
     NT.joinStep = 'server';
     stage('Связываемся с сервером…');
-    const peer = new window.Peer(PEER_OPTS);
+    const peer = new window.Peer(peerOpts());
     NT.peer = peer;
     peer.on('open', () => {
       if (NT.peer !== peer) return;
@@ -8079,16 +8104,16 @@
         return netError('Комната ' + code + ' не найдена. Проверь код и попроси друга не закрывать игру, пока ты подключаешься.');
       }
       if (NET.on) { if (NT.conn && NT.conn.open) return; return netLost(); }
-      netError('Не получилось подключиться. Проверь интернет или выключи VPN.' + errInfo(err));
+      netError('Не получилось подключиться. Проверь интернет и попробуй ещё.' + errInfo(err));
     });
   }
   function joinFailText(code) {
-    if (NT.joinStep === 'server') return 'Не получилось связаться с сервером игры. Проверь интернет или выключи VPN и попробуй ещё.';
+    if (NT.joinStep === 'server') return 'Не получилось связаться с сервером игры. Проверь интернет и попробуй ещё.';
     if (NT.joinStep === 'room' || NT.iceFail) return iceFailText();
     if (NT.joinStep === 'hello') return 'Телефоны соединились, но соперник не ответил. Пусть оба полностью закроют Telegram и откроют игру заново.';
     return 'Не получилось подключиться к комнате ' + code;
   }
-  const iceFailText = () => 'Комната найдена, но телефоны не смогли соединиться напрямую. Так бывает на мобильном интернете: подключитесь к Wi-Fi (хотя бы один из вас) или выключите VPN — и попробуйте ещё.';
+  const iceFailText = () => NET.directOnly ? DIRECT_FAIL : 'Комната найдена, но телефоны не смогли соединиться. Так бывает на мобильном интернете: подключитесь к Wi-Fi (хотя бы один из вас) и попробуйте ещё.';
   // следим, получилось ли у телефонов «пробиться» друг к другу
   function watchIce(conn, code) {
     let n = 0;
@@ -8130,6 +8155,7 @@
       case '_ping': rawSend({ t: '_pong', ts: m.ts }); return;
       case '_pong': { const r = performance.now() - m.ts; NET.rtt = NET.rtt * 0.7 + r * 0.3; return; }
       case '_bye': netLost('Соперник вышел из игры'); return;
+      case '_direct': netError('У соперника включено «Только напрямую», а напрямую соединиться не получилось. Попробуйте другую сеть (например, Wi-Fi) или пусть соперник выключит этот переключатель.'); return;
       case '_srvwarn': srvSet('warn', 'Друг хочет перейти на сервер ' + RELAY_NAME + ' — так быстрее. Выключи VPN, если он включён.'); return;
       case '_srvtry': if (NET.role === 'host') srvUpgradeHost(); return;
       case '_srvstate': if (NT.via !== 'relay') srvSet('trying', 'Подключаемся к серверу ' + RELAY_NAME + '…'); return;
@@ -8142,17 +8168,35 @@
     else if (m.t[0] === 'n') neonMsg(m);
     else tankMsg(m);
   }
+  // смотрим у WebRTC, какой путь выбран: напрямую или через TURN
+  async function checkRoute() {
+    try {
+      const pc = NT.conn && NT.conn.peerConnection;
+      if (!pc || !pc.getStats) return;
+      const st = await pc.getStats();
+      let pair = null;
+      st.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId) pair = st.get(r.selectedCandidatePairId) || pair; });
+      if (!pair) st.forEach(r => { if (r.type === 'candidate-pair' && (r.selected || (r.nominated && r.state === 'succeeded'))) pair = pair || r; });
+      if (!pair) return;
+      const lo = st.get(pair.localCandidateId), re = st.get(pair.remoteCandidateId);
+      NT.route = (lo && lo.candidateType === 'relay') || (re && re.candidateType === 'relay') ? 'turn' : 'direct';
+      netBadge();
+      if (NT.route === 'turn' && NET.directOnly && NET.on) { rawSend({ t: '_direct' }); setTimeout(() => netError(DIRECT_FAIL), 150); }
+    } catch (e) {}
+  }
   function connected() {
     clearInterval(NT.pingTimer);
     NT.alive = performance.now();
     NT.pingTimer = setInterval(() => {
       if (!NET.on) return;
       rawSend({ t: '_ping', ts: performance.now() });
+      if (!(NT.routeAt > performance.now() - 5000)) { NT.routeAt = performance.now(); checkRoute(); }
       const waiting = NT.via === 'relay' && (NT.reconnSince || NT.peerWait);
       if (performance.now() - NT.alive > (waiting ? RELAY_HOLD + 4000 : 8000)) netLost();
       netBadge();
     }, 1000);
     document.body.classList.add('netOn');
+    NT.route = null; NT.routeAt = performance.now(); setTimeout(checkRoute, 600);
     setLobby('connected');
     vibrate([20, 40, 20]);
     sound(660, 0.1, 'triangle', 0.06); setTimeout(() => sound(990, 0.14, 'triangle', 0.06), 110);
@@ -8265,6 +8309,8 @@
         <button class="hkPlay netHost">Создать комнату</button>
         <div class="netOr">или</div>
         <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
+        <div class="settingRow netDirectRow"><div class="label">Только напрямую<small>Без пересылки через сервер: меньше задержка. Если напрямую не выйдет — игра скажет об этом</small></div>
+          <button class="switch netDirectSw" role="switch" aria-checked="${NET.directOnly}" aria-label="Только напрямую"><span></span></button></div>
         <p class="netTip">${netInfo()}</p>`;
     } else if (st === 'creating') {
       h = `<p class="netWait">Создаём комнату…</p><p class="netStage">${NET.stage || ''}</p><button class="backBtn netCancel">Отмена</button>`;
@@ -8288,6 +8334,11 @@
     }
     stateBox.innerHTML = h;
     const $ = s => stateBox.querySelector(s);
+    if ($('.netDirectSw')) $('.netDirectSw').addEventListener('click', e => {
+      NET.directOnly = !NET.directOnly;
+      try { localStorage.setItem('pp-direct', NET.directOnly ? '1' : '0'); } catch (err) {}
+      e.currentTarget.setAttribute('aria-checked', String(NET.directOnly));
+    });
     if ($('.netHost')) $('.netHost').addEventListener('click', () => { try { audioBus(); } catch (e) {} hostRoom(); });
     if ($('.netJoinBtn')) {
       const inp = $('.netCode');
@@ -8432,7 +8483,7 @@
   };
   // хост: снимок игры ~30 раз в секунду
   NET.tankHostSend = now => {
-    if (now - tLastSend < 33) return;
+    if (now - tLastSend < NET.snapGap() || NET.congested()) return;
     tLastSend = now;
     const sh = [];
     for (const p of [p1, p2]) for (const s of p.shells) sh.push([s.id, Math.round(s.x * 10) / 10, Math.round(s.y * 10) / 10, +s.dx.toFixed(3), +s.dy.toFixed(3), s.pierce ? 1 : 0, s.owner, s.left]);
@@ -8454,7 +8505,7 @@
       updatePlayer(p2, dt, now);
       guestPush(p2);
       updatePortals(dt, [p2]);
-      if (now - tLastPos > 33) { tLastPos = now; NET.send({ t: 'p', x: +p2.x.toFixed(1), y: +p2.y.toFixed(1), a: +p2.angle.toFixed(1), seq: NET.seq2, ch: +p2.charge.toFixed(2), a2: +(p2.ammoS || 0).toFixed(2) }); }
+      if (now - tLastPos > 33 && !NET.congested()) { tLastPos = now; NET.send({ t: 'p', x: +p2.x.toFixed(1), y: +p2.y.toFixed(1), a: +p2.angle.toFixed(1), seq: NET.seq2, ch: +p2.charge.toFixed(2), a2: +(p2.ammoS || 0).toFixed(2) }); }
     }
     renderGuest(now);
   };
@@ -8781,7 +8832,7 @@
     NET.send({ t: 'qstart', key: G.net.key, o: Object.assign({}, G.net.opts) });
   };
   NET.partyHostSend = (G, now) => {
-    if (now - qLastSend < 33) return;
+    if (now - qLastSend < NET.snapGap() || NET.congested()) return;
     qLastSend = now;
     const full = G.round !== qLastRound || qSnapN++ % 20 === 0;
     qLastRound = G.round;
@@ -8927,7 +8978,7 @@
     NET.send({ t: 'nstart', o: { goal: trOpts.goal, fade: trOpts.fade, bonus: trOpts.bonus } });
   };
   NET.neonHostSend = now => {
-    if (now - nLastSend < 33 || trState === 'menu') return;
+    if (now - nLastSend < NET.snapGap() || trState === 'menu' || NET.congested()) return;
     nLastSend = now;
     NET.send({ t: 'ns', hn: now, st: trState, sa: trStateAt, sc: trScore.slice(), base: +trBase.toFixed(3),
       rd: riders.map(r => [r.x, r.y, r.dir, r.alive ? 1 : 0, +(r.acc || 0).toFixed(3), r.boostUntil || 0, r.ghostUntil || 0, r.moves || 0]),
