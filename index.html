@@ -1735,7 +1735,7 @@
       <button class="switch" id="qFixed" role="switch" aria-checked="false" aria-label="Фиксированный джойстик"><span></span></button>
     </div>
     <div class="settingRow">
-      <div class="label">Случайная карта<small id="quickRandNote">Крепости, Сад камней, Пилорама или Прыжки</small></div>
+      <div class="label">Случайная карта<small id="quickRandNote">Любая из карт: 4 классические, «Новинки» и «Хитрые»</small></div>
       <button class="switch" id="quickRandSw" role="switch" aria-checked="true" aria-label="Случайная карта"><span></span></button>
     </div>
     <div class="tiles" id="quickTiles" hidden></div>
@@ -4497,7 +4497,9 @@
   LEVELS.forEach((L, i) => groupTiles[L.group].appendChild(levelTile(i)));
 
   // --- быстрые танки (вкладка «Мини-игры»): случайная или одна из 4 карт ---
-  const QUICK_MAPS = ['Крепости', 'Сад камней', 'Пилорама', 'Прыжки'].map(n => LEVELS.findIndex(L => L.name === n)).filter(i => i >= 0);
+  // быстрые танки и танки по сети: 4 классические карты + все новые («Новинки» и «Хитрые»)
+  const QUICK_MAPS = ['Крепости', 'Сад камней', 'Пилорама', 'Прыжки'].map(n => LEVELS.findIndex(L => L.name === n)).filter(i => i >= 0)
+    .concat(LEVELS.map((L, i) => (L.group === 'Новинки' || L.group === 'Хитрые') ? i : -1).filter(i => i >= 0));
   let quickRandom = false;
   const quickTiles = document.getElementById('quickTiles');
   QUICK_MAPS.forEach(i => quickTiles.appendChild(levelTile(i)));
@@ -4513,7 +4515,7 @@
     document.getElementById('qRico').setAttribute('aria-checked', String(settings.ricochet));
     document.getElementById('qSelf').setAttribute('aria-checked', String(settings.selfDamage));
     renderFixed();
-    document.getElementById('quickRandNote').textContent = quickRandOn ? 'Крепости, Сад камней, Пилорама или Прыжки' : 'Выбери карту ниже';
+    document.getElementById('quickRandNote').textContent = quickRandOn ? 'Любая из 19 карт: классические, «Новинки» и «Хитрые»' : 'Выбери карту ниже';
     document.querySelectorAll('#quickRounds button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === settings.rounds)));
   }
   document.getElementById('quickRandSw').addEventListener('click', () => {
@@ -7615,7 +7617,24 @@
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   const RELAY_HOST = ''; // свои серверы отключены — только P2P (код сервера оставлен на будущее)
   const RELAY_URL = qs_relay();
-  const NET_BUILD = '2.14-2';
+  const NET_BUILD = '2.14-4';
+  // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
+  // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
+  // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
+  (function selfUpdate() {
+    if (!/^https?:/.test(location.protocol)) return;
+    fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(t => {
+      const v = (t || '').trim();
+      if (!v || v === NET_BUILD || !/^[\w.\-]{1,20}$/.test(v)) return;
+      let tried = '';
+      try { tried = sessionStorage.getItem('pp-upd') || ''; } catch (e) {}
+      if (tried === v) return; // уже пробовали — не крутимся по кругу
+      try { sessionStorage.setItem('pp-upd', v); } catch (e) {}
+      const u = new URL(location.href);
+      u.searchParams.set('v', v);
+      location.replace(u.toString());
+    }).catch(() => {});
+  })();
   // как подключаться: по умолчанию напрямую (P2P); сервер Москва — по кнопке, когда VPN выключен
   NET.mode = 'p2p';
   const RELAY_NAME = /\.msk\d*\./.test(RELAY_HOST) ? 'Москва' : /\.waw\d*\./.test(RELAY_HOST) ? 'Варшава' : /\.mia\d*\./.test(RELAY_HOST) ? 'Майами' : RELAY_HOST;
