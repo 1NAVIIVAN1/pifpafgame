@@ -7795,7 +7795,7 @@
   const BOT_NAME = 'pifpafgame';
   const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
   // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
-  const NET_VER = 11;
+  const NET_VER = 12;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   // свои серверы связи — выбираются переключателями во вкладке «По сети» (до подключения)
@@ -7803,7 +7803,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.27';
+  const NET_BUILD = '2.28';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -8293,7 +8293,7 @@
       const r = Math.round(NET.rttLast == null ? NET.rtt : NET.rttLast);
       // какая связь: напрямую телефон-телефон или через пересылающий сервер (TURN), если напрямую не пробиться
       const via = NT.via === 'elite' ? 'Элит · сервер Москва' : rtcOk && NT.via === 'qr' ? 'Рядом (Wi-Fi)' : rtcOk ? 'Напрямую (знакомство: ' + RELAY_NAME + ')' : NT.via === 'relay' ? 'Сервер ' + RELAY_NAME : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
-      txt = via + ' · ' + r + ' мс' + (NET.buffered() > 24000 ? ' · затор' : '') + ((rtcOk && NT.rtc.fast.readyState === 'open') || (NT.fast && NT.fast.readyState === 'open') ? ' ⚡' : '');
+      txt = via + ' · ' + r + ' мс' + (NT.via === 'elite' && NET.eliteFps && NET.eliteFps < 50 ? ' · сервер тормозит (' + NET.eliteFps + ' к/с)' : '') + (NET.buffered() > 24000 ? ' · затор' : '') + ((rtcOk && NT.rtc.fast.readyState === 'open') || (NT.fast && NT.fast.readyState === 'open') ? ' ⚡' : '');
       cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
     }
     badgeEl.textContent = txt; badgeEl.className = cls;
@@ -8428,6 +8428,7 @@
       case '_busy': netError('В этой комнате уже играют.'); return;
       case '_badver': if (NET.role === 'guest') { clearTimeout(NT.joinTimer); netError(OLD_VER_GUEST); } return;
       case '_ping': rawSend({ t: '_pong', ts: m.ts }); return;
+      case '_sp': rawSend({ t: '_sq', ts: m.ts }); NET.eliteFps = m.fps; return; // «Элит»: сервер меряет, не копится ли очередь до нас
       case '_rtc': if (m.sdp) rtcOnSdp(m.sdp); return;
       case '_ice': if (NT.rtc) NT.rtc.theirs++; rtcOnIce(m.c); return;
       case '_rtcfail': rtcClose(); netError('Напрямую соединиться не получилось. ' + (m.why || '') + ' Попробуйте другую сеть (например, Wi-Fi) или другой способ связи.'); return;
@@ -10340,6 +10341,16 @@
         if (sp > cap) { P.vx *= cap / sp; P.vy *= cap / sp; }
         P.x += P.vx * dt; P.y += P.vy * dt;
       },
+      // по сети: трещины льдины не меняются весь раунд — шлём их изредка, а числа — покороче
+      netPack(D, full) {
+        const r = v => (Math.abs(v) < 100 ? Math.round(v * 100) / 100 : Math.round(v * 10) / 10);
+        const o = { scale: r(D.scale || 1), t: r(D.t || 0), bonus: D.bonus ? { x: r(D.bonus.x), y: r(D.bonus.y), type: D.bonus.type, born: r(D.bonus.born) } : null };
+        if (full) o.cracks = D.cracks;
+        o.f = (D.f || []).map(f => { const q = {}; for (const k in f) q[k] = typeof f[k] === 'number' ? r(f[k]) : f[k]; return q; });
+        o.drops = (D.drops || []).map(p => ({ x: r(p.x), y: r(p.y), vx: r(p.vx), vy: r(p.vy), life: r(p.life), r: r(p.r) }));
+        return o;
+      },
+      netUnpack(old, o) { const D = Object.assign({}, o); if (!D.cracks && old) D.cracks = old.cracks; return D; },
     key: 'sumo', title: 'Сумо', bg: '#0b2a3f',
     desc: 'Скользкая льдина тает и сужается. Слева на своей половине — джойстик, справа — рывок-таран. Вытолкни соперника в воду.',
     icon: '<svg viewBox="0 0 60 60"><ellipse cx="30" cy="32" rx="27" ry="22" fill="#dff3ff"/><circle cx="20" cy="38" r="9" fill="#4fa3ff"/><circle cx="40" cy="25" r="9" fill="#ff5a4f"/><circle cx="23" cy="36" r="2" fill="#fff"/><circle cx="37" cy="27" r="2" fill="#fff"/></svg>',
