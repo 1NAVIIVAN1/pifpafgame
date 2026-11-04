@@ -7624,10 +7624,10 @@
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   // свои серверы связи — выбираются переключателями во вкладке «По сети» (до подключения)
   // ru — «Напрямую по России»: знакомство через сервер Москва, а сама игра — напрямую телефон-телефон
-  const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
+  const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.19';
+  const NET_BUILD = '2.20';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -7652,7 +7652,7 @@
   function applySrv() {
     const sv = SERVERS[NET.srvSel];
     const qr = new URLSearchParams(location.search).get('relay'); // для проверки: свой адрес сервера
-    NET.rtcWanted = NET.srvSel === 'ru';
+    NET.rtcWanted = NET.srvSel === 'ru' || NET.srvSel === 'ruw';
     if (sv) { RELAY_NAME = sv[0]; RELAY_HOST = sv[1]; RELAY_URL = qr || 'wss://' + sv[1] + '/'; NET.mode = 'relay'; }
     else { RELAY_NAME = ''; RELAY_HOST = ''; RELAY_URL = qs_relay(); NET.mode = RELAY_URL ? 'relay' : 'p2p'; }
   }
@@ -8067,7 +8067,7 @@
     else {
       const r = Math.round(NET.rtt);
       // какая связь: напрямую телефон-телефон или через пересылающий сервер (TURN), если напрямую не пробиться
-      const via = rtcOk ? 'Напрямую (Россия)' : NT.via === 'relay' ? 'Сервер ' + RELAY_NAME : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
+      const via = rtcOk ? 'Напрямую (знакомство: ' + RELAY_NAME + ')' : NT.via === 'relay' ? 'Сервер ' + RELAY_NAME : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
       txt = via + ' · ' + r + ' мс' + (NET.buffered() > 24000 ? ' · затор' : '') + ((rtcOk && NT.rtc.fast.readyState === 'open') || (NT.fast && NT.fast.readyState === 'open') ? ' ⚡' : '');
       cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
     }
@@ -8457,16 +8457,19 @@
     let h = '';
     if (st === 'idle') {
       h = `<div class="netTitle">Игра по сети</div>
-        <p>Создай комнату и отправь ссылку другу — или введи код, который прислал друг.</p>
+        <p>Создай комнату и отправь ссылку другу — или введи код, который прислал друг.</p><p class="netTip">Все переключатели выключены — обычный способ: знакомство через бесплатный зарубежный сервис, игра напрямую, а если не выйдет — через его пересылку.</p>
         <button class="hkPlay netHost">Создать комнату</button>
         <div class="netOr">или</div>
         <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
-        <div class="settingRow netDirectRow"><div class="label">Только напрямую<small>Без пересылки через сервер: меньше задержка. Если напрямую не выйдет — игра скажет об этом</small></div>
+        <div class="settingRow netDirectRow"><div class="label">Только напрямую<small>Для игры с VPN. Знакомство через бесплатный зарубежный сервис, игра — напрямую, без пересылки</small></div>
           <button class="switch netDirectSw" role="switch" aria-checked="${NET.directOnly}" aria-label="Только напрямую"><span></span></button></div>
         ${Object.entries(SERVERS).map(([k, [n, , lab]]) => {
           const on = NET.srvSel === k, v = NET.srvPing[k], title = lab || 'Сервер ' + n;
-          const off = k === 'ru' ? 'Знакомство через сервер Москва, а игра — напрямую телефон–телефон' : 'Вся игра идёт через этот сервер';
-          const info = !on ? off : v === undefined ? 'Проверяем задержку…' : v === null ? 'Сервер Москва не отвечает — проверь, что он запущен' : (k === 'ru' ? 'Сервер знакомства отвечает: <b>' : 'Задержка до сервера: <b>') + v + ' мс</b>';
+          const off = k === 'ru' ? 'Без VPN. Телефоны знакомятся через твой сервер в Москве, а играют напрямую друг с другом'
+            : k === 'ruw' ? 'Без VPN. Телефоны знакомятся через твой сервер в Варшаве, а играют напрямую друг с другом'
+            : k === 'msk' ? 'Без VPN. Вся игра идёт через твой сервер в Москве'
+            : 'С VPN. Вся игра идёт через твой сервер в ' + (k === 'mia' ? 'Майами — для VPN в США' : 'Варшаве — для VPN в Европе');
+          const info = !on ? off : v === undefined ? 'Проверяем задержку…' : v === null ? 'Сервер ' + n + ' не отвечает — проверь, что он запущен в Amvera' : (k === 'ru' || k === 'ruw' ? 'Сервер знакомства отвечает: <b>' : 'Задержка до сервера: <b>') + v + ' мс</b>';
           return `<div class="settingRow netDirectRow"><div class="label">${title}<small>${info}</small></div>
           <button class="switch netSrvSw" data-k="${k}" role="switch" aria-checked="${on}" aria-label="${title}"><span></span></button></div>`;
         }).join('')}
