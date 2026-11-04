@@ -7627,7 +7627,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.20';
+  const NET_BUILD = '2.21';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -7653,6 +7653,7 @@
     const sv = SERVERS[NET.srvSel];
     const qr = new URLSearchParams(location.search).get('relay'); // для проверки: свой адрес сервера
     NET.rtcWanted = NET.srvSel === 'ru' || NET.srvSel === 'ruw';
+    NET.rtcOnly = NET.srvSel === 'ruw'; // сервер — только посредник: игра строго напрямую
     if (sv) { RELAY_NAME = sv[0]; RELAY_HOST = sv[1]; RELAY_URL = qr || 'wss://' + sv[1] + '/'; NET.mode = 'relay'; }
     else { RELAY_NAME = ''; RELAY_HOST = ''; RELAY_URL = qs_relay(); NET.mode = RELAY_URL ? 'relay' : 'p2p'; }
   }
@@ -8203,7 +8204,9 @@
       case '_badver': if (NET.role === 'guest') { clearTimeout(NT.joinTimer); netError(OLD_VER_GUEST); } return;
       case '_ping': rawSend({ t: '_pong', ts: m.ts }); return;
       case '_rtc': if (m.sdp) rtcOnSdp(m.sdp); return;
-      case '_ice': rtcOnIce(m.c); return;
+      case '_ice': if (NT.rtc) NT.rtc.theirs++; rtcOnIce(m.c); return;
+      case '_rtcfail': rtcClose(); netError('Напрямую соединиться не получилось. ' + (m.why || '') + ' Попробуйте другую сеть (например, Wi-Fi) или другой способ связи.'); return;
+      case '_rtconly': NET.rtcOnlyPeer = true; return;
       case '_ev':
         if (m.of === 's') { for (const e of m.ev || []) guestEvent(e); }
         else if (m.of === 'ns') { if (trActive && NET.game === 'neon') for (const e of m.ev || []) neonEvent(e); }
@@ -8252,9 +8255,24 @@
     clearTimeout(R.timer);
     try { R.main.close(); } catch (e) {} try { R.fast.close(); } catch (e) {} try { R.pc.close(); } catch (e) {}
   }
+  // напрямую не вышло — объясняем, почему, и не играем через сервер
+  function rtcWhy(R, peer) {
+    const me = peer ? 'Телефон соперника' : 'Твой телефон', net = peer ? 'Сеть соперника' : 'Твоя сеть';
+    if (!R.mine.srflx && !R.mine.host) return me + ' не смог получить сетевой адрес для прямой связи.';
+    if (!R.mine.srflx) return net + ' не дала узнать внешний адрес (служба STUN недоступна) — напрямую из такой сети не пробиться.';
+    if (!R.theirs) return peer ? 'От тебя не пришёл ни один адрес — у тебя прямая связь недоступна.' : 'От соперника не пришёл ни один адрес — у него прямая связь недоступна.';
+    return 'Адреса получены, но сеть одного из вас не пропускает прямое соединение (так бывает на мобильном интернете и с VPN).';
+  }
+  function rtcFail(R) {
+    const why = rtcWhy(R);
+    wsSend({ t: '_rtcfail', why: rtcWhy(R, true) });
+    rtcClose();
+    setTimeout(() => netError('Напрямую соединиться не получилось. ' + why + ' Попробуйте другую сеть (например, Wi-Fi) или другой способ связи.'), 200);
+  }
   function rtcLost(R) {
     if (NT.rtc !== R) return;
     const was = R.ok;
+    if (was && (NET.rtcOnly || NT.via === 'rtc') && NET.on) { rtcClose(); return netLost('Прямая связь с соперником оборвалась.'); }
     rtcClose();
     if (was) { netBadge(); if (NET.lobby === 'connected') setLobby('connected'); }
   }
@@ -8284,12 +8302,24 @@
     const pc = new RTCPeerConnection({ iceServers: RU_ICE });
     const main = pc.createDataChannel('pp-main', { negotiated: true, id: 1, ordered: true });
     const fast = pc.createDataChannel('pp-fast', { negotiated: true, id: 77, ordered: false, maxRetransmits: 0 });
-    const R = NT.rtc = { pc, main, fast, ok: false, n: {}, last: {}, pend: [] };
-    pc.onicecandidate = e => { if (NT.rtc === R && e.candidate) wsSend({ t: '_ice', c: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate }); };
+    const R = NT.rtc = { pc, main, fast, ok: false, n: {}, last: {}, pend: [], mine: { host: 0, srflx: 0 }, theirs: 0 };
+    pc.onicecandidate = e => {
+      if (NT.rtc !== R || !e.candidate) return;
+      const c = e.candidate.candidate || '';
+      if (/ typ srflx/.test(c)) R.mine.srflx++; else if (/ typ host/.test(c)) R.mine.host++;
+      wsSend({ t: '_ice', c: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate });
+    };
     const ready = () => {
       if (NT.rtc !== R || R.ok || main.readyState !== 'open' || fast.readyState !== 'open') return;
       R.ok = true; clearTimeout(R.timer);
       NT.route = 'direct';
+      // только посредник: познакомились — отключаемся от сервера, дальше строго напрямую
+      if (NET.rtcOnly || NET.rtcOnlyPeer) setTimeout(() => {
+        if (NT.rtc !== R || !R.ok) return;
+        NT.via = 'rtc'; clearTimeout(NT.relayTimer); NT.reconnSince = 0; NT.peerWait = 0;
+        const ws = NT.ws; NT.ws = null; try { ws && ws.close(); } catch (e) {}
+        netBadge(); if (NET.lobby === 'connected') setLobby('connected');
+      }, 1500);
       netBadge(); if (NET.lobby === 'connected') setLobby('connected');
     };
     main.onopen = ready; fast.onopen = ready;
@@ -8297,7 +8327,11 @@
     main.onclose = () => rtcLost(R);
     pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed' || pc.connectionState === 'closed') rtcLost(R); };
     // за 12 секунд не пробились — играем через сервер
-    R.timer = setTimeout(() => { if (NT.rtc === R && !R.ok) rtcClose(); }, 12000);
+    R.timer = setTimeout(() => {
+      if (NT.rtc !== R || R.ok) return;
+      if (NET.rtcOnly || NET.rtcOnlyPeer) { rtcFail(R); return; }
+      rtcClose();
+    }, 12000);
     return R;
   }
   async function rtcStart() {
@@ -8345,7 +8379,8 @@
     document.body.classList.add('netOn');
     NT.route = null; NT.routeAt = performance.now(); setTimeout(checkRoute, 600);
     if (!NET_TEST && NT.via !== 'relay') setupFast();
-    if (NT.via === 'relay' && NET.rtcWanted && NET.role === 'host') setTimeout(rtcStart, 300);
+    NET.rtcOnlyPeer = false;
+    if (NT.via === 'relay' && NET.rtcWanted && NET.role === 'host') { if (NET.rtcOnly) wsSend({ t: '_rtconly' }); setTimeout(rtcStart, 300); }
     setLobby('connected');
     vibrate([20, 40, 20]);
     sound(660, 0.1, 'triangle', 0.06); setTimeout(() => sound(990, 0.14, 'triangle', 0.06), 110);
@@ -8466,7 +8501,7 @@
         ${Object.entries(SERVERS).map(([k, [n, , lab]]) => {
           const on = NET.srvSel === k, v = NET.srvPing[k], title = lab || 'Сервер ' + n;
           const off = k === 'ru' ? 'Без VPN. Телефоны знакомятся через твой сервер в Москве, а играют напрямую друг с другом'
-            : k === 'ruw' ? 'Без VPN. Телефоны знакомятся через твой сервер в Варшаве, а играют напрямую друг с другом'
+            : k === 'ruw' ? 'Сервер Варшава — только посредник для знакомства. Игра строго напрямую; не выйдет — игра скажет почему'
             : k === 'msk' ? 'Без VPN. Вся игра идёт через твой сервер в Москве'
             : 'С VPN. Вся игра идёт через твой сервер в ' + (k === 'mia' ? 'Майами — для VPN в США' : 'Варшаве — для VPN в Европе');
           const info = !on ? off : v === undefined ? 'Проверяем задержку…' : v === null ? 'Сервер ' + n + ' не отвечает — проверь, что он запущен в Amvera' : (k === 'ru' || k === 'ruw' ? 'Сервер знакомства отвечает: <b>' : 'Задержка до сервера: <b>') + v + ' мс</b>';
@@ -8491,6 +8526,7 @@
         ? `<div class="netOk">Соперник подключился!</div><p>Выбери игру ниже, настрой её и нажми «Играть» — игра начнётся у обоих.</p>`
         : `<div class="netOk">Подключено!</div><p>Ждём, пока соперник выберет игру и нажмёт «Играть». Твоя сторона всегда снизу.</p>`;
       if (NT.rtc && NT.rtc.ok) h += `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Напрямую телефон–телефон (знакомство через сервер ${RELAY_NAME})</p>`;
+      else if (NET.rtcOnly || NET.rtcOnlyPeer) h += `<p class="netWait">Соединяемся напрямую… (сервер ${RELAY_NAME} — только посредник)</p>`;
       else if (NT.via === 'relay') h += `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Связь через сервер ${RELAY_NAME}${NET.rtcWanted && NT.rtc ? ' · пробуем напрямую…' : ''}</p>`;
       h += `<button class="backBtn netLeaveBtn">Отключиться</button>`;
     } else if (st === 'error') {
@@ -8573,6 +8609,7 @@
     t.innerHTML = (icon ? icon.outerHTML : '') + `<span>${name}</span>`;
     t.addEventListener('click', () => {
       if (!NET.on) { panelHint('Сначала создай комнату или войди по коду'); return; }
+      if (NET.rtcOnly && !(NT.rtc && NT.rtc.ok)) { panelHint('Соединяемся напрямую — подожди пару секунд'); return; }
       if (NET.role === 'guest') { panelHint('Игру выбирает тот, кто создал комнату'); return; }
       NET.game = g === 'tanks' || g === 'stick' ? 'tanks' : g;
       document.getElementById(src).click(); // откроются настройки игры (без ботов)
