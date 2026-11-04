@@ -1159,7 +1159,7 @@
   .netOr { opacity: 0.5; font-size: 0.85rem; }
   .netJoin { display: flex; gap: 8px; }
   .netJoin .hkPlay { flex: 1; }
-  .netCode {
+  .netCode, .netMyCode {
     width: 7.5em; min-width: 0;
     padding: 10px;
     border-radius: 12px;
@@ -1451,6 +1451,13 @@
   .netSrvRow { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
   .netSrvRow .backBtn { flex: 1; min-width: 120px; }
   .netSrvRow .backBtn:disabled { opacity: 0.45; }
+
+  .netMyRow { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; text-align: left; }
+  .netMyRow label { font-size: 0.85rem; font-weight: 700; opacity: 0.85; }
+  .netMyRow .netMyCode { flex: 1; min-width: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: 0.3em; text-align: center; }
+  .netMyRow .netDice { flex: none; width: 64px; font-size: 1.4rem; }
+  .netMyRow small { font-size: 0.75rem; opacity: 0.75; }
+  .netHost:disabled { opacity: 0.45; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -4092,7 +4099,9 @@
       const s = shooter.shells[i];
       for (const target of [p1, p2]) {
         if (target === shooter && (s.bounces === 0 || !settings.selfDamage)) continue;
-        if (Math.hypot(s.x - target.x, s.y - target.y) >= (s.pierce ? PIERCE_HIT : s.r ? s.r + TANK_HIT_R : HIT_RADIUS)) continue;
+        const hitR = s.pierce ? PIERCE_HIT : s.r ? s.r + TANK_HIT_R : HIT_RADIUS;
+        const past = NET.compPos ? NET.compPos(shooter, target) : null; // по сети: где цель была на экране стрелявшего
+        if (Math.hypot(s.x - target.x, s.y - target.y) >= hitR && !(past && Math.hypot(s.x - past.x, s.y - past.y) < hitR)) continue;
         s.el.remove();
         shooter.shells.splice(i, 1);
         if (target.shieldActive) blockSpark(target.x, target.y);
@@ -7619,7 +7628,7 @@
   const BOT_NAME = 'pifpafgame';
   const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
   // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
-  const NET_VER = 10;
+  const NET_VER = 11;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   // свои серверы связи — выбираются переключателями во вкладке «По сети» (до подключения)
@@ -7627,7 +7636,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.21';
+  const NET_BUILD = '2.22';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -7714,7 +7723,22 @@
     if (el) el.textContent = text;
   }
   const errInfo = err => (err && err.type ? ' (' + err.type + ')' : '');
-  const newCode = () => Array.from({ length: 5 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
+  // ПОСЛЕДНЯЯ ЦИФРА НОМЕРА КОМНАТЫ = СПОСОБ СВЯЗИ. Другу достаточно знать номер — способ включится сам.
+  // 0 (и 7–9) — обычный · 1 — только напрямую · 2 — напрямую по России (Москва) · 3 — напрямую через Варшаву
+  // 4 — сервер Москва · 5 — сервер Майами · 6 — сервер Варшава
+  const METHOD_DIGIT = { '': '0', direct: '1', ru: '2', ruw: '3', msk: '4', mia: '5', waw: '6' };
+  const METHOD_NAME = { '': 'обычный', direct: 'только напрямую', ru: 'напрямую по России', ruw: 'напрямую через Варшаву', msk: 'сервер Москва', mia: 'сервер Майами', waw: 'сервер Варшава' };
+  const methodKey = () => NET.directOnly ? 'direct' : (NET.srvSel || '');
+  const digitMethod = d => Object.keys(METHOD_DIGIT).find(k => METHOD_DIGIT[k] === String(d)) || '';
+  function applyMethod(k) {
+    NET.directOnly = k === 'direct';
+    NET.srvSel = k && k !== 'direct' ? k : '';
+    try { localStorage.setItem('pp-direct', NET.directOnly ? '1' : '0'); localStorage.setItem('pp-srv', NET.srvSel); } catch (e) {}
+    applySrv();
+  }
+  const rnd4 = () => Array.from({ length: 4 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
+  const newCode = () => rnd4() + METHOD_DIGIT[methodKey()];
+  NET.myCode = '';
 
   // --- отправка ---
   function rawSend(m) {
@@ -7785,8 +7809,10 @@
     netClose(true);
     NET.hostNote = '';
     NET.role = 'host'; NET.game = null;
+    if (!/^\d{5}$/.test(NET.myCode || '')) NET.myCode = newCode();
+    applyMethod(digitMethod(NET.myCode[4])); // способ — по последней цифре номера
     setLobby('creating');
-    const code = newCode();
+    const code = NET.myCode;
     if (NET_TEST) {
       NET.code = code;
       NT.bc = new BroadcastChannel('pifpaf-' + code);
@@ -7836,7 +7862,7 @@
       const type = err && err.type;
       if (type === 'unavailable-id') {
         try { peer.destroy(); } catch (e) {}
-        if (first) { hostPeer(newCode(), true); return; } // код занят — другой
+        if (first) return roomTaken(code); // номер занят — говорим и даём выбрать
         // старая «точка» ещё не отпущена сервером — подождём
         if (tries < 6) { setTimeout(() => { if (NET.role === 'host' && NT.peer === peer) hostPeer(code, false, tries + 1); }, 2500); return; }
         return netError('Комната потерялась. Создай новую.' + errInfo(err));
@@ -7929,13 +7955,18 @@
     if (m.ok === 'back') { NT.peerWait = 0; NT.alive = performance.now(); netBadge(); return; }
     if (m.ok === 'left') { NT.peerWait = 0; if (NET.on && !(NT.rtc && NT.rtc.ok)) netLost(); return; }
   }
+  function roomTaken(code) {
+    netClose(true);
+    NET.takenCode = code;
+    setLobby('taken');
+  }
   function relayHost(code, first) {
     NT.relayCode = code;
     if (first) stage('Связываемся с сервером…');
     relayOpen(m => {
       if (m.t !== '_srv') return onRaw(m);
       if (m.ok === 'hosted') { relayBack(); NET.code = code; if (!NET.on && (NET.lobby === 'creating' || NET.lobby === 'waiting')) setLobby('waiting'); return; }
-      if (m.e === 'taken') { NT.key = Math.random().toString(36).slice(2); NT.ws && NT.ws.close(); NT.ws = null; relayHost(newCode(), true); return; }
+      if (m.e === 'taken') { NT.key = Math.random().toString(36).slice(2); const w = NT.ws; NT.ws = null; try { w && w.close(); } catch (e) {} return roomTaken(code); }
       relaySys(m);
     }, ws => ws.send(JSON.stringify({ t: '_host', code, key: NT.key })));
   }
@@ -8100,6 +8131,7 @@
   // --- гость: войти по коду ---
   async function joinRoom(code, tries = 0, p2p = false) {
     if (!tries) netClose(true);
+    if (!tries && !p2p) applyMethod(digitMethod(String(code)[4])); // способ связи — по последней цифре
     NET.role = 'guest'; NET.code = code;
     if (!tries) setLobby('joining');
     if (NET_TEST) {
@@ -8493,7 +8525,10 @@
     if (st === 'idle') {
       h = `<div class="netTitle">Игра по сети</div>
         <p>Создай комнату и отправь ссылку другу — или введи код, который прислал друг.</p><p class="netTip">Все переключатели выключены — обычный способ: знакомство через бесплатный зарубежный сервис, игра напрямую, а если не выйдет — через его пересылку.</p>
-        <button class="hkPlay netHost">Создать комнату</button>
+        <div class="netMyRow"><label>Номер твоей комнаты</label>
+          <div class="netJoin"><input class="netMyCode" maxlength="5" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="${NET.myCode}"><button class="backBtn netDice" aria-label="Случайный номер">🎲</button></div>
+          <small class="netMyHint">Последняя цифра — способ связи: <b>${METHOD_NAME[methodKey()]}</b></small></div>
+        <button class="hkPlay netHost">Создать комнату ${NET.myCode}</button>
         <div class="netOr">или</div>
         <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
         <div class="settingRow netDirectRow"><div class="label">Только напрямую<small>Для игры с VPN. Знакомство через бесплатный зарубежный сервис, игра — напрямую, без пересылки</small></div>
@@ -8508,10 +8543,15 @@
           return `<div class="settingRow netDirectRow"><div class="label">${title}<small>${info}</small></div>
           <button class="switch netSrvSw" data-k="${k}" role="switch" aria-checked="${on}" aria-label="${title}"><span></span></button></div>`;
         }).join('')}
-        <p class="netTip">Включён может быть только один способ. Друг должен выбрать такой же${NET.srvSel ? ' (ссылка для друга уже с этим сервером)' : ''}.</p>
+        <p class="netTip">0 — обычный · 1 — только напрямую · 2 — по России · 3 — через Варшаву · 4 — Москва · 5 — Майами · 6 — Варшава. Включён может быть только один способ. Друг должен выбрать такой же${NET.srvSel ? ' (ссылка для друга уже с этим сервером)' : ''}.</p>
         <p class="netTip">${netInfo()}</p>`;
     } else if (st === 'creating') {
       h = `<p class="netWait">Создаём комнату…</p><p class="netStage">${NET.stage || ''}</p><button class="backBtn netCancel">Отмена</button>`;
+    } else if (st === 'taken') {
+      h = `<div class="netTitle">Номер ${NET.takenCode} занят</div>
+        <p>Комната с таким номером уже есть. Выбери другой номер — последняя цифра останется прежней, способ связи не изменится.</p>
+        <button class="hkPlay netTakenGen">Сгенерировать новый номер</button>
+        <button class="backBtn netTakenEdit">Изменить номер вручную</button>`;
     } else if (st === 'waiting') {
       h = `<p>Код комнаты:</p><div class="netBig">${NET.code}</div>
         <button class="hkPlay netShare">Отправить ссылку другу</button>
@@ -8534,7 +8574,8 @@
     }
     stateBox.innerHTML = h;
     const $ = s => stateBox.querySelector(s);
-    const saveSel = () => { try { localStorage.setItem('pp-direct', NET.directOnly ? '1' : '0'); localStorage.setItem('pp-srv', NET.srvSel); } catch (err) {} applySrv(); };
+    const saveSel = () => { try { localStorage.setItem('pp-direct', NET.directOnly ? '1' : '0'); localStorage.setItem('pp-srv', NET.srvSel); } catch (err) {} applySrv();
+      if (/^\d{4}/.test(NET.myCode || '')) NET.myCode = NET.myCode.slice(0, 4) + METHOD_DIGIT[methodKey()]; };
     if ($('.netDirectSw')) $('.netDirectSw').addEventListener('click', () => {
       NET.directOnly = !NET.directOnly;
       if (NET.directOnly) NET.srvSel = '';
@@ -8557,6 +8598,26 @@
       const k = NET.srvSel;
       pingHost(SERVERS[k][1], 3).then(v => { NET.srvPing[k] = v; NET.srvPingBusy = false; if (NET.lobby === 'idle') setLobby('idle'); });
     }
+    // свой номер комнаты: последняя цифра и переключатели связаны
+    if (st === 'idle' && !/^\d{5}$/.test(NET.myCode || '')) { NET.myCode = newCode(); setLobby('idle'); return; }
+    if ($('.netMyCode')) {
+      const inp = $('.netMyCode');
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(0, 5);
+        NET.myCode = inp.value;
+        if (inp.value.length === 5) {
+          applyMethod(digitMethod(inp.value[4]));
+          stateBox.querySelectorAll('.netSrvSw').forEach(b => b.setAttribute('aria-checked', String(NET.srvSel === b.dataset.k)));
+          if ($('.netDirectSw')) $('.netDirectSw').setAttribute('aria-checked', String(NET.directOnly));
+          $('.netMyHint').innerHTML = 'Последняя цифра — способ связи: <b>' + METHOD_NAME[methodKey()] + '</b>';
+        }
+        $('.netHost').textContent = 'Создать комнату ' + inp.value;
+        $('.netHost').disabled = inp.value.length !== 5;
+      });
+    }
+    if ($('.netDice')) $('.netDice').addEventListener('click', () => { NET.myCode = newCode(); setLobby('idle'); });
+    if ($('.netTakenGen')) $('.netTakenGen').addEventListener('click', () => { const d = String(NET.takenCode || '')[4] || METHOD_DIGIT[methodKey()]; NET.myCode = rnd4() + d; hostRoom(); });
+    if ($('.netTakenEdit')) $('.netTakenEdit').addEventListener('click', () => { NET.myCode = NET.takenCode || NET.myCode; setLobby('idle'); setTimeout(() => { const i = stateBox.querySelector('.netMyCode'); if (i) { i.focus(); i.select(); } }, 50); });
     if ($('.netHost')) $('.netHost').addEventListener('click', () => { try { audioBus(); } catch (e) {} hostRoom(); });
     if ($('.netJoinBtn')) {
       const inp = $('.netCode');
@@ -8700,8 +8761,19 @@
     let da = ((p2.na - p2.angle) % 360 + 540) % 360 - 180;
     p2.angle = ((p2.angle + da * k) % 360 + 360) % 360;
   };
+  // КОМПЕНСАЦИЯ ЗАДЕРЖКИ: гость видит танк хозяина с опозданием (половина пинга + 100 мс сглаживания).
+  // Попадание снаряда гостя проверяем и по тому месту, где танк хозяина был НА ЭКРАНЕ ГОСТЯ.
+  const tHist = [];
+  NET.compPos = (shooter, target) => {
+    if (!(NET.on && NET.role === 'host') || shooter !== p2 || target !== p1 || !tHist.length) return null;
+    const t = performance.now() - Math.min(300, NET.rtt / 2 + 100);
+    let best = null, bd = Infinity;
+    for (const h of tHist) { const d = Math.abs(h.t - t); if (d < bd) { bd = d; best = h; } }
+    return best;
+  };
   // хост: снимок игры ~30 раз в секунду
   NET.tankHostSend = now => {
+    { const t = performance.now(); tHist.push({ t, x: p1.x, y: p1.y }); while (tHist.length && t - tHist[0].t > 600) tHist.shift(); }
     if (now - tLastSend < NET.snapGap() || NET.congested()) return;
     tLastSend = now;
     const sh = [];
@@ -9139,8 +9211,11 @@
       const g = pgByKey(NET.game);
       if (!g || !g.G.active) return;
       const G = g.G;
-      if (m.t === 'qi') G.remote = { x: m.x, y: m.y, on: !!m.on, mag: m.mag || 0 };
-      else if (m.t === 'qb') { if (G.state === 'play' || G.state === 'countdown') G.remotePress(m.s, !!m.d); }
+      if (m.t === 'qi') { if (!(G.remoteAt > performance.now() - 120)) G.remote = { x: m.x, y: m.y, on: !!m.on, mag: m.mag || 0 }; }
+      else if (m.t === 'qb') {
+        if (m.d && m.x !== undefined) { G.remote = { x: +m.x || 0, y: +m.y || 0, on: !!m.on, mag: +m.mag || 0 }; G.remoteAt = performance.now(); }
+        if (G.state === 'play' || G.state === 'countdown') G.remotePress(m.s, !!m.d);
+      }
       else if (m.t === 'qp') G.remoteRaw(m.k, m.x, m.y, m.id);
       else if (m.t === 'qshot') { if (G.cfg.netShot && Array.isArray(m.a)) G.cfg.netShot(G, m.a); }
       else if (m.t === 'qsweep') { if (G.cfg.netSweep) G.cfg.netSweep(G, +m.x || 0, +m.y || 0); }
@@ -9571,7 +9646,9 @@
     const owner = e => (G.netMode() ? G.me() : e.clientY < scrMid() ? 1 : 0);
     const flipE = e => (G.netMode() === 'guest' ? { clientX: innerWidth - e.clientX, clientY: innerHeight - e.clientY, pointerId: e.pointerId } : e);
     // кнопка: у гостя нажатие уходит хосту
-    const btnPress = (i, s) => { if (G.netMode() === 'guest') { NET.send({ t: 'qb', d: 1, s }); G.sound(500, 0.03, 'square', 0.02); } else cfg.press && cfg.press(G, i, s); };
+    // по сети нажатие гостя несёт направление его джойстика в этот момент: рывок/прыжок пойдут туда, куда он смотрел,
+    // даже если сообщение о повороте ещё не дошло до хоста
+    const btnPress = (i, s) => { if (G.netMode() === 'guest') { const d = G.dir(1); NET.send({ t: 'qb', d: 1, s, x: d.on ? +d.x.toFixed(3) : 0, y: d.on ? +d.y.toFixed(3) : 0, on: d.on ? 1 : 0, mag: d.on ? +(d.mag || 0).toFixed(2) : 0 }); G.sound(500, 0.03, 'square', 0.02); } else cfg.press && cfg.press(G, i, s); };
     const btnRelease = (i, s) => { if (G.netMode() === 'guest') NET.send({ t: 'qb', d: 0, s }); else cfg.release && cfg.release(G, i, s); };
     G.remoteRaw = (k, x, y, id) => {
       if (!isLive()) return;
@@ -11978,6 +12055,7 @@
       desc: 'Ходите по очереди: сначала синий, потом красный. Хватай любую свою фишку, тяни назад и отпускай — пунктир покажет, куда она поедет. Задел мячом две свои фишки за удар — пас и ещё удар. Три удара по мячу — заряжен СУПЕРУДАР.',
       icon: '<svg viewBox="0 0 60 60"><rect x="4" y="4" width="52" height="52" rx="6" fill="#2f8a3e"/><rect x="20" y="4" width="20" height="5" fill="#fff"/><rect x="20" y="51" width="20" height="5" fill="#fff"/><circle cx="30" cy="30" r="9" fill="none" stroke="#fff" stroke-width="2"/><circle cx="18" cy="42" r="7" fill="#4fa3ff"/><circle cx="42" cy="18" r="7" fill="#ff5a4f"/><circle cx="30" cy="30" r="4" fill="#fff"/></svg>',
       controls: 'raw',
+      localAim: true, // по сети гость целится у себя, хосту уходит только удар
       netLerp: ['pucks', 'ball', 'bars'], anyHalf: true,
       goalLabel: 'Голов до победы', goals: [3, 5, 7], goalDef: 3,
       countdownMs: 1200, roundEndMs: 2200,
@@ -12000,6 +12078,19 @@
       },
       down(G, i, x, y, id) {
         const D = G.d;
+        if (G.netMode() === 'guest') {
+          if (G.state !== 'play' || D.phase !== 'aim' || G.loc) return;
+          if (G.sentShot && G.now - G.sentShot < 2500) return;
+          let bi = -1, bd = GRAB;
+          D.pucks.forEach((p, k) => { const d = Math.hypot(p.x - x, p.y - y); if (p.team === 1 && d < bd) { bd = d; bi = k; } });
+          if (bi < 0 || D.turn !== 1) {
+            if (D.turn !== 1 && D.pucks.some(p => Math.hypot(p.x - x, p.y - y) < GRAB)) { say(G, 1, 'Сейчас ход соперника', '#ffffff', 15); G.sound(150, 0.05, 'square', 0.02); }
+            return;
+          }
+          G.loc = { pi: bi, x, y, id, tick: 0 };
+          G.sound(400, 0.03, 'sine', 0.03);
+          return;
+        }
         if (G.state !== 'play' || D.phase !== 'aim') return;
         const t = D.turn;
         if (G.bot && t === 1) return;
@@ -12015,6 +12106,14 @@
         G.sound(400, 0.03, 'sine', 0.03);
       },
       move(G, x, y, id) {
+        if (G.netMode() === 'guest') {
+          const a = G.loc, p = a && G.d.pucks[a.pi];
+          if (!a || a.id !== id || !p) return;
+          a.x = x; a.y = y;
+          const step = Math.floor(Math.min(1, Math.hypot(p.x - x, p.y - y) / PULL_MAX) * 6);
+          if (step > a.tick) { a.tick = step; G.sound(300 + step * 70, 0.025, 'triangle', 0.025); if (step === 6) G.vibrate(8); } else if (step < a.tick) a.tick = step;
+          return;
+        }
         const a = G.d.aim;
         if (!a || a.id !== id) return;
         a.x = x; a.y = y;
@@ -12025,6 +12124,17 @@
         else if (step < a.tick) a.tick = step;
       },
       up(G, x, y, id) {
+        if (G.netMode() === 'guest') {
+          const a = G.loc, D = G.d, p = a && D.pucks[a.pi];
+          if (!a || a.id !== id) return;
+          G.loc = null;
+          if (!p || G.state !== 'play' || D.phase !== 'aim' || D.turn !== 1) return;
+          const dx = p.x - x, dy = p.y - y;
+          if (Math.hypot(dx, dy) < 14) return;
+          NET.send({ t: 'qshot', key: 'football', a: [a.pi, +dx.toFixed(2), +dy.toFixed(2)] });
+          G.sentShot = G.now; G.vibrate(10);
+          return;
+        }
         const D = G.d, a = D.aim;
         if (!a || a.id !== id) return;
         D.aim = null;
@@ -12032,6 +12142,12 @@
         shoot(G, a.p, a.p.x - x, a.p.y - y);
       },
       upAll(G) { const a = G.d.aim; if (a && !a.bot) G.d.aim = null; },
+      // хост: пришёл готовый удар гостя
+      netShot(G, a) {
+        const D = G.d, p = D.pucks[a[0] | 0];
+        if (!p || p.team !== 1 || G.state !== 'play' || D.phase !== 'aim' || D.turn !== 1) return;
+        shoot(G, p, +a[1] || 0, +a[2] || 0);
+      },
       update(G, dt0, now) {
         const D = G.d, W = G.W, H = G.H, GW = goalW(G);
         if (!D.ball) return;
@@ -12239,7 +12355,7 @@
           c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(bar.x - bar.w / 2 + 6, bar.y - 2, bar.w - 12, 2);
         }
         // прицел: пунктир пути фишки и куда пойдёт мяч
-        const a = D.aim;
+        const a = G.netMode() === 'guest' && G.loc && D.pucks[G.loc.pi] ? { p: D.pucks[G.loc.pi], x: G.loc.x, y: G.loc.y } : D.aim;
         if (a) {
           const p = a.p;
           const dx = p.x - a.x, dy = p.y - a.y, d = Math.hypot(dx, dy);
