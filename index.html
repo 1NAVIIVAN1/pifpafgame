@@ -7803,7 +7803,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.28';
+  const NET_BUILD = '2.30';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -9514,7 +9514,7 @@
     if (now - qLastIn > 250 || (str !== qLastInStr && now - qLastIn > 30)) { qLastIn = now; qLastInStr = str; NET.send({ t: 'qi', x, y, on: d.on ? 1 : 0, mag }); }
     // мир — с отставанием (запас подстраивается под ровность связи), чтобы бойцы двигались плавно
     if (!qSnaps.length) return;
-    const rt = now - NET.interpDelay(now);
+    const idl = NET.interpDelay(now), rt = now - idl;
     let A = qSnaps[0], B = qSnaps[qSnaps.length - 1];
     for (let k = 0; k < qSnaps.length - 1; k++) if (qSnaps[k].at <= rt && qSnaps[k + 1].at >= rt) { A = qSnaps[k]; B = qSnaps[k + 1]; break; }
     const span = B.at - A.at, f = span > 0 ? Math.max(0, Math.min(1, (rt - A.at) / span)) : 1;
@@ -9532,6 +9532,10 @@
       if (Array.isArray(b) && Array.isArray(a) && a.length === b.length) D[k] = b.map((o, i) => lerp1(a[i], o));
       else if (b && !Array.isArray(b)) D[k] = lerp1(a, b);
     }
+    // соперник показан «из прошлого» (запас плавности + путь до нас), а свой боец — уже «сейчас».
+    // Для игр со столкновениями досчитываем соперника вперёд по его скорости — тогда оба на экране
+    // в одном времени, и бойцы не проходят друг сквозь друга
+    if (G.cfg.netExtrap && G.state === 'play') G.cfg.netExtrap(G, D, Math.min(0.3, (idl + NET.rtt) / 1000));
     if (key && G.cfg.netPredict) predictOwn(G, D, key, B, now);
     G.d = D;
   };
@@ -9546,6 +9550,7 @@
     if (!qPred || qPred.round !== G.round) qPred = { x: srv.x, y: srv.y, vx: srv.vx || 0, vy: srv.vy || 0, round: G.round, at: now, hist: [], snapAt: latest.at, cx: 0, cy: 0 };
     const P = qPred, dt = Math.min(0.05, (now - P.at) / 1000); P.at = now;
     G.cfg.netPredict(G, P, G.dir(1), dt, srv, latest.D);
+    if (G.cfg.netPredictHit) G.cfg.netPredictHit(G, P, D);
     // плавно добираем поправку
     const k = Math.min(1, dt * 7);
     const mx = P.cx * k, my = P.cy * k;
@@ -10332,15 +10337,8 @@
   // Льдина-эллипс посреди воды тает и сужается. Бойцы скользят по льду,
   // джойстиком разгоняются, кнопкой делают рывок-таран. Выпал в воду — раунд сопернику.
   partyGame({
-      // по сети: движение своего бойца у гостя (как в update, без столкновений)
-      netPredict(G, P, d, dt, srv) {
-        if (d.on) { P.vx += d.x * 820 * dt; P.vy += d.y * 820 * dt; }
-        const fr = Math.exp(-1.15 * dt);
-        P.vx *= fr; P.vy *= fr;
-        const sp = Math.hypot(P.vx, P.vy), cap = Math.hypot(srv.vx || 0, srv.vy || 0) > 320 ? 700 : 300;
-        if (sp > cap) { P.vx *= cap / sp; P.vy *= cap / sp; }
-        P.x += P.vx * dt; P.y += P.vy * dt;
-      },
+      // по сети всё считает хозяин игры (или сервер «Элит»): телефон гостя ничего не угадывает,
+      // а показывает обоих бойцов ровно так, как их посчитали, — с задержкой на пинг
       // по сети: трещины льдины не меняются весь раунд — шлём их изредка, а числа — покороче
       netPack(D, full) {
         const r = v => (Math.abs(v) < 100 ? Math.round(v * 100) / 100 : Math.round(v * 10) / 10);
