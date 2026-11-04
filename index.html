@@ -7619,14 +7619,14 @@
   const BOT_NAME = 'pifpafgame';
   const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
   // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
-  const NET_VER = 9;
+  const NET_VER = 10;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   // свои серверы связи — выбираются переключателями во вкладке «По сети» (до подключения)
   const SERVERS = { msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.18';
+  const NET_BUILD = '2.21';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -7646,7 +7646,12 @@
   })();
   // как подключаться: '' — напрямую (P2P), иначе через выбранный сервер (весь матч)
   NET.mode = 'p2p'; NET.srvSel = ''; NET.srvPing = {};
-  try { NET.srvSel = SERVERS[localStorage.getItem('pp-srv')] ? localStorage.getItem('pp-srv') : ''; } catch (e) {}
+  // по умолчанию — сервер Москва: он работает без VPN, а дальше игра сама пробует соединиться напрямую
+  try {
+    const saved = localStorage.getItem('pp-srv');
+    if (saved === null) NET.srvSel = (localStorage.getItem('pp-direct') === '1' || new URLSearchParams(location.search).has('relay')) ? '' : 'msk';
+    else NET.srvSel = SERVERS[saved] ? saved : '';
+  } catch (e) {}
   { const q = new URLSearchParams(location.search).get('srv'); if (q && SERVERS[q]) NET.srvSel = q; }
   function applySrv() {
     const sv = SERVERS[NET.srvSel];
@@ -7701,7 +7706,9 @@
   async function loadPeer() {
     if (window.Peer) return;
     for (const src of PEER_SRCS) { try { await loadOne(src); return; } catch (e) {} }
-    throw new Error('Не удалось загрузить модуль прямой связи. Включи переключатель «Сервер Москва» и создай комнату ещё раз.');
+    throw new Error(NET.role === 'guest'
+      ? 'Друг создал комнату через PeerJS, а он у тебя не загрузился (в России обычно нужен VPN). Включи VPN или попроси друга выбрать «Сервер Москва» и создать комнату заново.'
+      : 'Не удалось загрузить модуль прямой связи. Включи переключатель «Сервер Москва» и создай комнату ещё раз.');
   }
   // строка «что сейчас происходит» в плашке
   function stage(text) {
@@ -7710,10 +7717,36 @@
     if (el) el.textContent = text;
   }
   const errInfo = err => (err && err.type ? ' (' + err.type + ')' : '');
-  const newCode = () => Array.from({ length: 5 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
+  // Первая цифра кода — способ связи, который выбрал ХОЗЯИН комнаты. Гость по коду сам понимает,
+  // куда подключаться, и его собственные переключатели ни на что не влияют.
+  // 1 — сервер Москва, 2 — Майами, 3 — Варшава, 4 — PeerJS, 5 — PeerJS «только напрямую».
+  const WAY_DIGIT = { msk: '1', mia: '2', waw: '3' };
+  const CODE_WAY = { '1': 'msk', '2': 'mia', '3': 'waw', '4': 'p2p', '5': 'direct' };
+  function wayDigit() {
+    if (NET.srvSel && WAY_DIGIT[NET.srvSel]) return WAY_DIGIT[NET.srvSel];
+    if (NET.mode === 'relay') return String(6 + Math.floor(Math.random() * 4)); // свой сервер из ?relay= (проверка) — старое поведение
+    return NET.directOnly ? '5' : '4';
+  }
+  const newCode = () => wayDigit() + Array.from({ length: 4 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
+  // гость: на время подключения берём способ хозяина (из кода), свои настройки не трогаем и потом возвращаем
+  function useHostWay(code) {
+    const w = CODE_WAY[String(code)[0]];
+    if (!w) return;
+    if (!NT.mine) NT.mine = { srv: NET.srvSel, d: NET.directOnly };
+    NET.srvSel = SERVERS[w] ? w : '';
+    NET.directOnly = w === 'direct';
+    applySrv();
+    if (!SERVERS[w]) { NET.mode = 'p2p'; RELAY_URL = ''; }
+  }
+  function restoreMine() {
+    if (!NT.mine) return;
+    NET.srvSel = NT.mine.srv; NET.directOnly = NT.mine.d; NT.mine = null;
+    applySrv();
+  }
 
   // --- отправка ---
   function rawSend(m) {
+    if (NT.via === 'relay' && dirOpen() && dirSend(m)) return;
     if (NT.via === 'relay') { if (NT.ws && NT.ws.readyState === 1) { try { NT.ws.send(JSON.stringify(m)); } catch (e) {} } return; }
     if (NET_TEST) {
       if (!NT.bc) return;
@@ -7762,6 +7795,7 @@
   // новые снимки просто пропускаем — до соперника доходит самый свежий, а не старый.
   NET.buffered = () => {
     try {
+      if (NT.via === 'relay' && dirOpen()) return D.fast && D.fast.readyState === 'open' ? D.fast.bufferedAmount || 0 : 0;
       if (NT.via === 'relay') return NT.ws ? NT.ws.bufferedAmount : 0;
       if (NT.fast && NT.fast.readyState === 'open') return NT.fast.bufferedAmount || 0;
       const dc = NT.conn && (NT.conn.dataChannel || NT.conn._dc);
@@ -7905,7 +7939,7 @@
     if (!NET.role || NT.via !== 'relay') return;
     if (!NT.reconnSince) NT.reconnSince = performance.now();
     netBadge();
-    if (NET.on && performance.now() - NT.reconnSince > RELAY_HOLD) { NT.reconnSince = 0; return netLost(); }
+    if (NET.on && !dirOpen() && performance.now() - NT.reconnSince > RELAY_HOLD) { NT.reconnSince = 0; return netLost(); }
     if (!NET.on && NET.role === 'host') { NET.hostNote = RECONNECTING; if (NET.lobby === 'waiting') setLobby('waiting'); }
     clearTimeout(NT.relayTimer);
     NT.relayTimer = setTimeout(() => {
@@ -7921,7 +7955,7 @@
   function relaySys(m) {
     if (m.ok === 'wait') { NT.peerWait = performance.now(); netBadge(); return; }
     if (m.ok === 'back') { NT.peerWait = 0; NT.alive = performance.now(); netBadge(); return; }
-    if (m.ok === 'left') { NT.peerWait = 0; if (NET.on) netLost(); return; }
+    if (m.ok === 'left') { NT.peerWait = 0; if (NET.on && !dirOpen()) netLost(); netBadge(); return; }
   }
   function relayHost(code, first) {
     NT.relayCode = code;
@@ -7956,7 +7990,7 @@
         if (probe) { NT.probe = false; NT.via = 'p2p'; if (!window.Peer) return netError('Комната ' + code + ' не найдена или связь недоступна. Проверь код и попробуй ещё.'); joinRoom(code, 1, true); return; } // на сервере нет — дальше напрямую
         // комнаты нет на нашем сервере — может, хозяин на старом способе; потом пробуем и его
         if (tries < 3) { stage(`Комната ${code} пока не отвечает — пробуем ещё (${tries + 1}/3)…`); setTimeout(() => { if (NET.role === 'guest' && NET.code === code && !NET.on) relayJoin(code, tries + 1); }, 2000); return; }
-        if (NET.srvSel) return netError('На сервере ' + RELAY_NAME + ' нет комнаты ' + code + '. Включите у обоих один и тот же способ связи (сервер или напрямую).');
+        if (NET.srvSel) return netError('На сервере ' + RELAY_NAME + ' нет комнаты ' + code + '. Проверь код — или комната уже закрыта, пусть друг создаст новую.');
         joinRoom(code, 0, true); return;
       }
       if (m.e === 'busy') { const ws = NT.ws; NT.ws = null; try { ws && ws.close(); } catch (e) {} return netError('В этой комнате уже играют.'); }
@@ -7964,6 +7998,110 @@
     }, ws => ws.send(JSON.stringify({ t: '_guest', code, key: NT.key })));
   }
 
+
+  // ======================= НАПРЯМУЮ ЧЕРЕЗ СВОЙ СЕРВЕР (без VPN) =======================
+  // Старый прямой способ (PeerJS) в России без VPN часто не соединяется: его сервер знакомства заблокирован.
+  // Поэтому так: подключаемся через свой сервер (он без VPN работает), и через него же телефоны
+  // обмениваются «визитками» (адресами) и соединяются напрямую по WebRTC. Получилось — игра идёт
+  // напрямую (меньше задержка), сервер остаётся запасным. Прямой канал упал — молча продолжаем через сервер.
+  const DIR_ICE = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'stun:stun.sipnet.ru:3478' },
+  ];
+  const D = { pc: null, rel: null, fast: null, on: false, tries: 0, timer: null, ka: null, q: [], n: {}, last: {} };
+  function dirOpen() { return !!(D.on && D.rel && D.rel.readyState === 'open'); }
+  const wsSend = m => { if (NT.ws && NT.ws.readyState === 1) { try { NT.ws.send(JSON.stringify(m)); } catch (e) {} } };
+  function dirReset() {
+    clearTimeout(D.timer); clearInterval(D.ka);
+    const pc = D.pc; D.pc = null; D.on = false; D.q = [];
+    try { D.rel && D.rel.close(); } catch (e) {} try { D.fast && D.fast.close(); } catch (e) {}
+    D.rel = D.fast = null;
+    try { pc && pc.close(); } catch (e) {}
+  }
+  function dirMake() {
+    dirReset();
+    const pc = new RTCPeerConnection({ iceServers: DIR_ICE });
+    D.pc = pc; D.n = {}; D.last = {};
+    // оба телефона создают каналы с одинаковыми номерами — договариваться о них не нужно
+    D.rel = pc.createDataChannel('pp-r', { negotiated: true, id: 78, ordered: true });
+    D.fast = pc.createDataChannel('pp-f', { negotiated: true, id: 79, ordered: false, maxRetransmits: 0 });
+    const onm = fast => e => {
+      if (D.pc !== pc) return;
+      let m; try { m = JSON.parse(e.data); } catch (er) { return; }
+      if (!m || !m.t) return;
+      if (fast && m._n) { if (m._n <= (D.last[m.t] || 0)) return; D.last[m.t] = m._n; }
+      onRaw(m);
+    };
+    D.rel.onmessage = onm(false); D.fast.onmessage = onm(true);
+    D.rel.onopen = () => { if (D.pc === pc) dirUp(); };
+    D.rel.onclose = () => { if (D.pc === pc) dirFail(); };
+    pc.onicecandidate = e => { if (D.pc === pc && e.candidate) wsSend({ t: '_rtc', ice: e.candidate }); };
+    pc.onconnectionstatechange = () => { if (D.pc === pc && (pc.connectionState === 'failed' || pc.connectionState === 'closed')) dirFail(); };
+    D.timer = setTimeout(() => { if (D.pc === pc && !D.on) dirFail(); }, 15000);
+    return pc;
+  }
+  // хост начинает: отправляет «визитку» гостю через сервер
+  async function dirStart() {
+    if (NET_TEST || !NET.on || NT.via !== 'relay' || NET.role !== 'host' || D.pc || D.tries >= 2 || !window.RTCPeerConnection) return;
+    D.tries++;
+    try {
+      const pc = dirMake();
+      await pc.setLocalDescription(await pc.createOffer());
+      if (D.pc === pc) wsSend({ t: '_rtc', sdp: pc.localDescription });
+    } catch (e) { dirFail(); }
+  }
+  async function dirSignal(m) {
+    if (NET_TEST || NT.via !== 'relay' || !window.RTCPeerConnection) return;
+    try {
+      if (m.sdp && m.sdp.type === 'offer') {
+        if (NET.role !== 'guest') return;
+        const pc = dirMake();
+        await pc.setRemoteDescription(m.sdp);
+        await pc.setLocalDescription(await pc.createAnswer());
+        if (D.pc === pc) wsSend({ t: '_rtc', sdp: pc.localDescription });
+        dirFlush();
+      } else if (m.sdp && m.sdp.type === 'answer') {
+        if (!D.pc || NET.role !== 'host') return;
+        await D.pc.setRemoteDescription(m.sdp);
+        dirFlush();
+      } else if (m.ice) {
+        if (D.pc && D.pc.remoteDescription) await D.pc.addIceCandidate(m.ice).catch(() => {});
+        else D.q.push(m.ice);
+      }
+    } catch (e) {}
+  }
+  function dirFlush() { const pc = D.pc, q = D.q; D.q = []; if (pc) q.forEach(c => pc.addIceCandidate(c).catch(() => {})); }
+  function dirUp() {
+    clearTimeout(D.timer);
+    D.on = true;
+    // серверное соединение держим живым — оно запасное и через него же договоримся заново
+    clearInterval(D.ka); D.ka = setInterval(() => wsSend({ t: '_ka' }), 15000);
+    netBadge();
+    if (NET.lobby === 'connected') setLobby('connected');
+  }
+  function dirFail() {
+    const was = D.on;
+    dirReset();
+    netBadge();
+    if (was && NET.lobby === 'connected') setLobby('connected');
+    // вдруг сеть поменялась — хост попробует ещё раз чуть позже (не больше 2 попыток подряд)
+    if (NET.on && NET.role === 'host' && NT.via === 'relay') setTimeout(dirStart, 5000);
+  }
+  function dirSend(m) {
+    try {
+      if (FAST_T.has(m.t) && D.fast && D.fast.readyState === 'open') {
+        // события (выстрелы, взрывы, победа) терять нельзя — по надёжному каналу
+        if (m.ev && m.ev.length) { const ev = m.ev; m.ev = []; D.rel.send(JSON.stringify({ t: '_ev', of: m.t, key: m.key, ev })); }
+        if (D.fast.bufferedAmount > 24000 && m.t[0] !== '_') return true; // затор — этот снимок пропускаем
+        m._n = (D.n[m.t] = (D.n[m.t] || 0) + 1);
+        D.fast.send(JSON.stringify(m));
+        return true;
+      }
+      D.rel.send(JSON.stringify(m));
+      return true;
+    } catch (e) { return false; }
+  }
 
   // ======================= ПЕРЕХОД С P2P НА СЕРВЕР =======================
   // Сначала соединяемся напрямую (P2P). Уже вместе в комнате — можно перейти на сервер:
@@ -8056,12 +8194,12 @@
     if (!NET.on || NET_TEST) { badgeEl.hidden = true; return; }
     badgeEl.hidden = false;
     let txt, cls;
-    if (NT.reconnSince) { txt = 'Связь прервалась — переподключаемся…'; cls = 'bad'; }
-    else if (NT.peerWait) { txt = 'Соперник переподключается…'; cls = 'bad'; }
+    if (NT.reconnSince && !dirOpen()) { txt = 'Связь прервалась — переподключаемся…'; cls = 'bad'; }
+    else if (NT.peerWait && !dirOpen()) { txt = 'Соперник переподключается…'; cls = 'bad'; }
     else {
       const r = Math.round(NET.rtt);
       // какая связь: напрямую телефон-телефон или через пересылающий сервер (TURN), если напрямую не пробиться
-      const via = NT.via === 'relay' ? 'Сервер ' + RELAY_NAME : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
+      const via = NT.via === 'relay' ? (dirOpen() ? 'Напрямую' : 'Сервер ' + RELAY_NAME) : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
       txt = via + ' · ' + r + ' мс' + (NET.buffered() > 24000 ? ' · затор' : '') + (NT.fast && NT.fast.readyState === 'open' ? ' ⚡' : '');
       cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
     }
@@ -8087,12 +8225,13 @@
     if (!NET.on || NT.via !== 'relay' || document.hidden || !RELAY_HOST) return;
     const v = await pingHost(RELAY_HOST, 2);
     if (v) { NET.srvRtt = v; netBadge(); }
-  }, 5000);
+  }, 30000); // раньше каждые 5 с — лишние запросы во время боя давали скачки задержки
   // проверка всех серверов из вкладки «По сети»
 
   // --- гость: войти по коду ---
   async function joinRoom(code, tries = 0, p2p = false) {
     if (!tries) netClose(true);
+    if (!NET_TEST) useHostWay(code);
     NET.role = 'guest'; NET.code = code;
     if (!tries) setLobby('joining');
     if (NET_TEST) {
@@ -8196,6 +8335,8 @@
       case '_busy': netError('В этой комнате уже играют.'); return;
       case '_badver': if (NET.role === 'guest') { clearTimeout(NT.joinTimer); netError(OLD_VER_GUEST); } return;
       case '_ping': rawSend({ t: '_pong', ts: m.ts }); return;
+      case '_rtc': dirSignal(m); return;
+      case '_ka': return;
       case '_ev':
         if (m.of === 's') { for (const e of m.ev || []) guestEvent(e); }
         else if (m.of === 'ns') { if (trActive && NET.game === 'neon') for (const e of m.ev || []) neonEvent(e); }
@@ -8238,7 +8379,8 @@
     NT.pingTimer = setInterval(() => {
       if (!NET.on) return;
       rawSend({ t: '_ping', ts: performance.now() });
-      if (!(NT.routeAt > performance.now() - 5000)) { NT.routeAt = performance.now(); checkRoute(); }
+      // путь (напрямую/TURN) почти не меняется: проверяем редко — частый getStats на телефонах подтормаживает и даёт скачки пинга
+      if (!(NT.routeAt > performance.now() - (NT.route ? 30000 : 5000))) { NT.routeAt = performance.now(); checkRoute(); }
       const waiting = NT.via === 'relay' && (NT.reconnSince || NT.peerWait);
       if (performance.now() - NT.alive > (waiting ? RELAY_HOLD + 4000 : 8000)) netLost();
       netBadge();
@@ -8246,18 +8388,21 @@
     document.body.classList.add('netOn');
     NT.route = null; NT.routeAt = performance.now(); setTimeout(checkRoute, 600);
     if (!NET_TEST && NT.via !== 'relay') setupFast();
+    if (!NET_TEST && NT.via === 'relay' && NET.role === 'host') { dirReset(); D.tries = 0; setTimeout(dirStart, 800); }
     setLobby('connected');
     vibrate([20, 40, 20]);
     sound(660, 0.1, 'triangle', 0.06); setTimeout(() => sound(990, 0.14, 'triangle', 0.06), 110);
   }
   function netClose(silent) {
     if (NET.on && !silent) rawSend({ t: '_bye' });
+    dirReset(); D.tries = 0;
     clearInterval(NT.pingTimer); clearTimeout(NT.joinTimer);
     try { NT.fast && NT.fast.close(); } catch (e) {} NT.fast = null;
     try { NT.conn && NT.conn.close(); } catch (e) {}
     try { NT.peer && NT.peer.destroy(); } catch (e) {}
     try { NT.bc && NT.bc.close(); } catch (e) {}
     { const ws = NT.ws; NT.ws = null; try { ws && ws.close(); } catch (e) {} }
+    restoreMine();
     clearTimeout(NT.relayTimer); NT.via = null; NT.reconnSince = 0; NT.peerWait = 0; NT.relayOk = false; NT.relayCode = null;
     NT.conn = NT.peer = NT.bc = null;
     NT.hostCode = null; NT.hostRetries = 0; NT.probed = false; NT.probe = false; srvCleanup(); NET.srvState = ''; NET.srvNote = ''; NT.joinStep = null; NT.iceFail = false; NET.stage = '';
@@ -8360,15 +8505,17 @@
         <button class="hkPlay netHost">Создать комнату</button>
         <div class="netOr">или</div>
         <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
-        <div class="settingRow netDirectRow"><div class="label">Только напрямую<small>Без пересылки через сервер: меньше задержка. Если напрямую не выйдет — игра скажет об этом</small></div>
-          <button class="switch netDirectSw" role="switch" aria-checked="${NET.directOnly}" aria-label="Только напрямую"><span></span></button></div>
+        <div class="settingRow netDirectRow"><div class="label">PeerJS<small>Старый прямой способ. В России обычно работает только с VPN</small></div>
+          <button class="switch netPeerSw" role="switch" aria-checked="${!NET.srvSel}" aria-label="PeerJS"><span></span></button></div>
+        ${!NET.srvSel ? `<div class="settingRow netDirectRow"><div class="label">PeerJS: только напрямую<small>Без пересылки через TURN: меньше задержка. Если напрямую не выйдет — игра скажет об этом</small></div>
+          <button class="switch netDirectSw" role="switch" aria-checked="${NET.directOnly}" aria-label="Только напрямую"><span></span></button></div>` : ''}
         ${Object.entries(SERVERS).map(([k, [n]]) => {
           const on = NET.srvSel === k, v = NET.srvPing[k];
-          const info = !on ? 'Вся игра идёт через этот сервер' : v === undefined ? 'Проверяем задержку…' : v === null ? 'Не отвечает — проверь, что сервер запущен' : 'Задержка до сервера: <b>' + v + ' мс</b>';
+          const info = !on ? 'Работает без VPN. Сначала через сервер, потом сами пробуем напрямую' : v === undefined ? 'Проверяем задержку…' : v === null ? 'Не отвечает — проверь, что сервер запущен' : 'Задержка до сервера: <b>' + v + ' мс</b>';
           return `<div class="settingRow netDirectRow"><div class="label">Сервер ${n}<small>${info}</small></div>
           <button class="switch netSrvSw" data-k="${k}" role="switch" aria-checked="${on}" aria-label="Сервер ${n}"><span></span></button></div>`;
         }).join('')}
-        <p class="netTip">Включён может быть только один способ. Друг должен выбрать такой же${NET.srvSel ? ' (ссылка для друга уже с этим сервером)' : ''}.</p>
+        <p class="netTip">Включён может быть только один способ. Его выбирает тот, кто создаёт комнату: способ зашит в код комнаты, и друг подключится так же сам — его переключатели не важны.</p>
         <p class="netTip">${netInfo()}</p>`;
     } else if (st === 'creating') {
       h = `<p class="netWait">Создаём комнату…</p><p class="netStage">${NET.stage || ''}</p><button class="backBtn netCancel">Отмена</button>`;
@@ -8385,7 +8532,7 @@
       h = NET.role === 'host'
         ? `<div class="netOk">Соперник подключился!</div><p>Выбери игру ниже, настрой её и нажми «Играть» — игра начнётся у обоих.</p>`
         : `<div class="netOk">Подключено!</div><p>Ждём, пока соперник выберет игру и нажмёт «Играть». Твоя сторона всегда снизу.</p>`;
-      if (NT.via === 'relay') h += `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Связь через сервер ${RELAY_NAME}</p>`;
+      if (NT.via === 'relay') h += dirOpen() ? `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Связь напрямую (сервер ${RELAY_NAME} — запасной)</p>` : `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Связь через сервер ${RELAY_NAME}</p>`;
       h += `<button class="backBtn netLeaveBtn">Отключиться</button>`;
     } else if (st === 'error') {
       h = `<p class="netErr">${NET.lobbyErr || 'Ошибка связи'}</p><button class="hkPlay netRetry">Попробовать ещё</button>`;
@@ -8393,6 +8540,10 @@
     stateBox.innerHTML = h;
     const $ = s => stateBox.querySelector(s);
     const saveSel = () => { try { localStorage.setItem('pp-direct', NET.directOnly ? '1' : '0'); localStorage.setItem('pp-srv', NET.srvSel); } catch (err) {} applySrv(); };
+    if ($('.netPeerSw')) $('.netPeerSw').addEventListener('click', () => {
+      if (NET.srvSel) NET.srvSel = ''; else { NET.srvSel = 'msk'; NET.directOnly = false; }
+      saveSel(); setLobby('idle');
+    });
     if ($('.netDirectSw')) $('.netDirectSw').addEventListener('click', () => {
       NET.directOnly = !NET.directOnly;
       if (NET.directOnly) NET.srvSel = '';
@@ -9166,7 +9317,7 @@
     const sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
     const raw = String(sp || qs.get('room') || '').trim();
     const mm = raw.match(/^(\d{5})(?:-(\w+))?$/), code = mm ? mm[1] : '';
-    if (mm && mm[2] && SERVERS[mm[2]]) { NET.srvSel = mm[2]; NET.directOnly = false; } // друг прислал комнату на сервере — заходим туда же
+    if (mm && mm[2] && SERVERS[mm[2]] && !CODE_WAY[mm[1][0]]) { NET.srvSel = mm[2]; NET.directOnly = false; } // старая ссылка (код без способа) // друг прислал комнату на сервере — заходим туда же
     if (code) setTimeout(() => { applySrv(); openLobby(); joinRoom(code); }, 300);
   }
   NET.openLobby = openLobby;
