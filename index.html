@@ -7799,7 +7799,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.25';
+  const NET_BUILD = '2.26-1';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -10578,30 +10578,32 @@
     const STATUS_URL = qsE ? qsE.replace(/^ws/, 'http').replace(/\/elite.*$/, '/elite/status') : 'https://' + HOST + '/elite/status';
     const W = 360, H = 640, R = 21;
     const panel = document.getElementById('elitePanel');
-    const E = { ws: null, st: 'idle', code: '', you: 0, status: null, err: '', snaps: [], rtts: [], rtt: 0, inp: { x: 0, y: 0, on: false }, sentAt: 0, sentStr: '' };
+    let EG = 'sumo'; try { EG = localStorage.getItem('elite-game') === 'tanks' ? 'tanks' : 'sumo'; } catch (e) {}
+    const E = { game: EG, ws: null, st: 'idle', code: '', you: 0, status: null, err: '', snaps: [], rtts: [], rtt: 0, inp: { x: 0, y: 0, on: false }, sentAt: 0, sentStr: '' };
 
     // ---------- панель во вкладке ----------
     function render() {
       let h = `<div class="netTitle">Элит · игру считает сервер</div>
         <p class="netTip">Сервер в Москве сам решает, кто кого толкнул и кто упал — оба игрока в равных условиях, задержка — только твой путь до сервера. Одновременно идут максимум <b>2 матча</b>.</p>`;
       const s = E.status;
-      const seats = s ? `<p class="eliteSeats ${s.busy >= s.max ? 'full' : ''}">Матчей сейчас: <b>${s.busy} из ${s.max}</b>${s.busy >= s.max ? ' — мест нет' : ''}</p>` : `<p class="eliteSeats">Проверяем сервер…</p>`;
+      const seats = s ? `<p class="eliteSeats ${s.busy >= s.max ? 'full' : ''}">Матчей сейчас: <b>${s.busy} из ${s.max}</b>${s.busy >= s.max ? ' — мест нет' : ''}</p>` : (E.err ? '' : `<p class="eliteSeats">Проверяем сервер…</p>`);
       if (E.st === 'idle') {
-        h += seats + `<div class="eliteGame">🥋 Сумо</div>
+        h += seats + `<div class="segmented eliteGames"><button data-g="sumo" aria-pressed="${E.game === 'sumo'}">🥋 Сумо</button><button data-g="tanks" aria-pressed="${E.game === 'tanks'}">🪖 Танки</button></div>
           <button class="hkPlay eCreate">Создать матч</button>
           <div class="netOr">или</div>
           <div class="netJoin"><input class="netCode eCode" maxlength="4" placeholder="1234" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay eJoin">Войти</button></div>`;
       } else if (E.st === 'connecting') {
         h += `<p class="netWait">Подключаемся к серверу…</p><button class="backBtn eCancel">Отмена</button>`;
       } else if (E.st === 'waiting') {
-        h += `<p>Код матча:</p><div class="netBig">${E.code}</div><p class="netWait">Ждём соперника… Скажи ему код — он вводит его во вкладке «Элит».</p><button class="backBtn eCancel">Отмена</button>`;
+        h += `<p>${E.game === 'tanks' ? '🪖 Танки' : '🥋 Сумо'} · код матча:</p><div class="netBig">${E.code}</div><p class="netWait">Ждём соперника… Скажи ему код — он вводит его во вкладке «Элит».</p><button class="backBtn eCancel">Отмена</button>`;
       } else if (E.st === 'full') {
         h += `<p class="netErr">Сейчас заняты оба места: идут 2 матча. Попробуй через пару минут.</p><button class="hkPlay eRetry">Проверить ещё раз</button>`;
       }
       if (E.err) h += `<p class="netErr">${E.err}</p>`;
       panel.innerHTML = h;
       const $ = q => panel.querySelector(q);
-      if ($('.eCreate')) $('.eCreate').onclick = () => { try { audioBus(); } catch (e) {} connect({ t: 'create' }); };
+      panel.querySelectorAll('.eliteGames button').forEach(b => b.onclick = () => { E.game = b.dataset.g; try { localStorage.setItem('elite-game', E.game); } catch (e) {} render(); });
+      if ($('.eCreate')) $('.eCreate').onclick = () => { try { audioBus(); } catch (e) {} connect({ t: 'create', game: E.game }); };
       if ($('.eJoin')) {
         const inp = $('.eCode');
         const go = () => { const c = inp.value.trim(); if (/^\d{4}$/.test(c)) { try { audioBus(); } catch (e) {} connect({ t: 'join', code: c }); } else inp.classList.add('bad'); };
@@ -10613,8 +10615,16 @@
       if ($('.eRetry')) $('.eRetry').onclick = () => { E.st = 'idle'; E.err = ''; loadStatus(); render(); };
     }
     async function loadStatus() {
-      try { const r = await fetch(STATUS_URL + '?t=' + Date.now(), { cache: 'no-store' }); E.status = await r.json(); }
-      catch (e) { E.status = null; E.err = 'Сервер не отвечает. Проверь, что сервер Москва запущен.'; }
+      const get = async (u, ms) => { const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), ms); try { const r = await fetch(u + (u.endsWith('/health') ? '' : '?t=' + Date.now()), { cache: 'no-store', signal: ctl.signal }); const t = await r.text(); return { ok: r.ok, t }; } finally { clearTimeout(to); } };
+      let st = null;
+      for (let i = 0; i < 2 && !st; i++) { try { const r = await get(STATUS_URL, 6000); if (r.ok) { const j = JSON.parse(r.t); if (typeof j.busy === 'number') st = j; } } catch (e) {} }
+      if (st) { E.status = st; E.err = ''; E.oldSrv = false; }
+      else {
+        E.status = null; let alive = false;
+        try { alive = (await get(STATUS_URL.replace('/elite/status', '/health'), 6000)).ok; } catch (e) {}
+        E.oldSrv = alive;
+        E.err = alive ? 'Сервер Москва работает, но на нём старая версия без «Элит». Загрузи новый server.js в Amvera (приложение pifpaf, Москва) и нажми «Пересобрать».' : 'Сервер Москва сейчас не отвечает. Попробуй ещё раз через минуту.';
+      }
       if (E.st === 'idle' || E.st === 'full') render();
     }
     setInterval(() => { if (!tab.hidden && (E.st === 'idle' || E.st === 'full')) loadStatus(); }, 5000);
@@ -10628,7 +10638,7 @@
       let ws; try { ws = new WebSocket(WS_URL); } catch (e) { E.st = 'idle'; E.err = 'Не получилось подключиться к серверу.'; return render(); }
       E.ws = ws;
       const to = setTimeout(() => { if (E.ws === ws && ws.readyState !== 1) { closeWs(); E.st = 'idle'; E.err = 'Сервер не отвечает. Проверь, что сервер Москва запущен.'; render(); } }, 8000);
-      ws.onopen = () => { clearTimeout(to); send(first); E.pingT = setInterval(() => send({ t: 'p', ts: performance.now() }), 1000); };
+      ws.onopen = () => { clearTimeout(to); send(first); E.replyT = setTimeout(() => { if (E.ws === ws && E.st === 'connecting') { closeWs(); E.st = 'idle'; E.err = 'Сервер Москва не понял запрос — на нём старая версия. Загрузи новый server.js в Amvera (приложение pifpaf, Москва) и нажми «Пересобрать».'; render(); } }, 6000); E.pingT = setInterval(() => send({ t: 'p', ts: performance.now() }), 1000); };
       ws.onmessage = e => { if (E.ws !== ws) return; let m; try { m = JSON.parse(e.data); } catch (er) { return; } onMsg(m); };
       ws.onclose = () => {
         if (E.ws !== ws) return;
@@ -10641,6 +10651,8 @@
     function onMsg(m) {
       if (m.t === 'p') { const r = performance.now() - m.ts; E.rtts.push(r); if (E.rtts.length > 9) E.rtts.shift(); E.rttLast = r; const so = E.rtts.slice().sort((a, b) => a - b); E.rtt = so[so.length >> 1]; return; }
       if (m.t === 'full') { closeWs(); E.st = 'full'; E.status = { busy: m.busy, max: m.max }; return render(); }
+      if (m.game) E.game = m.game;
+      if (m.t === 'map') { TK.setMap(m); return; }
       if (m.t === 'created') { E.st = 'waiting'; E.code = m.code; E.you = 0; return render(); }
       if (m.t === 'nf') { closeWs(); E.st = 'idle'; E.err = 'Матча с таким кодом нет.'; return render(); }
       if (m.t === 'busy') { closeWs(); E.st = 'idle'; E.err = 'В этом матче уже двое.'; return render(); }
@@ -10668,20 +10680,23 @@
       dpr = Math.min(2, devicePixelRatio || 1);
       cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
       cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
-      k = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * k) / 2; oy = (innerHeight - H * k) / 2;
+      const FWw = game.kind === 'tanks' ? TK.FW : W, FHh = game.kind === 'tanks' ? TK.FH + 40 : H;
+      k = Math.min(innerWidth / FWw, innerHeight / FHh); ox = (innerWidth - FWw * k) / 2; oy = (innerHeight - (game.kind === 'tanks' ? TK.FH : H) * k) / 2 + (game.kind === 'tanks' ? 14 : 0);
     }
     addEventListener('resize', () => { if (game.on) fit(); });
     function startGame() {
-      Object.assign(game, { on: true, P: null, hist: [], parts: [], rings: [], shake: 0, msg: '', msgAt: 0, cracks: null, rd: 0, drops: [], leftAt: 0, readyAt: 0 });
+      Object.assign(game, { kind: E.game, on: true, P: null, hist: [], parts: [], rings: [], shake: 0, msg: '', msgAt: 0, cracks: null, rd: 0, drops: [], leftAt: 0, readyAt: 0 });
       E.snaps = []; E.jit = { last: 0, gap: 33, dev: [], cur: 70 };
       scr.hidden = false; overEl.hidden = true; scr.querySelector('.eAgain').textContent = 'Ещё раз';
       document.body.classList.add('eliteOn');
       fit();
+      if (game.kind === 'tanks') TK.start();
       requestAnimationFrame(loop);
     }
 
     // ---------- снимки с сервера ----------
     function onSnap(m) {
+      if (game.kind === 'tanks') return TK.snap(m);
       const now = performance.now();
       if (E.snaps.length && m.n <= E.snaps[E.snaps.length - 1].d.n) return;
       E.snaps.push({ at: now, d: m });
@@ -10739,11 +10754,13 @@
     }
     cv.addEventListener('pointerdown', e => {
       e.preventDefault();
+      if (game.kind === 'tanks') return TK.down(e);
       const left = E.you === 1 ? e.clientX > innerWidth / 2 : e.clientX < innerWidth / 2;
       if (left) { const [x, y] = toField(e.clientX, e.clientY); Object.assign(joy, { id: e.pointerId, cx: x, cy: y, x: 0, y: 0, on: false, fx: x, fy: y }); }
       else dash();
     });
     cv.addEventListener('pointermove', e => {
+      if (game.kind === 'tanks') return TK.move(e);
       if (joy.id !== e.pointerId) return;
       const [x, y] = toField(e.clientX, e.clientY);
       let dx = x - joy.cx, dy = y - joy.cy; const d = Math.hypot(dx, dy), JR = 50;
@@ -10751,12 +10768,12 @@
       const dd = Math.hypot(dx, dy); joy.on = dd > 10; joy.x = joy.on ? dx / dd : 0; joy.y = joy.on ? dy / dd : 0; joy.fx = x; joy.fy = y;
       sendInput();
     });
-    const upJ = e => { if (joy.id === e.pointerId) { joy.id = null; joy.on = false; joy.x = joy.y = 0; sendInput(true); } };
+    const upJ = e => { if (game.kind === 'tanks') return TK.up(e); if (joy.id === e.pointerId) { joy.id = null; joy.on = false; joy.x = joy.y = 0; sendInput(true); } };
     cv.addEventListener('pointerup', upJ); cv.addEventListener('pointercancel', upJ);
     const keys = new Set();
     addEventListener('keydown', e => {
       if (!game.on) return;
-      if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); dash(); return; }
+      if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (game.kind === 'tanks') TK.fireKey(); else dash(); return; }
       keys.add(e.code); keyJoy();
     });
     addEventListener('keyup', e => { if (!game.on) return; keys.delete(e.code); keyJoy(); });
@@ -10768,12 +10785,15 @@
       const d = Math.hypot(x, y); joy.on = d > 0; joy.x = d ? x / d : 0; joy.y = d ? y / d : 0;
       sendInput(true);
     }
+    E.sendInput = sendInput; E.joy = joy; E.toField = toField;
+    E.getK = () => [k, ox, oy, dpr]; E.cv = cv; E.c = c; E.game_ = game; E.send = send; E.burst = burst; E.circle = (x, y, r, col) => circle(x, y, r, col);
 
     // ---------- кадр ----------
     let lastT = 0;
     function loop(now) {
       if (!game.on) return;
       requestAnimationFrame(loop);
+      if (game.kind === 'tanks') return TK.frame(now);
       const dt = Math.min(0.05, lastT ? (now - lastT) / 1000 : 0.016); lastT = now;
       sendInput();
       if (!E.snaps.length) { c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#0d3550'; c.fillRect(0, 0, cv.width, cv.height); return; }
@@ -10889,6 +10909,229 @@
       c.strokeStyle = PG_COL[E.you]; c.lineWidth = 5; c.beginPath(); c.arc(bx, by, 38, -Math.PI / 2, -Math.PI / 2 + ready * Math.PI * 2); c.stroke();
       c.font = '800 12px system-ui, sans-serif'; c.fillStyle = '#ffffff'; c.fillText('РЫВОК', bx, by); c.globalAlpha = 1;
     }
+    // ======================= ТАНКИ В «ЭЛИТ» (джойстики) =======================
+    // Слева — джойстик езды, справа — джойстик атаки: потянул — прицел, отпустил — выстрел; тап — автоприцел.
+    const TK = (function () {
+      const B = 28, FW = 12 * B, FH = 22 * B, PAD = 9, SPEED = 72, CORNER = 11, BLAST = B * 1.75;
+      const S = { map: null, blocks: [], mud: [], P: null, hist: [], ghosts: [], atk: null, mv: null, parts: [], rings: [], shake: 0, lastAmmo: 5, mi: -1 };
+      function setMap(m) {
+        S.mi = m.mi; S.name = m.name;
+        S.blocks = m.b.map(([c, r, kd], idx) => ({ idx, x: c * B, y: r * B, w: B, h: B, k: kd, hp: kd === 'c' ? 2 : 1, gone: false }));
+        S.mud = (m.m || []).map(([c, r]) => ({ x: c * B, y: r * B }));
+        S.P = null; S.hist = [];
+        const g = E.game_; if (g && g.on) { g.msg = S.name; g.msgAt = performance.now(); }
+      }
+      function start() { S.P = null; S.hist = []; S.ghosts = []; S.atk = null; S.mv = null; S.parts = []; S.rings = []; S.shake = 0; }
+      const solidAt = (bl, x, y) => bl.some(b => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h);
+      function push(b, x, y, bl) {
+        if (x < b.x - PAD || x > b.x + b.w + PAD || y < b.y - PAD || y > b.y + b.h + PAD) return null;
+        let qx = Math.max(b.x, Math.min(b.x + b.w, x)), qy = Math.max(b.y, Math.min(b.y + b.h, y)), R = PAD;
+        const cr = Math.min(CORNER, b.w / 2 - 1), sx = x < b.x + cr ? -1 : x > b.x + b.w - cr ? 1 : 0, sy = y < b.y + cr ? -1 : y > b.y + b.h - cr ? 1 : 0;
+        if (sx && sy) { const kx = sx < 0 ? b.x : b.x + b.w, ky = sy < 0 ? b.y : b.y + b.h; if (!solidAt(bl, kx + sx * 2, ky - sy * 2) && !solidAt(bl, kx - sx * 2, ky + sy * 2)) { qx = kx - sx * cr; qy = ky - sy * cr; R = PAD + cr; } }
+        const dx = x - qx, dy = y - qy, d = Math.hypot(dx, dy);
+        if (d >= R) return null;
+        if (d < 1e-6) return [0, -1, PAD];
+        return [dx / d, dy / d, R - d];
+      }
+      function moveLocal(P, jx, jy, dt) {
+        P.a = (Math.atan2(jy, jx) * 180 / Math.PI + 90 + 360) % 360;
+        const mud = S.mud.some(z => P.x > z.x && P.x < z.x + B && P.y > z.y && P.y < z.y + B);
+        const sp = SPEED * (mud ? 0.5 : 1) * dt, rad = (P.a - 90) * Math.PI / 180, bl = S.blocks.filter(b => !b.gone);
+        let x = P.x + Math.cos(rad) * sp, y = P.y + Math.sin(rad) * sp;
+        for (let it = 0; it < 3; it++) { let mv = false; for (const b of bl) { const h = push(b, x, y, bl); if (h) { x += h[0] * h[2]; y += h[1] * h[2]; mv = true; } } if (!mv) break; }
+        P.x = Math.max(PAD + 1, Math.min(FW - PAD - 1, x)); P.y = Math.max(PAD + 1, Math.min(FH - PAD - 1, y));
+      }
+      // ----- снимки -----
+      function snap(m) {
+        const now = performance.now();
+        if (E.snaps.length && m.n <= E.snaps[E.snaps.length - 1].d.n) return;
+        E.snaps.push({ at: now, d: m }); while (E.snaps.length > 12) E.snaps.shift();
+        const J = E.jit; if (J.last) { const dt = now - J.last; J.gap = J.gap * 0.95 + Math.min(dt, 120) * 0.05; J.dev.push(Math.max(0, dt - J.gap)); if (J.dev.length > 90) J.dev.shift(); } J.last = now;
+        if (m.bs && S.blocks.length) for (let i = 0; i < S.blocks.length; i++) { const v = +m.bs[i] || 0; S.blocks[i].gone = v === 0; if (v) S.blocks[i].hp = v; }
+        for (const e of m.ev || []) event(e);
+        const me = m.T[E.you], P = S.P;
+        if (!me[3] || m.st !== 'play' || !P) { S.P = me[3] ? { x: me[0], y: me[1], a: me[2] } : null; S.hist = []; return; }
+        // наши выстрелы уже пришли с сервера — призраки больше не нужны
+        if (m.S.some(s => s[5] === E.you)) S.ghosts = S.ghosts.filter(gq => now - gq.t0 < 60);
+        const back = now - E.rtt; let hp = null, bd = 1e9;
+        for (const h of S.hist) { const d = Math.abs(h.t - back); if (d < bd) { bd = d; hp = h; } }
+        const ex = me[0] - (hp ? hp.x : P.x), ey = me[1] - (hp ? hp.y : P.y);
+        if (Math.hypot(ex, ey) > 40) { P.x = me[0]; P.y = me[1]; S.hist = []; return; }
+        P.x += ex * 0.3; P.y += ey * 0.3; S.hist.forEach(h => { h.x += ex * 0.3; h.y += ey * 0.3; });
+      }
+      function burst(x, y, col, n, sp, life = 0.45, size = 2.2) { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = sp * (0.4 + Math.random() * 0.6); S.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life, max: life, col, size }); } }
+      function event(e) {
+        const t = e[0], g = E.game_;
+        if (t === 'go') sound(880, 0.1, 'triangle', 0.06);
+        else if (t === 'fire') { if (e[1] !== E.you) sound(300, 0.06, 'square', 0.04); burst(e[2], e[3], '#ffd27a', 5, 90, 0.2, 2); }
+        else if (t === 'bounce' || t === 'mirror' || t === 'spring') { burst(e[1], e[2], t === 'spring' ? '#7dffb0' : '#fff2b0', 3, 70, 0.25, 1.8); sound(t === 'mirror' ? 1400 : 620, 0.04, 'triangle', 0.04); }
+        else if (t === 'wall' || t === 'chip') { burst(e[1], e[2], t === 'chip' ? '#c48a4e' : '#c8c0b8', 5, 70, 0.3, 2); sound(200, 0.06, 'square', 0.04); }
+        else if (t === 'crate') { burst(e[1], e[2], '#c48a4e', 12, 140, 0.5, 2.6); sound(260, 0.12, 'square', 0.05); }
+        else if (t === 'boom') { S.rings.push({ x: e[1], y: e[2], r: BLAST, life: 0.45, max: 0.45, col: '#ff9a3c' }); burst(e[1], e[2], '#ff7a2a', 26, 200, 0.6, 3); sound(90, 0.35, 'sawtooth', 0.08); S.shake = 8; vibrate([20, 30, 40]); }
+        else if (t === 'spark') { burst(e[1], e[2], '#9bf0ff', 8, 120, 0.3, 2); sound(1200, 0.05, 'sine', 0.04); }
+        else if (t === 'kill') { S.rings.push({ x: e[2], y: e[3], r: 40, life: 0.5, max: 0.5, col: '#ffffff' }); burst(e[2], e[3], e[1] === 0 ? '#4fa3ff' : '#ff5a4f', 24, 220, 0.7, 3); sound(120, 0.3, 'sawtooth', 0.08); S.shake = 9; vibrate([30, 40, 60]); g.msg = e[1] === E.you ? 'Тебя подбили' : 'Соперник подбит'; g.msgAt = performance.now(); }
+        else if (t === 'over') { const win = e[1] === E.you; document.querySelector('.eliteOverTxt').textContent = win ? 'Ты победил!' : 'Соперник победил'; document.querySelector('.eliteOver').hidden = false; sound(win ? 990 : 220, 0.3, 'triangle', 0.07); }
+      }
+      // ----- управление -----
+      const [toF] = [(sx, sy) => E.toField(sx, sy)];
+      function isLeft(e) { return e.clientX < innerWidth / 2; }
+      function down(e) {
+        const [x, y] = toF(e.clientX, e.clientY);
+        if (isLeft(e)) S.mv = { id: e.pointerId, cx: x, cy: y, x: 0, y: 0, on: false };
+        else S.atk = { id: e.pointerId, cx: x, cy: y, x: 0, y: 0, moved: false };
+      }
+      function move(e) {
+        const [x, y] = toF(e.clientX, e.clientY);
+        if (S.mv && S.mv.id === e.pointerId) {
+          let dx = x - S.mv.cx, dy = y - S.mv.cy; const d = Math.hypot(dx, dy), JR = 46;
+          if (d > JR) { S.mv.cx = x - dx / d * JR; S.mv.cy = y - dy / d * JR; dx = x - S.mv.cx; dy = y - S.mv.cy; }
+          const dd = Math.hypot(dx, dy); S.mv.on = dd > 9; S.mv.x = S.mv.on ? dx / dd : 0; S.mv.y = S.mv.on ? dy / dd : 0;
+          Object.assign(E.joy, { on: S.mv.on, x: S.mv.x, y: S.mv.y }); E.sendInput();
+        }
+        if (S.atk && S.atk.id === e.pointerId) {
+          let dx = x - S.atk.cx, dy = y - S.atk.cy; const d = Math.hypot(dx, dy);
+          if (d > 12) S.atk.moved = true;
+          S.atk.x = d ? dx / d : 0; S.atk.y = d ? dy / d : 0; S.atk.inDead = d <= 12;
+        }
+      }
+      function up(e) {
+        if (S.mv && S.mv.id === e.pointerId) { S.mv = null; Object.assign(E.joy, { on: false, x: 0, y: 0 }); E.sendInput(true); }
+        if (S.atk && S.atk.id === e.pointerId) {
+          const a = S.atk; S.atk = null;
+          if (a.moved && a.inDead) return; // вернул палец в центр — отмена
+          let ang;
+          if (a.moved) ang = Math.atan2(a.y, a.x) * 180 / Math.PI + 90;
+          else ang = autoAngle();
+          fire(ang);
+        }
+      }
+      function myPos() { const L = E.snaps[E.snaps.length - 1]; return S.P || (L ? { x: L.d.T[E.you][0], y: L.d.T[E.you][1], a: L.d.T[E.you][2] } : null); }
+      function autoAngle() {
+        const p = myPos(), L = E.snaps[E.snaps.length - 1]; if (!p || !L) return 0;
+        const o = L.d.T[1 - E.you];
+        if (o[3] && Math.hypot(o[0] - p.x, o[1] - p.y) < 330) return Math.atan2(o[1] - p.y, o[0] - p.x) * 180 / Math.PI + 90;
+        return p.a;
+      }
+      function fire(ang) {
+        const L = E.snaps[E.snaps.length - 1];
+        if (!L || L.d.st !== 'play' || !L.d.T[E.you][3]) return;
+        if (S.ammoLocal !== undefined && S.ammoLocal < 1) { sound(170, 0.035, 'square', 0.02); return; }
+        ang = ((ang % 360) + 360) % 360;
+        E.send({ t: 'fire', a: +ang.toFixed(1), lag: Math.round(E.rtt / 2 + E.jit.cur) });
+        const p = myPos(); if (!p) return;
+        if (S.P) S.P.a = ang;
+        const rad = (ang - 90) * Math.PI / 180;
+        S.ghosts.push({ x: p.x + Math.cos(rad) * 9, y: p.y + Math.sin(rad) * 9, dx: Math.cos(rad), dy: Math.sin(rad), t0: performance.now() });
+        S.ammoLocal = (S.ammoLocal || 0) - 1;
+        sound(300, 0.06, 'square', 0.05); vibrate(8);
+      }
+      function fireKey() { const p = myPos(); if (p) fire(p.a); }
+      // ----- кадр -----
+      let lastT = 0;
+      function frame(now) {
+        const [k, ox, oy, dpr] = E.getK(), c = E.c, cv = E.cv, g = E.game_;
+        const dt = Math.min(0.05, lastT ? (now - lastT) / 1000 : 0.016); lastT = now;
+        E.sendInput();
+        c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#1b1f2a'; c.fillRect(0, 0, cv.width, cv.height);
+        if (!E.snaps.length) return;
+        const J = E.jit, so = J.dev.slice().sort((a, b) => a - b), p95 = so[Math.floor(so.length * 0.95)] || 0;
+        const target = Math.max(45, Math.min(200, J.gap + p95 + 12));
+        J.cur = target > J.cur ? Math.min(target, J.cur + 300 * dt) : Math.max(target, J.cur - 25 * dt);
+        const rt = now - J.cur;
+        let A = E.snaps[0], Bs = E.snaps[E.snaps.length - 1];
+        for (let i = 0; i < E.snaps.length - 1; i++) if (E.snaps[i].at <= rt && E.snaps[i + 1].at >= rt) { A = E.snaps[i]; Bs = E.snaps[i + 1]; break; }
+        const sp = Bs.at - A.at, f = sp > 0 ? Math.max(0, Math.min(1, (rt - A.at) / sp)) : 1;
+        const L = E.snaps[E.snaps.length - 1].d, a = A.d, b = Bs.d;
+        S.ammoLocal = L.T[E.you][5] / 10 - (S.ghosts.length ? 0 : 0);
+        // свой танк — сразу от джойстика
+        const me = L.T[E.you];
+        if (S.P && me[3] && L.st === 'play') {
+          if (S.mv && S.mv.on) moveLocal(S.P, S.mv.x, S.mv.y, dt);
+          else if (E.joy.on && !S.mv) moveLocal(S.P, E.joy.x, E.joy.y, dt);
+          S.hist.push({ t: now, x: S.P.x, y: S.P.y }); while (S.hist.length && now - S.hist[0].t > 1000) S.hist.shift();
+        }
+        const lerpA = (u, v) => { let d = ((v - u + 540) % 360) - 180; return u + d * f; };
+        const tanks = [0, 1].map(i => {
+          const ta = a.T[i], tb = b.T[i];
+          const o = { x: ta[0] + (tb[0] - ta[0]) * f, y: ta[1] + (tb[1] - ta[1]) * f, a: lerpA(ta[2], tb[2]), alive: !!tb[3], shield: tb[4] > 0 };
+          if (i === E.you && S.P && me[3]) { o.x = S.P.x; o.y = S.P.y; o.a = S.P.a; o.alive = true; o.shield = me[4] > 0; }
+          return o;
+        });
+        // снаряды — интерполяция по номеру
+        const shells = [];
+        for (const sb of b.S) { const sa = a.S.find(q => q[0] === sb[0]); shells.push(sa ? [sa[1] + (sb[1] - sa[1]) * f, sa[2] + (sb[2] - sa[2]) * f, sb[5]] : [sb[1], sb[2], sb[5]]); }
+        S.ghosts = S.ghosts.filter(q => now - q.t0 < 120 + E.rtt + J.cur);
+        S.ghosts.forEach(q => { const t = (now - q.t0) / 1000; shells.push([q.x + q.dx * 300 * t, q.y + q.dy * 300 * t, E.you, true]); });
+        S.parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.9; p.vy *= 0.9; p.life -= dt; }); S.parts = S.parts.filter(p => p.life > 0);
+        S.rings.forEach(r => r.life -= dt); S.rings = S.rings.filter(r => r.life > 0);
+        S.shake = Math.max(0, S.shake - dt * 40);
+        // --- рисуем поле ---
+        const sx = S.shake ? (Math.random() * 2 - 1) * S.shake : 0, sy = S.shake ? (Math.random() * 2 - 1) * S.shake : 0;
+        c.setTransform(dpr * k, 0, 0, dpr * k, dpr * (ox + sx), dpr * (oy + sy));
+        if (E.you === 1) { c.translate(FW, FH); c.rotate(Math.PI); }
+        c.fillStyle = '#e4d3ae'; c.fillRect(0, 0, FW, FH);
+        c.strokeStyle = 'rgba(120,90,50,0.10)'; c.lineWidth = 1; c.beginPath();
+        for (let i = 1; i < 12; i++) { c.moveTo(i * B, 0); c.lineTo(i * B, FH); } for (let j = 1; j < 22; j++) { c.moveTo(0, j * B); c.lineTo(FW, j * B); } c.stroke();
+        c.fillStyle = 'rgba(110, 80, 40, 0.35)'; S.mud.forEach(z => { c.fillRect(z.x, z.y, B, B); });
+        const rr = (x, y, w, h, r) => { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
+        for (const bl of S.blocks) {
+          if (bl.gone) continue;
+          const x = bl.x, y = bl.y;
+          if (bl.k === 's') { c.fillStyle = 'rgba(40,50,70,0.25)'; rr(x + 1.5, y + 3, B - 3, B - 3, 5); c.fill(); c.fillStyle = '#8fa2bd'; rr(x + 1.5, y + 1.5, B - 3, B - 3, 5); c.fill(); c.fillStyle = '#c3d0e2'; rr(x + 4, y + 4, B - 8, 5, 2.5); c.fill(); }
+          else if (bl.k === 'c') { c.fillStyle = bl.hp === 1 ? '#a87a40' : '#c48a4e'; rr(x + 1.5, y + 1.5, B - 3, B - 3, 3); c.fill(); c.strokeStyle = '#7a4f22'; c.lineWidth = 2; c.stroke(); c.beginPath(); c.moveTo(x + 4, y + 4); c.lineTo(x + B - 4, y + B - 4); c.moveTo(x + B - 4, y + 4); c.lineTo(x + 4, y + B - 4); c.stroke(); }
+          else if (bl.k === 'b') { const gr = c.createRadialGradient(x + 10, y + 9, 2, x + 14, y + 14, 13); gr.addColorStop(0, '#ff9a6a'); gr.addColorStop(1, '#9e2412'); c.fillStyle = gr; c.beginPath(); c.arc(x + 14, y + 14, 12.5, 0, 7); c.fill(); c.strokeStyle = '#ffcc55'; c.lineWidth = 2.5; c.stroke(); c.save(); if (E.you === 1) { c.translate(x + 14, y + 14); c.rotate(Math.PI); c.translate(-x - 14, -y - 14); } c.fillStyle = '#ffe08a'; c.font = '900 13px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('!', x + 14, y + 15); c.restore(); }
+          else if (bl.k === 'p') { c.fillStyle = '#2f9a56'; rr(x + 1.5, y + 1.5, B - 3, B - 3, 9); c.fill(); c.strokeStyle = '#5fd18a'; c.lineWidth = 3; for (let q = 6; q < B - 4; q += 6) { c.beginPath(); c.moveTo(x + q, y + 5); c.lineTo(x + q, y + B - 5); c.stroke(); } }
+          else { c.fillStyle = '#b9c6d3'; rr(x + 1, y + 1, B - 2, B - 2, 4); c.fill(); c.strokeStyle = '#39c6ff'; c.lineWidth = 4; c.beginPath(); if (bl.k === '/') { c.moveTo(x + 3, y + B - 3); c.lineTo(x + B - 3, y + 3); } else { c.moveTo(x + 3, y + 3); c.lineTo(x + B - 3, y + B - 3); } c.stroke(); }
+        }
+        // прицел своего танка
+        const mt = tanks[E.you];
+        if (S.atk && S.atk.moved && !S.atk.inDead && mt.alive) {
+          const an = Math.atan2(S.atk.y, S.atk.x), dx = Math.cos(an), dy = Math.sin(an), bl = S.blocks.filter(q => !q.gone);
+          let Ld = 12; for (; Ld < 320; Ld += 4) { const x = mt.x + dx * Ld, y = mt.y + dy * Ld; if (x < 0 || y < 0 || x > FW || y > FH || bl.some(q => x > q.x - 5 && x < q.x + q.w + 5 && y > q.y - 5 && y < q.y + q.h + 5)) break; }
+          c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 2.5; c.setLineDash([7, 6]); c.beginPath(); c.moveTo(mt.x + dx * 12, mt.y + dy * 12); c.lineTo(mt.x + dx * Ld, mt.y + dy * Ld); c.stroke(); c.setLineDash([]);
+        }
+        // танки
+        tanks.forEach((t, i) => {
+          if (!t.alive) return;
+          c.save(); c.translate(t.x, t.y); c.rotate(t.a * Math.PI / 180);
+          c.fillStyle = 'rgba(0,0,0,0.25)'; rr(-9.5, -7.5, 19, 17, 6); c.fill();
+          c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(-9.5, -8, 2.5, 16); c.fillRect(7, -8, 2.5, 16);
+          c.fillStyle = PG_COL[i]; rr(-7, -8, 14, 16, 6); c.fill();
+          c.fillStyle = PG_DARK[i]; c.beginPath(); c.arc(0, 0, 4.5, 0, 7); c.fill();
+          c.fillStyle = '#2a2f3a'; c.fillRect(-1.5, -14, 3, 8);
+          c.restore();
+          if (t.shield) { c.strokeStyle = 'rgba(155,240,255,0.85)'; c.lineWidth = 2.5; c.beginPath(); c.arc(t.x, t.y, 15 + Math.sin(now / 120) * 1.5, 0, 7); c.stroke(); }
+        });
+        // снаряды
+        for (const [x, y, own, gh] of shells) { c.globalAlpha = gh ? 0.85 : 1; c.fillStyle = '#1a1a1a'; c.beginPath(); c.arc(x, y, 5, 0, 7); c.fill(); c.fillStyle = own === 0 ? '#9cc8ff' : '#ffb0a8'; c.beginPath(); c.arc(x - 1.5, y - 1.5, 1.8, 0, 7); c.fill(); }
+        c.globalAlpha = 1;
+        for (const p of S.parts) { c.globalAlpha = Math.max(0, p.life / p.max); c.fillStyle = p.col; c.beginPath(); c.arc(p.x, p.y, p.size, 0, 7); c.fill(); }
+        for (const r of S.rings) { c.globalAlpha = Math.max(0, r.life / r.max); c.strokeStyle = r.col; c.lineWidth = 3; c.beginPath(); c.arc(r.x, r.y, r.r * (1.2 - r.life / r.max * 0.4), 0, 7); c.stroke(); }
+        c.globalAlpha = 1;
+        // --- подписи ---
+        c.setTransform(dpr, 0, 0, dpr, 0, 0); c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.font = '800 20px system-ui, sans-serif'; c.fillStyle = '#ffffff';
+        c.fillText(`${L.sc[E.you]} : ${L.sc[1 - E.you]}  (до 5)`, innerWidth / 2, Math.max(22, oy - 26));
+        c.font = '700 11px system-ui, sans-serif'; c.fillStyle = 'rgba(255,255,255,0.75)';
+        c.fillText(`Элит · танки · сервер Москва · ${Math.round(E.rttLast || E.rtt)} мс`, innerWidth / 2, Math.max(40, oy - 8));
+        // патроны
+        const am = Math.floor(me[5] / 10), apart = me[5] / 10 - am;
+        for (let q = 0; q < 5; q++) { const x = innerWidth / 2 - 40 + q * 20, y = Math.min(innerHeight - 14, oy + FH * k + 16); c.fillStyle = q < am ? '#ffd23f' : 'rgba(255,255,255,0.2)'; c.beginPath(); c.arc(x, y, 6, 0, 7); c.fill(); if (q === am && apart > 0) { c.fillStyle = 'rgba(255,210,63,0.6)'; c.beginPath(); c.moveTo(x, y); c.arc(x, y, 6, -Math.PI / 2, -Math.PI / 2 + apart * Math.PI * 2); c.fill(); } }
+        let big = '';
+        if (L.st === 'count') big = String(Math.max(1, Math.ceil((1500 - L.sl) / 500)));
+        else if (g.msg && now - g.msgAt < 1300) big = g.msg;
+        if (g.leftAt) big = g.msg;
+        if (big) { c.font = '900 30px system-ui, sans-serif'; c.lineWidth = 6; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.strokeText(big, innerWidth / 2, innerHeight / 2); c.fillStyle = '#ffffff'; c.fillText(big, innerWidth / 2, innerHeight / 2); }
+        // джойстики
+        const scr = (x, y) => { let X = x, Y = y; if (E.you === 1) { X = FW - x; Y = FH - y; } return [ox + X * k, oy + Y * k]; };
+        const sg = E.you === 1 ? -1 : 1;
+        if (S.mv) { const [jx, jy] = scr(S.mv.cx, S.mv.cy); c.globalAlpha = 0.55; E.circle(jx, jy, 46, 'rgba(255,255,255,0.22)'); E.circle(jx + S.mv.x * 34 * sg, jy + S.mv.y * 34 * sg, 20, PG_COL[E.you]); c.globalAlpha = 1; }
+        if (S.atk) { const [jx, jy] = scr(S.atk.cx, S.atk.cy); c.globalAlpha = 0.55; E.circle(jx, jy, 46, 'rgba(255,190,90,0.25)'); E.circle(jx + (S.atk.moved ? S.atk.x * 34 * sg : 0), jy + (S.atk.moved ? S.atk.y * 34 * sg : 0), 20, '#f59a2f'); c.globalAlpha = 1; }
+        else { c.globalAlpha = 0.35; c.font = '700 11px system-ui'; c.fillStyle = '#fff'; c.fillText('слева — ехать · справа — тяни и отпускай, тап — автоприцел', innerWidth / 2, innerHeight - 10); c.globalAlpha = 1; }
+      }
+      return { FW, FH, setMap, start, snap, frame, down, move, up, fireKey };
+    })();
+
     render();
   })();
 
