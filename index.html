@@ -708,7 +708,7 @@
 
   /* --- режимы и настройки в меню --- */
   /* сетевая игра: без ботов и сложностей */
-  body.netOn .oppBlock { display: none; }
+  body.netOn .oppBlock, body.elitePick .oppBlock { display: none; }
   #netTab { display: flex; flex-direction: column; gap: 14px; }
   #netTab[hidden] { display: none; }
   .netPanel { text-align: center; }
@@ -3531,7 +3531,7 @@
       const tipX = state.x + dx * BARREL_TIP;
       const tipY = state.y + dy * BARREL_TIP;
 
-      if (netOwn) { NET.send({ t: 'fire', pierce, x: state.x, y: state.y, a: state.angle, seq: NET.seq2 }); NET.tankGhost && NET.tankGhost(tipX, tipY, dx, dy, pierce, Math.max(ricochetCount(), TX.rico(state))); }
+      if (netOwn) { NET.send({ t: 'fire', pierce, x: state.x, y: state.y, a: state.angle, seq: NET.seq2 }); if (!NET.honest) NET.tankGhost && NET.tankGhost(tipX, tipY, dx, dy, pierce, Math.max(ricochetCount(), TX.rico(state))); }
       else {
       TX.shot(state);
       // бонус «Тройной выстрел»: ещё два снаряда веером
@@ -7795,7 +7795,7 @@
   const BOT_NAME = 'pifpafgame';
   const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
   // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
-  const NET_VER = 12;
+  const NET_VER = 13;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   // свои серверы связи — выбираются переключателями во вкладке «По сети» (до подключения)
@@ -7803,7 +7803,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.31';
+  const NET_BUILD = '2.32';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -9165,7 +9165,20 @@
     });
   };
   // гость: свой танк — сам, остальное — по снимкам
+  let tLastIn = 0, tLastInStr = '';
   NET.tankGuestStep = (dt, now) => {
+    if (NET.honest) {
+      // «ЧЕСТНЫЕ ТАНКИ» («Элит»): свой танк ведёт сервер. Телефон шлёт только джойстик, а танк показывает,
+      // как его посчитал сервер (с задержкой на пинг). Ничего не угадываем.
+      if (!gameOver && menu.hidden) {
+        const v = (p2.keyVec.x || p2.keyVec.y) ? p2.keyVec : p2.joy;
+        const x = +(+v.x || 0).toFixed(2), y = +(+v.y || 0).toFixed(2), ch = +(p2.charge || 0).toFixed(2);
+        const str = x + ',' + y + ',' + ch;
+        if (now - tLastIn > 200 || (str !== tLastInStr && now - tLastIn > 25)) { tLastIn = now; tLastInStr = str; NET.send({ t: 'ti', x, y, ch, seq: NET.seq2, a2: +(p2.ammoS || 0).toFixed(2) }); }
+      }
+      renderGuest(now);
+      return;
+    }
     if (!gameOver && menu.hidden) {
       updatePlayer(p2, dt, now);
       guestPush(p2);
@@ -9207,6 +9220,11 @@
     p1.x = a.p1[0] + (b.p1[0] - a.p1[0]) * f;
     p1.y = a.p1[1] + (b.p1[1] - a.p1[1]) * f;
     p1.angle = lerpA(a.p1[2], b.p1[2], f);
+    if (NET.honest && a.p2 && b.p2) {
+      p2.x = a.p2[0] + (b.p2[0] - a.p2[0]) * f;
+      p2.y = a.p2[1] + (b.p2[1] - a.p2[1]) * f;
+      p2.angle = lerpA(a.p2[2], b.p2[2], f);
+    }
     movers.forEach((m, i) => {
       if (!a.mv[i] || !b.mv[i] || !m.rect) return;
       m.rect.x = a.mv[i][0] + (b.mv[i][0] - a.mv[i][0]) * f;
@@ -9312,6 +9330,7 @@
       controlMode = m.ctrl;
       settings.rounds = m.rounds; settings.ricochet = m.rico; settings.selfDamage = m.self;
       NET.modes = m.modes; quickMode = false; NET.spd = m.spd == null ? 1 : m.spd; NET.rows = m.rows || 22;
+      NET.honest = !!m.honest;
       NET.flip = true;
       document.body.classList.add('netGuest');
       origStartLevel(m.level);
@@ -9392,7 +9411,7 @@
   function tankNetReset(wasGuest) {
     if (p1.orig) { Object.assign(p1, p1.orig); delete p1.orig; }
     p1.netPuppet = false; p2.netPuppet = false; p2.netOwn = false;
-    NET.flip = false; NET.modes = null;
+    NET.flip = false; NET.modes = null; NET.honest = false;
     joys[0].p = p1; joys[0].flip = 1; p2.resetJoy = joys[1].reset; p1.resetJoy = joys[0].reset;
     document.getElementById('btn1').textContent = 'ИГРОК 1 (синий)';
     document.getElementById('rematchBtn').textContent = 'Реванш';
@@ -10604,9 +10623,10 @@
   function sumoEll(G, x, y) { const a = (x - G.W / 2) / sumoRX(G), b = (y - G.H / 2) / sumoRY(G); return Math.sqrt(a * a + b * b); }
 
   // ======================= «ЭЛИТ»: ИГРУ СЧИТАЕТ СЕРВЕР =======================
-  // Отдельная вкладка. Оба игрока подключаются к серверу Москва. На сервере работает та же самая
-  // игра, что в телефоне, в роли хозяина комнаты — а оба телефона для неё гости.
-  // Поэтому на экране всё точь-в-точь как в обычной игре по сети. Одновременно — максимум 2 матча.
+  // Отдельная вкладка, устроена как «По сети»: наверху — плашка (создать матч / войти по коду),
+  // ниже — плитки игр. Создатель матча выбирает игру и настраивает её на обычных экранах
+  // (карта, рикошеты, раунды…), а играет её сервер в Москве. Оба телефона для сервера — гости.
+  // Танки здесь «честные»: оба танка ведёт сервер, телефон шлёт только джойстик. Одновременно — 2 матча.
   (function () {
     const tab = document.getElementById('eliteTab');
     if (!tab) return;
@@ -10615,40 +10635,40 @@
     const WS_URL = qsE || 'wss://' + HOST + '/elite';
     const STATUS_URL = qsE ? qsE.replace(/^ws/, 'http').replace(/\/elite.*$/, '/elite/status') : 'https://' + HOST + '/elite/status';
     const panel = document.getElementById('elitePanel');
-    let EG = 'sumo', EL = ''; try { EG = localStorage.getItem('elite-game') === 'tanks' ? 'tanks' : 'sumo'; EL = localStorage.getItem('elite-level') || ''; } catch (e) {}
-    const E = { game: EG, level: EL, ws: null, st: 'idle', code: '', status: null, err: '' };
-    // карты танков, которые есть и на сервере (свои карты из редактора туда не попадают)
-    const levelNames = () => LEVELS.filter(L => L && L.name && !L.mine && !L.user).map(L => L.name);
+    // st: idle → connecting → waiting (код, ждём соперника) → ready (оба здесь, создатель выбирает игру) → starting → playing
+    const E = { ws: null, st: 'idle', code: '', you: 0, status: null, err: '', pick: null, hint: '' };
 
-    // ---------- панель во вкладке ----------
+    // ---------- плашка ----------
     function render() {
-      if (E.st === 'playing') { panel.innerHTML = `<div class="netTitle">Элит</div><p class="netWait">Идёт матч…</p>`; return; }
-      let h = `<div class="netTitle">Элит · игру считает сервер</div>
-        <p class="netTip">Игра точь-в-точь как обычная по сети, но всё решает сервер в Москве: кто попал, кто упал, кто выиграл. Оба игрока в равных условиях. Одновременно идут максимум <b>2 матча</b>.</p>`;
-      const s = E.status;
-      const seats = s ? `<p class="eliteSeats ${s.busy >= s.max ? 'full' : ''}">Матчей сейчас: <b>${s.busy} из ${s.max}</b>${s.busy >= s.max ? ' — мест нет' : ''}</p>` : (E.err ? '' : `<p class="eliteSeats">Проверяем сервер…</p>`);
-      if (E.st === 'idle') {
-        const maps = E.game === 'tanks' ? `<div class="eliteMap"><label>Карта</label><select class="eLevel"><option value="">🎲 Случайная</option>${levelNames().map(n => `<option${n === E.level ? ' selected' : ''}>${n}</option>`).join('')}</select></div><p class="netTip">Танки с джойстиком. Раунды, отскоки и скорость — из твоих настроек танков.</p>` : '';
-        h += seats + `<div class="segmented eliteGames"><button data-g="sumo" aria-pressed="${E.game === 'sumo'}">🥋 Сумо</button><button data-g="tanks" aria-pressed="${E.game === 'tanks'}">🪖 Танки</button></div>
-          ${maps}
+      let h = '';
+      if (E.st === 'playing') h = `<div class="netTitle">Элит</div><p class="netWait">Идёт матч…</p>`;
+      else if (E.st === 'idle') {
+        const s = E.status;
+        const seats = s ? `<p class="eliteSeats ${s.busy >= s.max ? 'full' : ''}">Матчей сейчас: <b>${s.busy} из ${s.max}</b>${s.busy >= s.max ? ' — мест нет' : ''}</p>` : (E.err ? '' : `<p class="eliteSeats">Проверяем сервер…</p>`);
+        h = `<div class="netTitle">Элит · игру считает сервер</div>
+          <p>Создай матч и скажи код другу — или введи код, который прислал друг. Потом создатель выбирает игру ниже.</p>
+          <p class="netTip">Всё решает сервер в Москве: где танки, кто попал, кто упал, кто выиграл. Ничего не угадывается — оба видят то, что посчитал сервер. Одновременно идут максимум <b>2 матча</b>.</p>
+          ${seats}
           <button class="hkPlay eCreate">Создать матч</button>
           <div class="netOr">или</div>
           <div class="netJoin"><input class="netCode eCode" maxlength="4" placeholder="1234" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay eJoin">Войти</button></div>`;
       } else if (E.st === 'connecting') {
-        h += `<p class="netWait">Подключаемся к серверу…</p><button class="backBtn eCancel">Отмена</button>`;
+        h = `<p class="netWait">Подключаемся к серверу…</p><button class="backBtn eCancel">Отмена</button>`;
       } else if (E.st === 'waiting') {
-        h += `<p>${E.game === 'tanks' ? '🪖 Танки' : '🥋 Сумо'} · код матча:</p><div class="netBig">${E.code}</div><p class="netWait">Ждём соперника… Скажи ему код — он вводит его во вкладке «Элит».</p><button class="backBtn eCancel">Отмена</button>`;
+        h = `<p>Код матча:</p><div class="netBig">${E.code}</div><p class="netWait">Ждём соперника… Скажи ему код — он вводит его во вкладке «Элит».</p><button class="backBtn eCancel">Отмена</button>`;
+      } else if (E.st === 'ready') {
+        h = E.you === 0
+          ? `<div class="netOk">Соперник подключился!</div><p>Выбери игру ниже, настрой её и нажми «Играть» — игра начнётся у обоих.</p><button class="backBtn eCancel">Отключиться</button>`
+          : `<div class="netOk">Подключено!</div><p>Ждём, пока соперник выберет игру и нажмёт «Играть». Твоя сторона всегда снизу.</p><button class="backBtn eCancel">Отключиться</button>`;
       } else if (E.st === 'starting') {
-        h += `<p class="netWait">Соперник здесь — запускаем игру на сервере…</p>`;
+        h = `<p class="netWait">Запускаем игру на сервере…</p>`;
       } else if (E.st === 'full') {
-        h += `<p class="netErr">Сейчас заняты оба места: идут 2 матча. Попробуй через пару минут.</p><button class="hkPlay eRetry">Проверить ещё раз</button>`;
+        h = `<p class="netErr">Сейчас заняты оба места: идут 2 матча. Попробуй через пару минут.</p><button class="hkPlay eRetry">Проверить ещё раз</button>`;
       }
       if (E.err) h += `<p class="netErr">${E.err}</p>`;
       panel.innerHTML = h;
       const $ = q => panel.querySelector(q);
-      panel.querySelectorAll('.eliteGames button').forEach(b => b.onclick = () => { E.game = b.dataset.g; try { localStorage.setItem('elite-game', E.game); } catch (e) {} render(); });
-      if ($('.eLevel')) $('.eLevel').onchange = e => { E.level = e.target.value; try { localStorage.setItem('elite-level', E.level); } catch (er) {} };
-      if ($('.eCreate')) $('.eCreate').onclick = () => { try { audioBus(); } catch (e) {} connect({ t: 'create', game: E.game, v: NET_VER, o: options() }); };
+      if ($('.eCreate')) $('.eCreate').onclick = () => { try { audioBus(); } catch (e) {} connect({ t: 'create', v: NET_VER }); };
       if ($('.eJoin')) {
         const inp = $('.eCode');
         const go = () => { const c = inp.value.trim(); if (/^\d{4}$/.test(c)) { try { audioBus(); } catch (e) {} connect({ t: 'join', code: c, v: NET_VER }); } else inp.classList.add('bad'); };
@@ -10656,14 +10676,17 @@
         inp.onkeydown = e => { if (e.key === 'Enter') go(); };
         inp.oninput = () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 4); inp.classList.remove('bad'); };
       }
-      if ($('.eCancel')) $('.eCancel').onclick = () => { closeWs(); E.st = 'idle'; render(); };
+      if ($('.eCancel')) $('.eCancel').onclick = () => { closeWs(); E.st = 'idle'; E.err = ''; render(); loadStatus(); };
       if ($('.eRetry')) $('.eRetry').onclick = () => { E.st = 'idle'; E.err = ''; loadStatus(); render(); };
+      renderTiles();
     }
-    // настройки создателя матча — как если бы он сам был хозяином комнаты
-    function options() {
-      if (E.game === 'tanks') return { level: E.level, settings: { rounds: settings.rounds, ricochet: settings.ricochet, selfDamage: settings.selfDamage, speed: settings.speed }, modes: { lastShot: !!modes.lastShot, ricochet: !!modes.ricochet } };
-      const g = pgGames.find(x => x.G.net && x.G.net.key === E.game);
-      return g ? Object.assign({}, g.G.net.opts) : {};
+    // подсказка в плашке (как в «По сети»)
+    function hint(text) {
+      let el = panel.querySelector('.netHint');
+      if (!el) { el = document.createElement('p'); el.className = 'netErr netHint'; panel.appendChild(el); }
+      el.textContent = text;
+      panel.classList.remove('shake'); void panel.offsetWidth; panel.classList.add('shake');
+      vibrate(30);
     }
     async function loadStatus() {
       const get = async (u, ms) => { const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), ms); try { const r = await fetch(u + (u.endsWith('/health') ? '' : '?t=' + Date.now()), { cache: 'no-store', signal: ctl.signal }); const t = await r.text(); return { ok: r.ok, t }; } finally { clearTimeout(to); } };
@@ -10679,10 +10702,78 @@
       if (E.st === 'idle' || E.st === 'full') render();
     }
     setInterval(() => { if (!tab.hidden && (E.st === 'idle' || E.st === 'full')) loadStatus(); }, 5000);
-    new MutationObserver(() => { if (!tab.hidden) { if (E.st !== 'playing') E.err = ''; loadStatus(); render(); } }).observe(tab, { attributes: true, attributeFilter: ['hidden'] });
+    new MutationObserver(() => { if (!tab.hidden) { if (E.st === 'idle') E.err = ''; loadStatus(); render(); } }).observe(tab, { attributes: true, attributeFilter: ['hidden'] });
+
+    // ---------- плитки игр (те же иконки, что в «По сети») ----------
+    const ELITE_GAMES = [['tanks', 'quickStickTile', 'Танки: джойстик'], ['sumo', 'pgTile-sumo', 'Сумо']];
+    const tiles = document.createElement('div');
+    tiles.className = 'tiles'; tiles.id = 'tilesElite';
+    tab.appendChild(tiles);
+    setTimeout(() => {
+      ELITE_GAMES.forEach(([g, src, name]) => {
+        const t = document.createElement('button');
+        t.className = 'tile';
+        t.dataset.elitegame = g;
+        const srcEl = document.getElementById(src);
+        const icon = srcEl && srcEl.querySelector('.tileIcon');
+        t.innerHTML = (icon ? icon.outerHTML : '') + `<span>${name}</span>`;
+        t.addEventListener('click', () => {
+          if (E.st === 'idle' || E.st === 'connecting' || E.st === 'full') { hint('Сначала создай матч или войди по коду'); return; }
+          if (E.st === 'waiting') { hint('Ждём соперника — скажи ему код'); return; }
+          if (E.st !== 'ready') return;
+          if (E.you !== 0) { hint('Игру выбирает тот, кто создал матч'); return; }
+          // открываются обычные настройки игры (без ботов); «Играть» запустит игру на сервере
+          E.pick = g;
+          document.body.classList.add('elitePick');
+          srcEl.click();
+        });
+        tiles.appendChild(t);
+      });
+      renderTiles();
+    }, 0);
+    function renderTiles() { tiles.querySelectorAll('.tile').forEach(t => t.classList.toggle('dim', E.st !== 'ready' || E.you !== 0)); }
+    const endPick = () => { E.pick = null; document.body.classList.remove('elitePick'); };
+    // «Назад» в настройках — выбор отменён
+    ['quickBack'].forEach(id => { const b = document.getElementById(id); if (b) b.addEventListener('click', endPick); });
+    setTimeout(() => pgGames.forEach(({ G }) => { const b = G.net && G.net.root.querySelector('.pgBack'); if (b) b.addEventListener('click', endPick); }), 0);
+
+    // «Играть» в танках: вместо игры на телефоне — запуск на сервере с выбранной картой и настройками
+    const startBeforeElite = startLevel;
+    startLevel = function (i) {
+      if (E.pick === 'tanks' && E.st === 'ready' && !NET.on) {
+        const o = { level: LEVELS[i] && LEVELS[i].name, quick: !!quickMode, honest: true,
+          settings: { rounds: settings.rounds, ricochet: settings.ricochet, selfDamage: settings.selfDamage, speed: settings.speed },
+          modes: { lastShot: !!modes.lastShot, ricochet: !!modes.ricochet } };
+        document.getElementById('quickSetup').hidden = true;
+        quickMode = false;
+        endPick();
+        sendStart('tanks', o);
+        return;
+      }
+      return startBeforeElite(i);
+    };
+    // «Играть» в сумо: перехватываем раньше, чем игра запустится на телефоне
+    setTimeout(() => pgGames.forEach(({ G }) => {
+      if (!G.net) return;
+      G.net.root.addEventListener('click', e => {
+        if (!e.target.closest || !e.target.closest('.pgStart')) return;
+        if (!(E.pick === G.net.key && E.st === 'ready' && !NET.on)) return;
+        e.stopImmediatePropagation(); e.preventDefault();
+        const o = {}; for (const k of Object.keys(G.net.opts)) if (k !== 'opp') o[k] = G.net.opts[k];
+        G.net.close();
+        endPick();
+        sendStart(G.net.key, o);
+      }, true);
+    }), 0);
+    function sendStart(game, o) {
+      send({ t: 'start', game, o });
+      E.st = 'starting'; E.err = '';
+      NET.showEliteTab();
+      render();
+    }
 
     // ---------- связь с сервером (до начала игры) ----------
-    function closeWs() { const w = E.ws; E.ws = null; clearTimeout(E.replyT); try { w && w.close(); } catch (e) {} }
+    function closeWs() { const w = E.ws; E.ws = null; clearTimeout(E.replyT); clearInterval(E.pingT); try { w && w.close(); } catch (e) {} }
     const send = o => { if (E.ws && E.ws.readyState === 1) try { E.ws.send(JSON.stringify(o)); } catch (e) {} };
     const OLD = 'Сервер Москва не понял запрос — на нём старая версия. Загрузи новый server.js в Amvera (приложение pifpaf, Москва) и нажми «Пересобрать».';
     function connect(first) {
@@ -10690,30 +10781,37 @@
       let ws; try { ws = new WebSocket(WS_URL); } catch (e) { E.st = 'idle'; E.err = 'Не получилось подключиться к серверу.'; return render(); }
       E.ws = ws;
       const to = setTimeout(() => { if (E.ws === ws && ws.readyState !== 1) { closeWs(); E.st = 'idle'; E.err = 'Сервер Москва не отвечает. Попробуй ещё раз через минуту.'; render(); } }, 8000);
-      ws.onopen = () => { clearTimeout(to); send(first); E.replyT = setTimeout(() => { if (E.ws === ws && E.st === 'connecting') { closeWs(); E.st = 'idle'; E.err = OLD; render(); } }, 6000); };
+      ws.onopen = () => {
+        clearTimeout(to); send(first);
+        E.replyT = setTimeout(() => { if (E.ws === ws && E.st === 'connecting') { closeWs(); E.st = 'idle'; E.err = OLD; render(); } }, 6000);
+        E.pingT = setInterval(() => send({ t: 'p', ts: performance.now() }), 5000); // пока выбираем игру — связь не засыпает
+      };
       ws.onmessage = e => { if (E.ws !== ws) return; let m; try { m = JSON.parse(e.data); } catch (er) { return; } onMsg(m, ws); };
       ws.onclose = () => {
         if (E.ws !== ws) return;
-        E.ws = null;
+        E.ws = null; clearInterval(E.pingT);
         if (E.st !== 'idle') { E.st = 'idle'; if (!E.err) E.err = 'Связь с сервером пропала.'; }
+        endPick();
         render();
       };
     }
     function onMsg(m, ws) {
+      if (m.t === 'p') return;
       if (m.t === 'full') { closeWs(); E.st = 'full'; E.status = { busy: m.busy, max: m.max }; return render(); }
       if (m.t === 'badver') { closeWs(); E.st = 'idle'; E.err = m.srv > m.you ? 'На сервере игра новее, чем у тебя. Полностью закрой игру и открой заново — она обновится.' : 'На сервере старая версия игры. Загрузи новый server.js в Amvera (приложение pifpaf, Москва) и нажми «Пересобрать».'; return render(); }
-      if (m.game) E.game = m.game;
-      if (m.t === 'created') { clearTimeout(E.replyT); E.st = 'waiting'; E.code = m.code; return render(); }
+      if (m.t === 'created') { clearTimeout(E.replyT); E.st = 'waiting'; E.code = m.code; E.you = 0; return render(); }
       if (m.t === 'nf') { closeWs(); E.st = 'idle'; E.err = 'Матча с таким кодом нет.'; return render(); }
       if (m.t === 'busy') { closeWs(); E.st = 'idle'; E.err = 'В этом матче уже двое.'; return render(); }
-      if (m.t === 'joined' || m.t === 'peer') { clearTimeout(E.replyT); E.st = 'starting'; return render(); }
+      if (m.t === 'joined') { clearTimeout(E.replyT); E.code = m.code; E.you = 1; E.st = 'ready'; vibrate([20, 40, 20]); return render(); }
+      if (m.t === 'peer') { E.st = 'ready'; vibrate([20, 40, 20]); sound(660, 0.1, 'triangle', 0.06); return render(); }
+      if (m.t === 'starting') { E.st = 'starting'; return render(); }
       if (m.t === 'srverr') { closeWs(); E.st = 'idle'; E.err = 'Сервер не смог запустить игру. Попробуй ещё раз.'; return render(); }
-      if (m.t === 'left') { closeWs(); E.st = 'idle'; E.err = m.why === 'timeout' ? 'Соперник так и не пришёл — матч закрыт.' : 'Соперник ушёл — матч закрыт.'; return render(); }
-      // игра запущена на сервере: дальше этим соединением управляет обычный сетевой модуль (как у гостя)
-      if (m.t === 'egame') { E.ws = null; clearTimeout(E.replyT); E.st = 'playing'; render(); NET.eliteAttach(ws); }
+      if (m.t === 'left') { closeWs(); endPick(); E.st = 'idle'; E.err = m.why === 'timeout' ? 'Матч закрыт: долго не начинали.' : 'Соперник отключился — матч закрыт.'; return render(); }
+      // игра запущена на сервере: дальше этим соединением управляет обычный сетевой модуль (мы — гость)
+      if (m.t === 'egame') { clearInterval(E.pingT); E.ws = null; clearTimeout(E.replyT); E.st = 'playing'; render(); NET.eliteAttach(ws); }
     }
     // матч закончился (вышли, связь пропала) — назад во вкладку «Элит»
-    NET.onEliteEnd = () => { E.st = 'idle'; E.ws = null; render(); loadStatus(); };
+    NET.onEliteEnd = () => { E.st = 'idle'; E.ws = null; endPick(); render(); loadStatus(); };
     render();
   })();
 
