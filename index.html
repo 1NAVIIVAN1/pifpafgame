@@ -1458,6 +1458,28 @@
   .netMyRow .netDice { flex: none; width: 64px; font-size: 1.4rem; }
   .netMyRow small { font-size: 0.75rem; opacity: 0.75; }
   .netHost:disabled { opacity: 0.45; }
+
+  /* режим «Рядом без интернета (QR)» */
+  .netQrBtn { margin-top: 8px; }
+  .netQrNeed { background: rgba(255, 200, 80, 0.12); border: 1px solid rgba(255, 200, 80, 0.35); border-radius: 12px; padding: 10px 12px; font-size: 0.9rem; }
+  .netQrCv { display: block; margin: 8px auto; width: min(78vw, 300px); height: auto; border-radius: 10px; image-rendering: pixelated; }
+  .netQrTxt { margin: 6px 0; font-size: 0.8rem; text-align: left; }
+  .netQrTxt textarea { width: 100%; height: 70px; font-size: 0.7rem; margin: 6px 0; background: rgba(0,0,0,0.3); color: #fff; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }
+  .qrScan { position: fixed; inset: 0; z-index: 200; background: #000; display: flex; flex-direction: column; }
+  .qrScan video { flex: 1; width: 100%; object-fit: cover; min-height: 0; }
+  .qrScanBar { padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; background: #14161f; color: #fff; text-align: center; }
+  .qrScanBar textarea { width: 100%; height: 110px; font-size: 0.75rem; background: rgba(255,255,255,0.08); color: #fff; border-radius: 10px; border: 1px solid rgba(255,255,255,0.25); padding: 8px; }
+
+  /* вкладка «Элит» */
+  .eliteSeats { font-size: 0.9rem; margin: 6px 0; }
+  .eliteSeats.full { color: #ff8a7a; }
+  .eliteGame { display: inline-block; padding: 8px 16px; border-radius: 12px; background: rgba(79,163,255,0.15); border: 1px solid rgba(79,163,255,0.5); font-weight: 800; margin: 6px 0 10px; }
+  .eliteScr { position: fixed; inset: 0; z-index: 150; background: #0d3550; touch-action: none; }
+  .eliteScr canvas { display: block; touch-action: none; }
+  .eliteExit { position: absolute; left: 10px; top: calc(10px + env(safe-area-inset-top, 0px)); width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.35); color: #fff; font-size: 1.1rem; }
+  .eliteOver { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(20,24,32,0.92); padding: 22px 26px; border-radius: 18px; display: flex; flex-direction: column; gap: 10px; min-width: 220px; text-align: center; color: #fff; }
+  .eliteOver[hidden] { display: none; }
+  .eliteOverTxt { font-size: 1.4rem; font-weight: 900; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -1770,10 +1792,14 @@
       <button data-tab="mini">Мини-игры</button>
       <button data-tab="tanks">Тестирование</button>
       <button data-tab="net">По сети</button>
+      <button data-tab="elite">Элит</button>
     </div>
     <div id="netTab" hidden>
       <div class="panel netPanel" id="netPanel"></div>
       <div class="tiles" id="tilesNet"></div>
+    </div>
+    <div id="eliteTab" hidden>
+      <div class="panel netPanel" id="elitePanel"></div>
     </div>
     <div class="tiles" id="tilesMini">
       <button class="tile" id="quickTanksTile">
@@ -4700,6 +4726,7 @@
     document.getElementById('tilesMini').hidden = homeTab !== 'mini';
     document.getElementById('tilesTanks').hidden = homeTab !== 'tanks';
     document.getElementById('netTab').hidden = homeTab !== 'net';
+    document.getElementById('eliteTab').hidden = homeTab !== 'elite';
   }
   // перейти на вкладку «По сети» (для сетевого модуля)
   NET.showNetTab = () => { homeTab = 'net'; try { localStorage.setItem('home-tab', homeTab); } catch (e) {} renderTabs(); showHome(); };
@@ -7619,6 +7646,142 @@
   };
 
 
+  // ======================= QR-КОД (без библиотек, работает офлайн) =======================
+  // Байтовый режим, уровень коррекции M, версии 1–25. По мотивам открытого генератора Nayuki (MIT).
+  const QR = (function () {
+    const ECC_PER_BLOCK = [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24, 28, 28, 26, 26, 26, 26, 28, 28, 28, 28];
+    const NUM_BLOCKS = [-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21];
+    const FORMAT_M = 0;
+    const getBit = (x, i) => ((x >>> i) & 1) !== 0;
+    function mul(x, y) { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; } return z & 0xFF; }
+    function rsDivisor(n) {
+      const r = new Array(n).fill(0); r[n - 1] = 1; let root = 1;
+      for (let i = 0; i < n; i++) { for (let j = 0; j < n; j++) { r[j] = mul(r[j], root); if (j + 1 < n) r[j] ^= r[j + 1]; } root = mul(root, 0x02); }
+      return r;
+    }
+    function rsRemainder(data, div) {
+      const r = div.map(() => 0);
+      for (const b of data) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => { r[i] ^= mul(c, f); }); }
+      return r;
+    }
+    function rawModules(ver) {
+      let r = (16 * ver + 128) * ver + 64;
+      if (ver >= 2) { const na = Math.floor(ver / 7) + 2; r -= (25 * na - 10) * na - 55; if (ver >= 7) r -= 36; }
+      return r;
+    }
+    const dataCodewords = ver => Math.floor(rawModules(ver) / 8) - ECC_PER_BLOCK[ver] * NUM_BLOCKS[ver];
+    function alignPos(ver, size) {
+      if (ver === 1) return [];
+      const na = Math.floor(ver / 7) + 2, step = ver === 32 ? 26 : Math.ceil((ver * 4 + 4) / (na * 2 - 2)) * 2;
+      const r = [6];
+      for (let p = size - 7; r.length < na; p -= step) r.splice(1, 0, p);
+      return r;
+    }
+    function make(text) {
+      const bytes = Array.from(new TextEncoder().encode(text));
+      let ver = 1;
+      for (; ver <= 25; ver++) { const cc = ver < 10 ? 8 : 16; if (4 + cc + bytes.length * 8 <= dataCodewords(ver) * 8) break; }
+      if (ver > 25) throw new Error('QR: слишком длинный текст');
+      const size = ver * 4 + 17;
+      const mods = Array.from({ length: size }, () => new Array(size).fill(false));
+      const isFn = Array.from({ length: size }, () => new Array(size).fill(false));
+      const set = (x, y, d) => { mods[y][x] = d; isFn[y][x] = true; };
+      // служебные узоры
+      for (let i = 0; i < size; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+      const finder = (x, y) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const d = Math.max(Math.abs(dx), Math.abs(dy)), xx = x + dx, yy = y + dy; if (xx >= 0 && xx < size && yy >= 0 && yy < size) set(xx, yy, d !== 2 && d !== 4); } };
+      finder(3, 3); finder(size - 4, 3); finder(3, size - 4);
+      const ap = alignPos(ver, size), na = ap.length;
+      for (let i = 0; i < na; i++) for (let j = 0; j < na; j++) {
+        if ((i === 0 && j === 0) || (i === 0 && j === na - 1) || (i === na - 1 && j === 0)) continue;
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) set(ap[i] + dx, ap[j] + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+      }
+      const drawFormat = mask => {
+        const data = FORMAT_M << 3 | mask; let rem = data;
+        for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+        const bits = (data << 10 | rem) ^ 0x5412;
+        for (let i = 0; i <= 5; i++) set(8, i, getBit(bits, i));
+        set(8, 7, getBit(bits, 6)); set(8, 8, getBit(bits, 7)); set(7, 8, getBit(bits, 8));
+        for (let i = 9; i < 15; i++) set(14 - i, 8, getBit(bits, i));
+        for (let i = 0; i < 8; i++) set(size - 1 - i, 8, getBit(bits, i));
+        for (let i = 8; i < 15; i++) set(8, size - 15 + i, getBit(bits, i));
+        set(8, size - 8, true);
+      };
+      drawFormat(0);
+      if (ver >= 7) {
+        let rem = ver; for (let i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
+        const bits = ver << 12 | rem;
+        for (let i = 0; i < 18; i++) { const b = getBit(bits, i), a = size - 11 + i % 3, c = Math.floor(i / 3); set(a, c, b); set(c, a, b); }
+      }
+      // данные
+      const bb = [];
+      const push = (v, n) => { for (let i = n - 1; i >= 0; i--) bb.push((v >>> i) & 1); };
+      push(4, 4); push(bytes.length, ver < 10 ? 8 : 16); bytes.forEach(b => push(b, 8));
+      const cap = dataCodewords(ver) * 8;
+      push(0, Math.min(4, cap - bb.length));
+      push(0, (8 - bb.length % 8) % 8);
+      for (let p = 0xEC; bb.length < cap; p ^= 0xEC ^ 0x11) push(p, 8);
+      const data = [];
+      for (let i = 0; i < bb.length; i += 8) { let v = 0; for (let k = 0; k < 8; k++) v = v << 1 | bb[i + k]; data.push(v); }
+      // коррекция ошибок и перемешивание блоков
+      const nb = NUM_BLOCKS[ver], el = ECC_PER_BLOCK[ver], raw = Math.floor(rawModules(ver) / 8);
+      const nShort = nb - raw % nb, shortLen = Math.floor(raw / nb), div = rsDivisor(el);
+      const blocks = [];
+      for (let i = 0, k = 0; i < nb; i++) {
+        const dat = data.slice(k, k + shortLen - el + (i < nShort ? 0 : 1)); k += dat.length;
+        const ecc = rsRemainder(dat, div);
+        if (i < nShort) dat.push(0);
+        blocks.push(dat.concat(ecc));
+      }
+      const all = [];
+      for (let i = 0; i < blocks[0].length; i++) blocks.forEach((b, j) => { if (i !== shortLen - el || j >= nShort) all.push(b[i]); });
+      // раскладка по зигзагу
+      let bi = 0;
+      for (let right = size - 1; right >= 1; right -= 2) {
+        if (right === 6) right = 5;
+        for (let v = 0; v < size; v++) for (let j = 0; j < 2; j++) {
+          const x = right - j, up = ((right + 1) & 2) === 0, y = up ? size - 1 - v : v;
+          if (!isFn[y][x] && bi < all.length * 8) { mods[y][x] = getBit(all[bi >>> 3], 7 - (bi & 7)); bi++; }
+        }
+      }
+      // маска: пробуем все 8, берём с наименьшим «штрафом»
+      const maskFn = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, x => x % 3 === 0, (x, y) => (x + y) % 3 === 0,
+        (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => x * y % 2 + x * y % 3 === 0,
+        (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+      const applyMask = m => { for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!isFn[y][x] && maskFn[m](x, y)) mods[y][x] = !mods[y][x]; };
+      const penalty = () => {
+        let p = 0, dark = 0;
+        for (let y = 0; y < size; y++) {
+          let rc = 1, cc = 1;
+          for (let x = 0; x < size; x++) {
+            if (mods[y][x]) dark++;
+            if (x > 0) { if (mods[y][x] === mods[y][x - 1]) { rc++; if (rc === 5) p += 3; else if (rc > 5) p++; } else rc = 1; }
+            if (x > 0) { if (mods[x][y] === mods[x - 1][y]) { cc++; if (cc === 5) p += 3; else if (cc > 5) p++; } else cc = 1; }
+            if (x > 0 && y > 0) { const c = mods[y][x]; if (c === mods[y][x - 1] && c === mods[y - 1][x] && c === mods[y - 1][x - 1]) p += 3; }
+          }
+        }
+        const tot = size * size;
+        p += Math.floor(Math.abs(dark * 20 - tot * 10) / tot) * 10;
+        return p;
+      };
+      let best = 0, bestP = Infinity;
+      for (let m = 0; m < 8; m++) { applyMask(m); drawFormat(m); const p = penalty(); if (p < bestP) { bestP = p; best = m; } applyMask(m); }
+      applyMask(best); drawFormat(best);
+      return { size, get: (x, y) => mods[y][x] };
+    }
+    // нарисовать на canvas: модули чёрным на белом, с белой рамкой
+    function draw(cv, text, px) {
+      const q = make(text), border = 4, n = q.size + border * 2;
+      const s = px || Math.max(3, Math.floor(300 / n));
+      cv.width = cv.height = n * s;
+      const c = cv.getContext('2d');
+      c.fillStyle = '#ffffff'; c.fillRect(0, 0, cv.width, cv.height);
+      c.fillStyle = '#000000';
+      for (let y = 0; y < q.size; y++) for (let x = 0; x < q.size; x++) if (q.get(x, y)) c.fillRect((x + border) * s, (y + border) * s, s, s);
+      return q;
+    }
+    return { make, draw };
+  })();
+
   // ======================= СЕТЬ: игра вдвоём на двух телефонах =======================
   // Связь телефон-телефон через PeerJS (бесплатный сервер знакомства + прямое соединение WebRTC).
   // Хост (создал комнату) считает игру. Гость сам двигает свой танк/пушку и шлёт свои действия,
@@ -7636,7 +7799,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.22';
+  const NET_BUILD = '2.25';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -7676,11 +7839,35 @@
   const qs = new URLSearchParams(location.search);
   const NET_TEST = qs.get('nettest') === '1';
   const NET_LAG = +(qs.get('lag') || 0); // искусственная задержка для проверки, мс
+  const NET_JIT = +(qs.get('jit') || 0); // для проверки: случайные опоздания пакетов, мс
   const tg = window.Telegram && window.Telegram.WebApp;
   const GAME_NAMES = { tanks: 'Танки', grav: 'Гравитация' };
 
   const NT = { peer: null, conn: null, bc: null, alive: 0, pingTimer: null };
-  NET.code = null; NET.rtt = 80; NET.lobby = 'idle';
+  NET.code = null; NET.rtt = 80; NET.lobby = 'idle'; NET.rttS = []; NET.rttSpike = 0;
+  // ПОДСТРОЙКА ПЛАВНОСТИ: следим, насколько неровно приходят снимки. Связь ровная — показываем соперника
+  // почти без запаса (меньше задержка); бывают скачки — запас больше, и опоздавший снимок успевает прийти.
+  const JIT = { last: 0, gap: 33, dev: [], cur: 80, target: 80, at: 0 };
+  NET.jitNote = now => {
+    if (JIT.last) {
+      const dt = now - JIT.last;
+      if (dt < 1000) {
+        JIT.gap = JIT.gap * 0.95 + Math.min(dt, 120) * 0.05;
+        JIT.dev.push(Math.max(0, dt - JIT.gap)); if (JIT.dev.length > 90) JIT.dev.shift();
+        const so = JIT.dev.slice().sort((a, b) => a - b), p95 = so[Math.floor(so.length * 0.95)] || 0;
+        JIT.target = Math.max(45, Math.min(220, JIT.gap + p95 + 12));
+      }
+    }
+    JIT.last = now;
+  };
+  // текущий запас: растёт быстро (скачки появились), уменьшается медленно (чтобы картинка не прыгала)
+  NET.interpDelay = now => {
+    const dt = Math.min(0.1, (now - (JIT.at || now)) / 1000); JIT.at = now;
+    if (JIT.target > JIT.cur) JIT.cur = Math.min(JIT.target, JIT.cur + 300 * dt);
+    else JIT.cur = Math.max(JIT.target, JIT.cur - 25 * dt);
+    return JIT.cur;
+  };
+  NET.jitReset = () => { JIT.last = 0; JIT.dev = []; JIT.cur = JIT.target = 80; JIT.gap = 33; };
   const oneWay = () => Math.min(400, NET.rtt / 2);
 
   // модуль связи: если один CDN не открылся (бывает в России/у операторов) — пробуем другой
@@ -7747,7 +7934,8 @@
     if (NET_TEST) {
       if (!NT.bc) return;
       const pkt = { from: NET.role, m };
-      if (NET_LAG) setTimeout(() => NT.bc && NT.bc.postMessage(pkt), NET_LAG); else NT.bc.postMessage(pkt);
+      const lag = NET_LAG + (NET_JIT && Math.random() < 0.15 ? Math.random() * NET_JIT : 0);
+      if (lag) setTimeout(() => NT.bc && NT.bc.postMessage(pkt), lag); else NT.bc.postMessage(pkt);
       return;
     }
     if (NT.via === 'relay') { if (NT.ws && NT.ws.readyState === 1) { try { NT.ws.send(JSON.stringify(m)); } catch (e) {} } return; }
@@ -8097,9 +8285,9 @@
     if (NT.reconnSince && !rtcOk) { txt = 'Связь прервалась — переподключаемся…'; cls = 'bad'; }
     else if (NT.peerWait && !rtcOk) { txt = 'Соперник переподключается…'; cls = 'bad'; }
     else {
-      const r = Math.round(NET.rtt);
+      const r = Math.round(NET.rttLast == null ? NET.rtt : NET.rttLast);
       // какая связь: напрямую телефон-телефон или через пересылающий сервер (TURN), если напрямую не пробиться
-      const via = rtcOk ? 'Напрямую (знакомство: ' + RELAY_NAME + ')' : NT.via === 'relay' ? 'Сервер ' + RELAY_NAME : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
+      const via = rtcOk && NT.via === 'qr' ? 'Рядом (Wi-Fi)' : rtcOk ? 'Напрямую (знакомство: ' + RELAY_NAME + ')' : NT.via === 'relay' ? 'Сервер ' + RELAY_NAME : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
       txt = via + ' · ' + r + ' мс' + (NET.buffered() > 24000 ? ' · затор' : '') + ((rtcOk && NT.rtc.fast.readyState === 'open') || (NT.fast && NT.fast.readyState === 'open') ? ' ⚡' : '');
       cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
     }
@@ -8244,7 +8432,16 @@
         else if (m.of === 'ns') { if (trActive && NET.game === 'neon') for (const e of m.ev || []) neonEvent(e); }
         else if (m.of === 'qs') { const g = pgByKey(m.key); if (g && g.G.active && NET.game === m.key) qsEvents(g.G, m.ev || []); }
         return;
-      case '_pong': { const r = performance.now() - m.ts; NET.rtt = NET.rtt * 0.7 + r * 0.3; return; }
+      case '_pong': {
+        // пинг как в больших играх: по нескольким последним замерам (медиана) — редкий скачок не дёргает цифру
+        const r = performance.now() - m.ts;
+        NET.rttLast = NET.rttLast == null ? r : NET.rttLast * 0.7 + r * 0.3; // для плашки — реальный пинг, как раньше
+        NET.rttS.push(r); if (NET.rttS.length > 15) NET.rttS.shift();
+        const so = NET.rttS.slice().sort((a, b) => a - b);
+        NET.rtt = so[so.length >> 1];
+        NET.rttSpike = so.length >= 5 ? so[Math.floor(so.length * 0.9)] - NET.rtt : 0;
+        return;
+      }
       case '_bye': netLost('Соперник вышел из игры'); return;
       case '_direct': netError('У соперника включено «Только напрямую», а напрямую соединиться не получилось. Попробуйте другую сеть (например, Wi-Fi) или пусть соперник выключит этот переключатель.'); return;
       case '_srvwarn': srvSet('warn', 'Друг хочет перейти на сервер ' + RELAY_NAME + ' — так быстрее. Выключи VPN, если он включён.'); return;
@@ -8304,7 +8501,7 @@
   function rtcLost(R) {
     if (NT.rtc !== R) return;
     const was = R.ok;
-    if (was && (NET.rtcOnly || NT.via === 'rtc') && NET.on) { rtcClose(); return netLost('Прямая связь с соперником оборвалась.'); }
+    if (was && (NET.rtcOnly || NT.via === 'rtc' || NT.via === 'qr') && NET.on) { rtcClose(); return netLost('Прямая связь с соперником оборвалась.'); }
     rtcClose();
     if (was) { netBadge(); if (NET.lobby === 'connected') setLobby('connected'); }
   }
@@ -8329,9 +8526,9 @@
     if (R.main.readyState === 'open') { try { R.main.send(JSON.stringify(m)); } catch (e) {} }
     else wsSend(m);
   }
-  function rtcMake() {
+  function rtcMake(ice = RU_ICE, tmo = 12000) {
     rtcClose();
-    const pc = new RTCPeerConnection({ iceServers: RU_ICE });
+    const pc = new RTCPeerConnection({ iceServers: ice });
     const main = pc.createDataChannel('pp-main', { negotiated: true, id: 1, ordered: true });
     const fast = pc.createDataChannel('pp-fast', { negotiated: true, id: 77, ordered: false, maxRetransmits: 0 });
     const R = NT.rtc = { pc, main, fast, ok: false, n: {}, last: {}, pend: [], mine: { host: 0, srflx: 0 }, theirs: 0 };
@@ -8345,6 +8542,7 @@
       if (NT.rtc !== R || R.ok || main.readyState !== 'open' || fast.readyState !== 'open') return;
       R.ok = true; clearTimeout(R.timer);
       NT.route = 'direct';
+      if (R.onReady) { R.onReady(); return; } // режим «Рядом (QR)»
       // только посредник: познакомились — отключаемся от сервера, дальше строго напрямую
       if (NET.rtcOnly || NET.rtcOnlyPeer) setTimeout(() => {
         if (NT.rtc !== R || !R.ok) return;
@@ -8359,12 +8557,118 @@
     main.onclose = () => rtcLost(R);
     pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed' || pc.connectionState === 'closed') rtcLost(R); };
     // за 12 секунд не пробились — играем через сервер
-    R.timer = setTimeout(() => {
+    if (tmo) R.timer = setTimeout(() => {
       if (NT.rtc !== R || R.ok) return;
       if (NET.rtcOnly || NET.rtcOnlyPeer) { rtcFail(R); return; }
       rtcClose();
     }, 12000);
     return R;
+  }
+  // ======================= РЯДОМ БЕЗ ИНТЕРНЕТА (QR) =======================
+  // Нужна общая сеть: один Wi-Fi на двоих или раздача интернета с телефона одного из игроков
+  // (сам интернет при этом не нужен). Телефоны показывают друг другу QR с «адресами» (WebRTC),
+  // и дальше игра идёт напрямую по этой сети — задержка несколько миллисекунд.
+  function sdpPack(sdp, kind) {
+    const g = re => (sdp.match(re) || [])[1] || '';
+    const uf = g(/a=ice-ufrag:(\S+)/), pw = g(/a=ice-pwd:(\S+)/), fp = g(/a=fingerprint:sha-256 (\S+)/i);
+    const fpb = btoa(String.fromCharCode(...fp.split(':').map(h => parseInt(h, 16))));
+    const cs = [];
+    sdp.split(/\r?\n/).forEach(l => { const m = l.match(/^a=candidate:\S+ 1 udp \d+ (\S+) (\d+) typ (host|srflx)/i); if (m && cs.length < 5 && !cs.includes(m[1] + '~' + m[2])) cs.push(m[1] + '~' + m[2]); });
+    return ['PP1', kind, uf, pw, fpb, cs.join(',')].join('|');
+  }
+  function sdpUnpack(t) {
+    const [tag, kind, uf, pw, fpb, cs] = String(t || '').trim().split('|');
+    if (tag !== 'PP1' || !uf || !pw || !fpb) throw new Error('Это не код PifPaf');
+    const fp = Array.from(atob(fpb), c => c.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()).join(':');
+    const L = ['v=0', 'o=- 4611731400430051336 2 IN IP4 127.0.0.1', 's=-', 't=0 0', 'a=group:BUNDLE 0', 'a=msid-semantic: WMS',
+      'm=application 9 UDP/DTLS/SCTP webrtc-datachannel', 'c=IN IP4 0.0.0.0', 'a=ice-ufrag:' + uf, 'a=ice-pwd:' + pw, 'a=ice-options:trickle',
+      'a=fingerprint:sha-256 ' + fp, 'a=setup:' + (kind === 'o' ? 'actpass' : 'active'), 'a=mid:0', 'a=sctp-port:5000', 'a=max-message-size:262144'];
+    (cs ? cs.split(',') : []).forEach((c, i) => { const k = c.lastIndexOf('~'); L.push(`a=candidate:${i + 1} 1 udp ${2122260223 - i} ${c.slice(0, k)} ${c.slice(k + 1)} typ host generation 0`); });
+    L.push('a=end-of-candidates');
+    return { type: kind === 'o' ? 'offer' : 'answer', sdp: L.join('\r\n') + '\r\n' };
+  }
+  const gathered = (pc, ms = 2500) => new Promise(res => {
+    if (pc.iceGatheringState === 'complete') return res();
+    const t = setTimeout(res, ms);
+    pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); res(); } });
+  });
+  NET.qrText = ''; NET.qrStatus = '';
+  function qrErr(text) { NET.qrStatus = text; if (/^qr/.test(NET.lobby)) setLobby(NET.lobby); }
+  async function qrHostStart() {
+    netClose(true);
+    NET.role = 'host'; NT.via = 'qr'; NET.qrText = ''; NET.qrStatus = 'Готовим код…';
+    setLobby('qrhost');
+    try {
+      const R = rtcMake([], 0);
+      await R.pc.setLocalDescription(await R.pc.createOffer());
+      await gathered(R.pc);
+      if (NT.rtc !== R) return;
+      NET.qrText = sdpPack(R.pc.localDescription.sdp, 'o');
+      NET.qrStatus = '';
+      setLobby('qrhost');
+    } catch (e) { qrErr('Не получилось подготовить код: ' + (e.message || e)); }
+  }
+  async function qrHostAnswer(t) {
+    try {
+      const d = sdpUnpack(t);
+      if (d.type !== 'answer') return qrErr('Это твой собственный код. Отсканируй код с телефона друга.');
+      if (!NT.rtc) return qrErr('Начни заново: нажми «Я создаю игру».');
+      await NT.rtc.pc.setRemoteDescription(d);
+      qrErr('Соединяемся…');
+      setTimeout(() => { if (NET.lobby === 'qrhost' && !NET.on) qrErr('Не получилось соединиться. Проверьте, что вы в одной сети: общий Wi-Fi или раздача с телефона одного из вас.'); }, 12000);
+    } catch (e) { qrErr('Код не прочитался: ' + (e.message || e)); }
+  }
+  async function qrGuestOffer(t) {
+    try {
+      const d = sdpUnpack(t);
+      if (d.type !== 'offer') return qrErr('Это ответный код. Отсканируй код, который показывает создатель игры.');
+      netClose(true);
+      NET.role = 'guest'; NT.via = 'qr'; NET.qrText = ''; NET.qrStatus = 'Готовим ответный код…';
+      setLobby('qrguest');
+      const R = rtcMake([], 0);
+      R.onReady = () => rawSend({ t: '_join', v: NET_VER });
+      await R.pc.setRemoteDescription(d);
+      await R.pc.setLocalDescription(await R.pc.createAnswer());
+      await gathered(R.pc);
+      if (NT.rtc !== R) return;
+      NET.qrText = sdpPack(R.pc.localDescription.sdp, 'a');
+      NET.qrStatus = 'Ждём, пока друг отсканирует этот код…';
+      setLobby('qrguest');
+      setTimeout(() => { if (NET.lobby === 'qrguest' && !NET.on && NT.rtc === R) qrErr('Пока не соединились. Проверьте, что вы в одной сети: общий Wi-Fi или раздача с телефона одного из вас.'); }, 25000);
+    } catch (e) { NET.lobby === 'qrguest' ? qrErr('Не получилось: ' + (e.message || e)) : (NET.qrStatus = 'Код не прочитался: ' + (e.message || e), setLobby('qrguest0')); }
+  }
+  // сканер QR: встроенный в Telegram → камера браузера → вставка текста
+  function scanQR(onText) {
+    const ok = t => typeof t === 'string' && t.indexOf('PP1|') === 0;
+    if (tg && tg.showScanQrPopup && (!tg.isVersionAtLeast || tg.isVersionAtLeast('6.4'))) {
+      try { tg.showScanQrPopup({ text: 'Наведи камеру на код PifPaf' }, t => { if (ok(t)) { setTimeout(() => onText(t), 0); return true; } }); return; } catch (e) {}
+    }
+    const ov = document.createElement('div');
+    ov.className = 'qrScan';
+    ov.innerHTML = '<video playsinline muted></video><div class="qrScanBar"><span>Наведи камеру на код друга</span><button class="backBtn qrPaste">Вставить текстом</button><button class="hkPlay qrClose">Закрыть</button></div>';
+    document.body.appendChild(ov);
+    let stream = null, alive = true;
+    const close = () => { alive = false; try { stream && stream.getTracks().forEach(t => t.stop()); } catch (e) {} ov.remove(); };
+    ov.querySelector('.qrClose').onclick = close;
+    ov.querySelector('.qrPaste').onclick = () => {
+      const bar = ov.querySelector('.qrScanBar');
+      bar.innerHTML = '<textarea class="qrText" placeholder="Вставь сюда текст кода (начинается с PP1|)"></textarea><button class="hkPlay qrGo">Готово</button><button class="backBtn qrClose2">Закрыть</button>';
+      bar.querySelector('.qrClose2').onclick = close;
+      bar.querySelector('.qrGo').onclick = () => { const t = bar.querySelector('.qrText').value.trim(); if (ok(t)) { close(); onText(t); } };
+    };
+    if (!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { ov.querySelector('.qrPaste').click(); return; }
+    let det; try { det = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { ov.querySelector('.qrPaste').click(); return; }
+    const video = ov.querySelector('video');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => {
+      if (!alive) { s.getTracks().forEach(t => t.stop()); return; }
+      stream = s; video.srcObject = s; video.play().catch(() => {});
+      const tick = async () => {
+        if (!alive) return;
+        try { const r = await det.detect(video); const v = r && r[0] && r[0].rawValue; if (ok(v)) { close(); onText(v); return; } } catch (e) {}
+        setTimeout(tick, 200);
+      };
+      tick();
+    }).catch(() => { ov.querySelector('.qrPaste').click(); });
   }
   async function rtcStart() {
     if (NT.via !== 'relay' || !NET.on || NET.role !== 'host') return;
@@ -8399,6 +8703,7 @@
   }
   function connected() {
     clearInterval(NT.pingTimer);
+    NET.rttS = []; NET.rttSpike = 0; NET.rttLast = null; NET.jitReset();
     NT.alive = performance.now();
     NT.pingTimer = setInterval(() => {
       if (!NET.on) return;
@@ -8410,7 +8715,7 @@
     }, 1000);
     document.body.classList.add('netOn');
     NT.route = null; NT.routeAt = performance.now(); setTimeout(checkRoute, 600);
-    if (!NET_TEST && NT.via !== 'relay') setupFast();
+    if (!NET_TEST && NT.via === 'p2p') setupFast();
     NET.rtcOnlyPeer = false;
     if (NT.via === 'relay' && NET.rtcWanted && NET.role === 'host') { if (NET.rtcOnly) wsSend({ t: '_rtconly' }); setTimeout(rtcStart, 300); }
     setLobby('connected');
@@ -8529,6 +8834,7 @@
           <div class="netJoin"><input class="netMyCode" maxlength="5" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="${NET.myCode}"><button class="backBtn netDice" aria-label="Случайный номер">🎲</button></div>
           <small class="netMyHint">Последняя цифра — способ связи: <b>${METHOD_NAME[methodKey()]}</b></small></div>
         <button class="hkPlay netHost">Создать комнату ${NET.myCode}</button>
+        <button class="backBtn netQrBtn">📡 Рядом без интернета (QR-код)</button>
         <div class="netOr">или</div>
         <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
         <div class="settingRow netDirectRow"><div class="label">Только напрямую<small>Для игры с VPN. Знакомство через бесплатный зарубежный сервис, игра — напрямую, без пересылки</small></div>
@@ -8547,6 +8853,34 @@
         <p class="netTip">${netInfo()}</p>`;
     } else if (st === 'creating') {
       h = `<p class="netWait">Создаём комнату…</p><p class="netStage">${NET.stage || ''}</p><button class="backBtn netCancel">Отмена</button>`;
+    } else if (st === 'qrmenu') {
+      h = `<div class="netTitle">Рядом без интернета</div>
+        <p class="netQrNeed">Нужна <b>одна сеть на двоих</b>: общий Wi-Fi <b>или</b> один из вас раздаёт интернет с телефона, а второй к нему подключён. Сам интернет при этом не нужен.</p>
+        <p class="netTip">Телефоны обменяются QR-кодами и дальше будут играть напрямую друг с другом — задержка несколько миллисекунд.</p>
+        <button class="hkPlay netQrHost">Я создаю игру</button>
+        <button class="hkPlay netQrJoin">Я подключаюсь</button>
+        <button class="backBtn netQrBack">Назад</button>`;
+    } else if (st === 'qrhost') {
+      h = `<div class="netTitle">Ты создаёшь игру</div>
+        <p class="netQrNeed">Вы должны быть в одной сети: общий Wi-Fi или раздача с телефона одного из вас.</p>
+        ${NET.qrText ? `<p><b>1.</b> Покажи этот код другу — пусть нажмёт «Я подключаюсь» и отсканирует.</p><canvas class="netQrCv"></canvas>
+        <p><b>2.</b> Друг покажет ответный код — отсканируй его.</p><button class="hkPlay netQrScan">📷 Сканировать ответ друга</button>
+        <details class="netQrTxt"><summary>Код текстом</summary><textarea readonly>${NET.qrText}</textarea><button class="backBtn netQrCopy">Скопировать</button></details>` : ''}
+        ${NET.qrStatus ? `<p class="netWait">${NET.qrStatus}</p>` : ''}
+        <button class="backBtn netCancel">Отмена</button>`;
+    } else if (st === 'qrguest0') {
+      h = `<div class="netTitle">Ты подключаешься</div>
+        <p class="netQrNeed">Вы должны быть в одной сети: общий Wi-Fi или раздача с телефона одного из вас.</p>
+        <p>Друг нажал «Я создаю игру» и показывает QR-код — отсканируй его.</p>
+        <button class="hkPlay netQrScan0">📷 Сканировать код друга</button>
+        ${NET.qrStatus ? `<p class="netErr">${NET.qrStatus}</p>` : ''}
+        <button class="backBtn netQrBack">Назад</button>`;
+    } else if (st === 'qrguest') {
+      h = `<div class="netTitle">Ты подключаешься</div>
+        ${NET.qrText ? `<p>Покажи этот код другу — как только он отсканирует, игра соединится.</p><canvas class="netQrCv"></canvas>
+        <details class="netQrTxt"><summary>Код текстом</summary><textarea readonly>${NET.qrText}</textarea><button class="backBtn netQrCopy">Скопировать</button></details>` : ''}
+        ${NET.qrStatus ? `<p class="netWait">${NET.qrStatus}</p>` : ''}
+        <button class="backBtn netCancel">Отмена</button>`;
     } else if (st === 'taken') {
       h = `<div class="netTitle">Номер ${NET.takenCode} занят</div>
         <p>Комната с таким номером уже есть. Выбери другой номер — последняя цифра останется прежней, способ связи не изменится.</p>
@@ -8565,7 +8899,8 @@
       h = NET.role === 'host'
         ? `<div class="netOk">Соперник подключился!</div><p>Выбери игру ниже, настрой её и нажми «Играть» — игра начнётся у обоих.</p>`
         : `<div class="netOk">Подключено!</div><p>Ждём, пока соперник выберет игру и нажмёт «Играть». Твоя сторона всегда снизу.</p>`;
-      if (NT.rtc && NT.rtc.ok) h += `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Напрямую телефон–телефон (знакомство через сервер ${RELAY_NAME})</p>`;
+      if (NT.rtc && NT.rtc.ok && NT.via === 'qr') h += `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Рядом — напрямую по вашей сети, без интернета</p>`;
+      else if (NT.rtc && NT.rtc.ok) h += `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Напрямую телефон–телефон (знакомство через сервер ${RELAY_NAME})</p>`;
       else if (NET.rtcOnly || NET.rtcOnlyPeer) h += `<p class="netWait">Соединяемся напрямую… (сервер ${RELAY_NAME} — только посредник)</p>`;
       else if (NT.via === 'relay') h += `<p class="netTip" style="color:#4fd17a;opacity:1">✓ Связь через сервер ${RELAY_NAME}${NET.rtcWanted && NT.rtc ? ' · пробуем напрямую…' : ''}</p>`;
       h += `<button class="backBtn netLeaveBtn">Отключиться</button>`;
@@ -8615,6 +8950,15 @@
         $('.netHost').disabled = inp.value.length !== 5;
       });
     }
+    // режим «Рядом (QR)»
+    if ($('.netQrCv') && NET.qrText) { try { QR.draw($('.netQrCv'), NET.qrText, 5); } catch (e) {} }
+    if ($('.netQrBtn')) $('.netQrBtn').addEventListener('click', () => setLobby('qrmenu'));
+    if ($('.netQrBack')) $('.netQrBack').addEventListener('click', () => { netClose(true); NET.qrStatus = ''; setLobby('idle'); });
+    if ($('.netQrHost')) $('.netQrHost').addEventListener('click', () => qrHostStart());
+    if ($('.netQrJoin')) $('.netQrJoin').addEventListener('click', () => { NET.qrStatus = ''; setLobby('qrguest0'); scanQR(qrGuestOffer); });
+    if ($('.netQrScan0')) $('.netQrScan0').addEventListener('click', () => scanQR(qrGuestOffer));
+    if ($('.netQrScan')) $('.netQrScan').addEventListener('click', () => scanQR(qrHostAnswer));
+    if ($('.netQrCopy')) $('.netQrCopy').addEventListener('click', () => copy(NET.qrText));
     if ($('.netDice')) $('.netDice').addEventListener('click', () => { NET.myCode = newCode(); setLobby('idle'); });
     if ($('.netTakenGen')) $('.netTakenGen').addEventListener('click', () => { const d = String(NET.takenCode || '')[4] || METHOD_DIGIT[methodKey()]; NET.myCode = rnd4() + d; hostRoom(); });
     if ($('.netTakenEdit')) $('.netTakenEdit').addEventListener('click', () => { NET.myCode = NET.takenCode || NET.myCode; setLobby('idle'); setTimeout(() => { const i = stateBox.querySelector('.netMyCode'); if (i) { i.focus(); i.select(); } }, 50); });
@@ -8766,7 +9110,7 @@
   const tHist = [];
   NET.compPos = (shooter, target) => {
     if (!(NET.on && NET.role === 'host') || shooter !== p2 || target !== p1 || !tHist.length) return null;
-    const t = performance.now() - Math.min(300, NET.rtt / 2 + 100);
+    const t = performance.now() - Math.min(320, NET.rtt / 2 + NET.interpDelay(performance.now()));
     let best = null, bd = Infinity;
     for (const h of tHist) { const d = Math.abs(h.t - t); if (d < bd) { bd = d; best = h; } }
     return best;
@@ -8823,8 +9167,8 @@
   const lerpA = (a, b, k) => { const d = ((b - a) % 360 + 540) % 360 - 180; return a + d * k; };
   function renderGuest(now) {
     if (tSnap.length < 1) return;
-    // показываем мир с отставанием ~100 мс — так соперник двигается плавно
-    const rt = now - 100;
+    // показываем мир с отставанием (запас подстраивается под ровность связи) — так соперник двигается плавно
+    const rt = now - NET.interpDelay(now);
     let A = tSnap[0], B = tSnap[tSnap.length - 1];
     for (let k = 0; k < tSnap.length - 1; k++) if (tSnap[k].at <= rt && tSnap[k + 1].at >= rt) { A = tSnap[k]; B = tSnap[k + 1]; break; }
     const span = B.at - A.at;
@@ -8960,7 +9304,7 @@
       applyLayout(m);
     } else if (m.t === 's') {
       const now = performance.now();
-      tSnap.push({ at: now, d: m });
+      tSnap.push({ at: now, d: m }); NET.jitNote(now);
       // сломанные ящики/бочки и ворота — как у хоста
       if (m.tb && TB.list.length) {
         const str = m.tb, open = str[str.length - 1] === 'o';
@@ -9149,9 +9493,9 @@
     const x = d.on ? +d.x.toFixed(3) : 0, y = d.on ? +d.y.toFixed(3) : 0, mag = d.on ? +(d.mag || 0).toFixed(2) : 0;
     const str = x + ',' + y + ',' + mag;
     if (now - qLastIn > 250 || (str !== qLastInStr && now - qLastIn > 30)) { qLastIn = now; qLastInStr = str; NET.send({ t: 'qi', x, y, on: d.on ? 1 : 0, mag }); }
-    // мир — с отставанием ~70 мс, чтобы бойцы двигались плавно
+    // мир — с отставанием (запас подстраивается под ровность связи), чтобы бойцы двигались плавно
     if (!qSnaps.length) return;
-    const rt = now - 70;
+    const rt = now - NET.interpDelay(now);
     let A = qSnaps[0], B = qSnaps[qSnaps.length - 1];
     for (let k = 0; k < qSnaps.length - 1; k++) if (qSnaps[k].at <= rt && qSnaps[k + 1].at >= rt) { A = qSnaps[k]; B = qSnaps[k + 1]; break; }
     const span = B.at - A.at, f = span > 0 ? Math.max(0, Math.min(1, (rt - A.at) / span)) : 1;
@@ -9251,8 +9595,8 @@
       if (m.d) {
         const prev = qSnaps.length ? qSnaps[qSnaps.length - 1].D : null;
         const D = G.cfg.netUnpack ? G.cfg.netUnpack(prev, m.d) : m.d;
-        qSnaps.push({ at: now, D });
-        while (qSnaps.length > 8) qSnaps.shift();
+        qSnaps.push({ at: now, D }); NET.jitNote(now);
+        while (qSnaps.length > 12) qSnaps.shift();
       }
     }
   }
@@ -10220,6 +10564,333 @@
   function sumoRX(G) { return (G.W / 2 - 14) * (G.d.scale || 1); }
   function sumoRY(G) { return (G.H / 2 - 60) * (G.d.scale || 1); }
   function sumoEll(G, x, y) { const a = (x - G.W / 2) / sumoRX(G), b = (y - G.H / 2) / sumoRY(G); return Math.sqrt(a * a + b * b); }
+
+  // ======================= «ЭЛИТ»: ИГРУ СЧИТАЕТ СЕРВЕР =======================
+  // Отдельная вкладка, со старой «По сети» не связана. Оба игрока подключаются к серверу Москва,
+  // присылают только джойстик и кнопку, а сервер сам решает, что произошло (сумо), и рассылает
+  // картинку обоим. Одновременно на сервере — не больше 2 матчей.
+  (function () {
+    const tab = document.getElementById('eliteTab');
+    if (!tab) return;
+    const HOST = 'pifpaf-m3ivan.msk1.amvera.tech';
+    const qsE = new URLSearchParams(location.search).get('elite'); // для проверки: ws://127.0.0.1:8787/elite
+    const WS_URL = qsE || 'wss://' + HOST + '/elite';
+    const STATUS_URL = qsE ? qsE.replace(/^ws/, 'http').replace(/\/elite.*$/, '/elite/status') : 'https://' + HOST + '/elite/status';
+    const W = 360, H = 640, R = 21;
+    const panel = document.getElementById('elitePanel');
+    const E = { ws: null, st: 'idle', code: '', you: 0, status: null, err: '', snaps: [], rtts: [], rtt: 0, inp: { x: 0, y: 0, on: false }, sentAt: 0, sentStr: '' };
+
+    // ---------- панель во вкладке ----------
+    function render() {
+      let h = `<div class="netTitle">Элит · игру считает сервер</div>
+        <p class="netTip">Сервер в Москве сам решает, кто кого толкнул и кто упал — оба игрока в равных условиях, задержка — только твой путь до сервера. Одновременно идут максимум <b>2 матча</b>.</p>`;
+      const s = E.status;
+      const seats = s ? `<p class="eliteSeats ${s.busy >= s.max ? 'full' : ''}">Матчей сейчас: <b>${s.busy} из ${s.max}</b>${s.busy >= s.max ? ' — мест нет' : ''}</p>` : `<p class="eliteSeats">Проверяем сервер…</p>`;
+      if (E.st === 'idle') {
+        h += seats + `<div class="eliteGame">🥋 Сумо</div>
+          <button class="hkPlay eCreate">Создать матч</button>
+          <div class="netOr">или</div>
+          <div class="netJoin"><input class="netCode eCode" maxlength="4" placeholder="1234" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay eJoin">Войти</button></div>`;
+      } else if (E.st === 'connecting') {
+        h += `<p class="netWait">Подключаемся к серверу…</p><button class="backBtn eCancel">Отмена</button>`;
+      } else if (E.st === 'waiting') {
+        h += `<p>Код матча:</p><div class="netBig">${E.code}</div><p class="netWait">Ждём соперника… Скажи ему код — он вводит его во вкладке «Элит».</p><button class="backBtn eCancel">Отмена</button>`;
+      } else if (E.st === 'full') {
+        h += `<p class="netErr">Сейчас заняты оба места: идут 2 матча. Попробуй через пару минут.</p><button class="hkPlay eRetry">Проверить ещё раз</button>`;
+      }
+      if (E.err) h += `<p class="netErr">${E.err}</p>`;
+      panel.innerHTML = h;
+      const $ = q => panel.querySelector(q);
+      if ($('.eCreate')) $('.eCreate').onclick = () => { try { audioBus(); } catch (e) {} connect({ t: 'create' }); };
+      if ($('.eJoin')) {
+        const inp = $('.eCode');
+        const go = () => { const c = inp.value.trim(); if (/^\d{4}$/.test(c)) { try { audioBus(); } catch (e) {} connect({ t: 'join', code: c }); } else inp.classList.add('bad'); };
+        $('.eJoin').onclick = go;
+        inp.onkeydown = e => { if (e.key === 'Enter') go(); };
+        inp.oninput = () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 4); inp.classList.remove('bad'); };
+      }
+      if ($('.eCancel')) $('.eCancel').onclick = () => { closeWs(); E.st = 'idle'; render(); };
+      if ($('.eRetry')) $('.eRetry').onclick = () => { E.st = 'idle'; E.err = ''; loadStatus(); render(); };
+    }
+    async function loadStatus() {
+      try { const r = await fetch(STATUS_URL + '?t=' + Date.now(), { cache: 'no-store' }); E.status = await r.json(); }
+      catch (e) { E.status = null; E.err = 'Сервер не отвечает. Проверь, что сервер Москва запущен.'; }
+      if (E.st === 'idle' || E.st === 'full') render();
+    }
+    setInterval(() => { if (!tab.hidden && (E.st === 'idle' || E.st === 'full')) loadStatus(); }, 5000);
+    new MutationObserver(() => { if (!tab.hidden) { E.err = ''; loadStatus(); render(); } }).observe(tab, { attributes: true, attributeFilter: ['hidden'] });
+
+    // ---------- связь с сервером ----------
+    function closeWs() { const w = E.ws; E.ws = null; try { w && w.close(); } catch (e) {} clearInterval(E.pingT); }
+    const send = o => { if (E.ws && E.ws.readyState === 1) try { E.ws.send(JSON.stringify(o)); } catch (e) {} };
+    function connect(first) {
+      closeWs(); E.err = ''; E.st = 'connecting'; render();
+      let ws; try { ws = new WebSocket(WS_URL); } catch (e) { E.st = 'idle'; E.err = 'Не получилось подключиться к серверу.'; return render(); }
+      E.ws = ws;
+      const to = setTimeout(() => { if (E.ws === ws && ws.readyState !== 1) { closeWs(); E.st = 'idle'; E.err = 'Сервер не отвечает. Проверь, что сервер Москва запущен.'; render(); } }, 8000);
+      ws.onopen = () => { clearTimeout(to); send(first); E.pingT = setInterval(() => send({ t: 'p', ts: performance.now() }), 1000); };
+      ws.onmessage = e => { if (E.ws !== ws) return; let m; try { m = JSON.parse(e.data); } catch (er) { return; } onMsg(m); };
+      ws.onclose = () => {
+        if (E.ws !== ws) return;
+        E.ws = null; clearInterval(E.pingT);
+        if (game.on) { endGame(); E.err = 'Связь с сервером пропала.'; }
+        if (E.st !== 'idle') { E.st = 'idle'; if (!E.err) E.err = 'Связь с сервером пропала.'; }
+        render();
+      };
+    }
+    function onMsg(m) {
+      if (m.t === 'p') { const r = performance.now() - m.ts; E.rtts.push(r); if (E.rtts.length > 9) E.rtts.shift(); E.rttLast = r; const so = E.rtts.slice().sort((a, b) => a - b); E.rtt = so[so.length >> 1]; return; }
+      if (m.t === 'full') { closeWs(); E.st = 'full'; E.status = { busy: m.busy, max: m.max }; return render(); }
+      if (m.t === 'created') { E.st = 'waiting'; E.code = m.code; E.you = 0; return render(); }
+      if (m.t === 'nf') { closeWs(); E.st = 'idle'; E.err = 'Матча с таким кодом нет.'; return render(); }
+      if (m.t === 'busy') { closeWs(); E.st = 'idle'; E.err = 'В этом матче уже двое.'; return render(); }
+      if (m.t === 'joined') { E.code = m.code; E.you = 1; E.st = 'playing'; render(); return startGame(); }
+      if (m.t === 'peer') { E.st = 'playing'; render(); return startGame(); }
+      if (m.t === 'left') { if (game.on) { game.msg = m.why === 'timeout' ? 'Соперник так и не пришёл' : 'Соперник вышел'; game.leftAt = performance.now(); } else { closeWs(); E.st = 'idle'; E.err = 'Соперник не пришёл — матч закрыт.'; render(); } return; }
+      if (m.t === 's') onSnap(m);
+    }
+
+    // ---------- экран игры ----------
+    const scr = document.createElement('div');
+    scr.className = 'eliteScr'; scr.hidden = true;
+    scr.innerHTML = '<canvas></canvas><button class="eliteExit">✕</button><div class="eliteOver" hidden><div class="eliteOverTxt"></div><button class="hkPlay eAgain">Ещё раз</button><button class="backBtn eQuit">Выйти</button></div>';
+    document.body.appendChild(scr);
+    const cv = scr.querySelector('canvas'), c = cv.getContext('2d');
+    const overEl = scr.querySelector('.eliteOver');
+    const game = { on: false };
+    scr.querySelector('.eliteExit').onclick = () => quit();
+    scr.querySelector('.eQuit').onclick = () => quit();
+    scr.querySelector('.eAgain').onclick = () => { send({ t: 'again' }); scr.querySelector('.eAgain').textContent = 'Ждём соперника…'; };
+    function quit() { send({ t: 'leave' }); endGame(); closeWs(); E.st = 'idle'; loadStatus(); render(); }
+    function endGame() { game.on = false; scr.hidden = true; overEl.hidden = true; document.body.classList.remove('eliteOn'); }
+    let k = 1, ox = 0, oy = 0, dpr = 1;
+    function fit() {
+      dpr = Math.min(2, devicePixelRatio || 1);
+      cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+      cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
+      k = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * k) / 2; oy = (innerHeight - H * k) / 2;
+    }
+    addEventListener('resize', () => { if (game.on) fit(); });
+    function startGame() {
+      Object.assign(game, { on: true, P: null, hist: [], parts: [], rings: [], shake: 0, msg: '', msgAt: 0, cracks: null, rd: 0, drops: [], leftAt: 0, readyAt: 0 });
+      E.snaps = []; E.jit = { last: 0, gap: 33, dev: [], cur: 70 };
+      scr.hidden = false; overEl.hidden = true; scr.querySelector('.eAgain').textContent = 'Ещё раз';
+      document.body.classList.add('eliteOn');
+      fit();
+      requestAnimationFrame(loop);
+    }
+
+    // ---------- снимки с сервера ----------
+    function onSnap(m) {
+      const now = performance.now();
+      if (E.snaps.length && m.n <= E.snaps[E.snaps.length - 1].d.n) return;
+      E.snaps.push({ at: now, d: m });
+      while (E.snaps.length > 12) E.snaps.shift();
+      // насколько неровно приходят снимки — под это подстраиваем запас плавности
+      const J = E.jit;
+      if (J.last) { const dt = now - J.last; J.gap = J.gap * 0.95 + Math.min(dt, 120) * 0.05; J.dev.push(Math.max(0, dt - J.gap)); if (J.dev.length > 90) J.dev.shift(); }
+      J.last = now;
+      for (const e of m.ev || []) onEvent(e, m);
+      if (m.rd !== game.rd) { game.rd = m.rd; game.cracks = null; game.P = null; game.hist = []; }
+      // свой боец: сверяем предсказание с тем, где сервер видел нас пинг назад
+      const s = m.f[E.you], P = game.P;
+      if (!P || s[8] || m.st !== 'play') { game.P = { x: s[0], y: s[1], vx: s[2], vy: s[3], face: s[4] }; game.hist = []; return; }
+      const back = now - E.rtt;
+      let hp = null, bd = 1e9;
+      for (const h of game.hist) { const d = Math.abs(h.t - back); if (d < bd) { bd = d; hp = h; } }
+      const ex = s[0] - (hp ? hp.x : P.x), ey = s[1] - (hp ? hp.y : P.y);
+      if (Math.hypot(ex, ey) > 70) { P.x = s[0]; P.y = s[1]; P.vx = s[2]; P.vy = s[3]; game.hist = []; return; }
+      P.x += ex * 0.3; P.y += ey * 0.3;
+      P.vx += (s[2] - P.vx) * 0.15; P.vy += (s[3] - P.vy) * 0.15;
+      game.hist.forEach(h => { h.x += ex * 0.3; h.y += ey * 0.3; });
+    }
+    function burst(x, y, col, n, sp, life = 0.5, size = 2.4) { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = sp * (0.4 + Math.random() * 0.6); game.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life, max: life, col, size }); } }
+    function onEvent(e) {
+      const t = e[0];
+      if (t === 'go') { sound(880, 0.1, 'triangle', 0.06); }
+      else if (t === 'dash') { if (e[1] !== E.you) sound(180, 0.12, 'sawtooth', 0.04); burst(e[2] - Math.cos(e[4]) * 18, e[3] - Math.sin(e[4]) * 18, '#ffffff', 8, 160, 0.35, 2.2); }
+      else if (t === 'hit') { const p = e[1]; burst(e[2], e[3], e[4] ? '#ffd23f' : '#ffffff', 6 + Math.round(p * 12), 120 + p * 220, 0.4, 2.4); if (p > 0.25) game.rings.push({ x: e[2], y: e[3], r: 22 + p * 30, life: 0.3, max: 0.3, col: '#ffffff' }); sound(110 + p * 120, 0.12, 'triangle', 0.05 + p * 0.07); if (e[4]) sound(660, 0.15, 'sine', 0.06); game.shake = Math.max(game.shake, p * 9); if (p > 0.3) vibrate(Math.round(10 + p * 20)); }
+      else if (t === 'out') { game.rings.push({ x: e[2], y: e[3], r: 60, life: 0.7, max: 0.7, col: '#bfe9ff' }); burst(e[2], e[3], '#bfe9ff', 26, 220, 0.8, 3); sound(220, 0.3, 'sine', 0.07); sound(90, 0.35, 'triangle', 0.06); game.shake = 8; vibrate([30, 30, 60]); }
+      else if (t === 'bonus') { burst(e[3], e[4], e[2] === 'spikes' ? '#7dffb0' : '#ffd23f', 16, 160); sound(880, 0.1, 'triangle', 0.05); if (e[1] === E.you) { game.msg = e[2] === 'spikes' ? 'Шипы!' : 'Пружина!'; game.msgAt = performance.now(); } }
+      else if (t === 'end') { game.msg = e[1] < 0 ? e[2] : (e[1] === E.you ? 'Очко тебе!' : 'Очко сопернику'); game.msgAt = performance.now(); }
+      else if (t === 'over') { const win = e[1] === E.you; overEl.querySelector('.eliteOverTxt').textContent = win ? 'Ты победил!' : 'Соперник победил'; overEl.hidden = false; sound(win ? 990 : 220, 0.3, 'triangle', 0.07); }
+      else if (t === 'round') { overEl.hidden = true; scr.querySelector('.eAgain').textContent = 'Ещё раз'; }
+    }
+
+    // ---------- управление: слева джойстик, справа рывок ----------
+    const joy = { id: null, cx: 0, cy: 0, x: 0, y: 0, on: false, fx: 0, fy: 0 };
+    const toField = (sx, sy) => { let x = (sx - ox) / k, y = (sy - oy) / k; if (E.you === 1) { x = W - x; y = H - y; } return [x, y]; };
+    function sendInput(force) {
+      const s = (joy.on ? joy.x.toFixed(2) + ',' + joy.y.toFixed(2) : '0');
+      const now = performance.now();
+      if (force || (s !== E.sentStr && now - E.sentAt > 30) || now - E.sentAt > 200) { E.sentStr = s; E.sentAt = now; send({ t: 'in', x: joy.on ? +joy.x.toFixed(3) : 0, y: joy.on ? +joy.y.toFixed(3) : 0, on: joy.on ? 1 : 0 }); }
+    }
+    function dash() {
+      const now = performance.now();
+      if (now < game.readyAt) return;
+      send({ t: 'dash', x: joy.on ? +joy.x.toFixed(3) : 0, y: joy.on ? +joy.y.toFixed(3) : 0, on: joy.on ? 1 : 0 });
+      const P = game.P, L = E.snaps[E.snaps.length - 1];
+      if (P && L && L.d.st === 'play' && !L.d.f[E.you][8]) {
+        const a = joy.on ? Math.atan2(joy.y, joy.x) : P.face;
+        P.face = a; P.vx += Math.cos(a) * 520; P.vy += Math.sin(a) * 520; P.dashUntil = now + 240;
+        game.readyAt = now + 1200;
+        sound(180, 0.12, 'sawtooth', 0.05); vibrate(12);
+      }
+    }
+    cv.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const left = E.you === 1 ? e.clientX > innerWidth / 2 : e.clientX < innerWidth / 2;
+      if (left) { const [x, y] = toField(e.clientX, e.clientY); Object.assign(joy, { id: e.pointerId, cx: x, cy: y, x: 0, y: 0, on: false, fx: x, fy: y }); }
+      else dash();
+    });
+    cv.addEventListener('pointermove', e => {
+      if (joy.id !== e.pointerId) return;
+      const [x, y] = toField(e.clientX, e.clientY);
+      let dx = x - joy.cx, dy = y - joy.cy; const d = Math.hypot(dx, dy), JR = 50;
+      if (d > JR) { joy.cx = x - dx / d * JR; joy.cy = y - dy / d * JR; dx = x - joy.cx; dy = y - joy.cy; }
+      const dd = Math.hypot(dx, dy); joy.on = dd > 10; joy.x = joy.on ? dx / dd : 0; joy.y = joy.on ? dy / dd : 0; joy.fx = x; joy.fy = y;
+      sendInput();
+    });
+    const upJ = e => { if (joy.id === e.pointerId) { joy.id = null; joy.on = false; joy.x = joy.y = 0; sendInput(true); } };
+    cv.addEventListener('pointerup', upJ); cv.addEventListener('pointercancel', upJ);
+    const keys = new Set();
+    addEventListener('keydown', e => {
+      if (!game.on) return;
+      if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); dash(); return; }
+      keys.add(e.code); keyJoy();
+    });
+    addEventListener('keyup', e => { if (!game.on) return; keys.delete(e.code); keyJoy(); });
+    function keyJoy() {
+      if (joy.id !== null) return;
+      let x = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
+      let y = (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) - (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0);
+      if (E.you === 1) { x = -x; y = -y; }
+      const d = Math.hypot(x, y); joy.on = d > 0; joy.x = d ? x / d : 0; joy.y = d ? y / d : 0;
+      sendInput(true);
+    }
+
+    // ---------- кадр ----------
+    let lastT = 0;
+    function loop(now) {
+      if (!game.on) return;
+      requestAnimationFrame(loop);
+      const dt = Math.min(0.05, lastT ? (now - lastT) / 1000 : 0.016); lastT = now;
+      sendInput();
+      if (!E.snaps.length) { c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#0d3550'; c.fillRect(0, 0, cv.width, cv.height); return; }
+      // запас плавности: обычно ~50 мс, при скачках связи — больше
+      const J = E.jit, so = J.dev.slice().sort((a, b) => a - b), p95 = so[Math.floor(so.length * 0.95)] || 0;
+      const target = Math.max(45, Math.min(200, J.gap + p95 + 12));
+      J.cur = target > J.cur ? Math.min(target, J.cur + 300 * dt) : Math.max(target, J.cur - 25 * dt);
+      const rt = now - J.cur;
+      let A = E.snaps[0], B = E.snaps[E.snaps.length - 1];
+      for (let i = 0; i < E.snaps.length - 1; i++) if (E.snaps[i].at <= rt && E.snaps[i + 1].at >= rt) { A = E.snaps[i]; B = E.snaps[i + 1]; break; }
+      const sp = B.at - A.at, f = sp > 0 ? Math.max(0, Math.min(1, (rt - A.at) / sp)) : 1;
+      const L = E.snaps[E.snaps.length - 1].d, a = A.d, b = B.d;
+      const lerp = (u, v) => u + (v - u) * f;
+      const scale = lerp(a.k, b.k);
+      // свой боец — сразу от джойстика (тот же расчёт, что на сервере)
+      const P = game.P, me = L.f[E.you];
+      if (P && L.st === 'play' && !me[8]) {
+        const spikes = me[6] > 0;
+        if (joy.on) { P.vx += joy.x * 820 * (spikes ? 1.25 : 1) * dt; P.vy += joy.y * 820 * (spikes ? 1.25 : 1) * dt; if (!(P.dashUntil > now)) P.face = Math.atan2(joy.y, joy.x); }
+        const fr = Math.exp(-(spikes ? 5 : 1.15) * dt); P.vx *= fr; P.vy *= fr;
+        const s2 = Math.hypot(P.vx, P.vy), cap = P.dashUntil > now ? 700 : 300;
+        if (s2 > cap) { P.vx *= cap / s2; P.vy *= cap / s2; }
+        P.x += P.vx * dt; P.y += P.vy * dt;
+        game.hist.push({ t: now, x: P.x, y: P.y }); while (game.hist.length && now - game.hist[0].t > 1000) game.hist.shift();
+      }
+      const fighters = [0, 1].map(i => {
+        const fa = a.f[i], fb = b.f[i];
+        const o = { x: lerp(fa[0], fb[0]), y: lerp(fa[1], fb[1]), face: fb[4], dash: fb[5] > 0, spikes: fb[6] > 0, spring: fb[7] > 0, out: !!fb[8], fall: fb[9], squash: fb[10] };
+        if (i === E.you && P && !me[8] && L.st === 'play') { o.x = P.x; o.y = P.y; o.face = P.face; o.dash = P.dashUntil > now; }
+        return o;
+      });
+      // эффекты
+      game.parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.92; p.vy *= 0.92; p.life -= dt; });
+      game.parts = game.parts.filter(p => p.life > 0);
+      game.rings.forEach(r => r.life -= dt); game.rings = game.rings.filter(r => r.life > 0);
+      game.shake = Math.max(0, game.shake - dt * 40);
+      if (!game.cracks) game.cracks = Array.from({ length: 9 }, () => ({ a: Math.random() * Math.PI * 2, r0: 0.15 + Math.random() * 0.3, len: 0.25 + Math.random() * 0.35, wob: Math.random() * 0.5 - 0.25 }));
+      const RX = (W / 2 - 14) * scale, RY = (H / 2 - 60) * scale;
+      if (L.st === 'play' && scale < 1 && Math.random() < dt * 6) { const ang = Math.random() * Math.PI * 2; game.drops.push({ x: W / 2 + Math.cos(ang) * RX, y: H / 2 + Math.sin(ang) * RY, vx: Math.cos(ang) * 30, vy: Math.sin(ang) * 30, life: 1.2, r: 3 + Math.random() * 4 }); }
+      game.drops.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }); game.drops = game.drops.filter(p => p.life > 0);
+      draw(now, fighters, L, RX, RY, b.b);
+    }
+    const circle = (x, y, r, col) => { c.fillStyle = col; c.beginPath(); c.arc(x, y, Math.max(0, r), 0, Math.PI * 2); c.fill(); };
+    function draw(now, F, L, RX, RY, bonus) {
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.fillStyle = '#0d3550'; c.fillRect(0, 0, cv.width, cv.height);
+      const sx = game.shake ? (Math.random() * 2 - 1) * game.shake : 0, sy = game.shake ? (Math.random() * 2 - 1) * game.shake : 0;
+      c.setTransform(dpr * k, 0, 0, dpr * k, dpr * (ox + sx), dpr * (oy + sy));
+      if (E.you === 1) { c.translate(W, H); c.rotate(Math.PI); } // у второго игрока своя сторона — снизу
+      // вода
+      c.strokeStyle = 'rgba(140, 210, 255, 0.10)'; c.lineWidth = 2;
+      for (let y = -40; y < H + 40; y += 26) { c.beginPath(); for (let x = -30; x <= W + 30; x += 10) { const yy = y + Math.sin(x / 26 + now / 700 + y) * 4; x === -30 ? c.moveTo(x, yy) : c.lineTo(x, yy); } c.stroke(); }
+      // льдина
+      c.fillStyle = 'rgba(255,255,255,0.10)'; c.beginPath(); c.ellipse(W / 2, H / 2 + 6, RX + 6, RY + 6, 0, 0, Math.PI * 2); c.fill();
+      const g = c.createRadialGradient(W / 2 - RX * 0.3, H / 2 - RY * 0.3, 10, W / 2, H / 2, Math.max(RX, RY));
+      g.addColorStop(0, '#f4fbff'); g.addColorStop(0.7, '#d7eefb'); g.addColorStop(1, '#a9d4ee');
+      c.fillStyle = g; c.beginPath(); c.ellipse(W / 2, H / 2, RX, RY, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 2.5; c.beginPath(); c.ellipse(W / 2, H / 2, RX - 1, RY - 1, 0, 0, Math.PI * 2); c.stroke();
+      c.strokeStyle = 'rgba(120, 170, 200, 0.45)'; c.lineWidth = 1.2;
+      for (const q of game.cracks) { c.beginPath(); const p = r => [W / 2 + Math.cos(q.a + r * q.wob) * r * RX, H / 2 + Math.sin(q.a + r * q.wob) * r * RY]; const [x0, y0] = p(q.r0); c.moveTo(x0, y0); for (let s = 1; s <= 4; s++) { const [x, y] = p(q.r0 + q.len * s / 4); c.lineTo(x + Math.sin(s * 7 + q.a) * 3, y + Math.cos(s * 5) * 3); } c.stroke(); }
+      c.strokeStyle = 'rgba(79, 163, 255, 0.18)'; c.lineWidth = 2; c.beginPath(); c.ellipse(W / 2, H / 2, RX * 0.35, RY * 0.35, 0, 0, Math.PI * 2); c.stroke();
+      for (const p of game.drops) { c.globalAlpha = Math.min(1, p.life); circle(p.x, p.y, p.r, '#e8f6ff'); } c.globalAlpha = 1;
+      // бонус
+      if (bonus) {
+        const pulse = 1 + Math.sin(now / 160) * 0.1, col = bonus[2] === 1 ? '#46d98a' : '#ffc83f';
+        circle(bonus[0], bonus[1], 16 * pulse, 'rgba(255,255,255,0.6)'); circle(bonus[0], bonus[1], 12 * pulse, col);
+      }
+      // бойцы
+      F.forEach((f, i) => {
+        const fall = f.out ? Math.min(1, f.fall / 0.6) : 0; if (fall >= 1) return;
+        const s = 1 - fall * 0.8;
+        c.save(); c.translate(f.x, f.y); c.globalAlpha = 1 - fall;
+        c.fillStyle = 'rgba(30, 70, 100, 0.25)'; c.beginPath(); c.ellipse(3, 6, R * s, R * 0.8 * s, 0, 0, Math.PI * 2); c.fill();
+        if (f.dash) { c.fillStyle = PG_GLOW[i] + '0.25)'; c.beginPath(); c.ellipse(-Math.cos(f.face) * 14, -Math.sin(f.face) * 14, R * 1.2, R * 0.9, f.face, 0, Math.PI * 2); c.fill(); }
+        c.rotate(f.face);
+        const sq = f.squash * 0.18; c.scale(s * (1 + sq), s * (1 - sq));
+        if (f.spikes) { c.fillStyle = '#46d98a'; for (let q = 0; q < 10; q++) { const an = q * Math.PI / 5; c.beginPath(); c.moveTo(Math.cos(an) * (R - 2), Math.sin(an) * (R - 2)); c.lineTo(Math.cos(an + 0.15) * (R + 5), Math.sin(an + 0.15) * (R + 5)); c.lineTo(Math.cos(an + 0.3) * (R - 2), Math.sin(an + 0.3) * (R - 2)); c.fill(); } }
+        const body = c.createRadialGradient(-6, -6, 3, 0, 0, R); body.addColorStop(0, i ? '#ff8a80' : '#8cc6ff'); body.addColorStop(1, PG_COL[i]);
+        circle(0, 0, R, body);
+        c.strokeStyle = PG_DARK[i]; c.lineWidth = 2.5; c.beginPath(); c.arc(0, 0, R - 1, 0, Math.PI * 2); c.stroke();
+        if (f.spring) { c.strokeStyle = '#ffd23f'; c.lineWidth = 3; c.setLineDash([4, 3]); c.beginPath(); c.arc(0, 0, R + 4, 0, Math.PI * 2); c.stroke(); c.setLineDash([]); }
+        circle(4, -13, 3, 'rgba(255,255,255,0.35)'); circle(4, 13, 3, 'rgba(255,255,255,0.35)');
+        circle(10, -7, 5.5, '#ffffff'); circle(10, 7, 5.5, '#ffffff'); circle(12, -7, 2.6, '#14161f'); circle(12, 7, 2.6, '#14161f');
+        c.restore();
+      });
+      c.globalAlpha = 1;
+      for (const p of game.parts) { c.globalAlpha = Math.max(0, p.life / p.max); circle(p.x, p.y, p.size, p.col); }
+      for (const r of game.rings) { c.globalAlpha = Math.max(0, r.life / r.max); c.strokeStyle = r.col; c.lineWidth = 3; c.beginPath(); c.arc(r.x, r.y, r.r * (1.4 - r.life / r.max * 0.4), 0, Math.PI * 2); c.stroke(); }
+      c.globalAlpha = 1;
+      // подписи — уже без поворота
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      const my = L.sc[E.you], his = L.sc[1 - E.you];
+      c.font = '800 22px system-ui, sans-serif'; c.fillStyle = '#ffffff';
+      c.fillText(`${my} : ${his}`, innerWidth / 2, 34);
+      c.font = '700 12px system-ui, sans-serif'; c.fillStyle = 'rgba(255,255,255,0.75)';
+      c.fillText(`Элит · сервер Москва · ${Math.round(E.rttLast || E.rtt)} мс`, innerWidth / 2, 56);
+      let big = '';
+      if (L.st === 'count') big = String(Math.max(1, Math.ceil((1500 - L.sl) / 500)));
+      else if (game.msg && now - game.msgAt < 1500) big = game.msg;
+      if (game.leftAt) big = game.msg;
+      if (big) { c.font = '900 34px system-ui, sans-serif'; c.lineWidth = 6; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.strokeText(big, innerWidth / 2, innerHeight / 2); c.fillStyle = '#ffffff'; c.fillText(big, innerWidth / 2, innerHeight / 2); }
+      // джойстик и кнопка
+      if (joy.id !== null) {
+        const sp = (x, y) => { let X = x, Y = y; if (E.you === 1) { X = W - x; Y = H - y; } return [ox + X * k, oy + Y * k]; };
+        const [jx, jy] = sp(joy.cx, joy.cy);
+        c.globalAlpha = 0.5; circle(jx, jy, 50, 'rgba(255,255,255,0.25)');
+        circle(jx + (E.you === 1 ? -joy.x : joy.x) * 40, jy + (E.you === 1 ? -joy.y : joy.y) * 40, 22, PG_COL[E.you]); c.globalAlpha = 1;
+      }
+      const ready = Math.max(0, Math.min(1, 1 - (game.readyAt - performance.now()) / 1200));
+      const bx = innerWidth - 70, by = innerHeight - 90;
+      c.globalAlpha = 0.85; circle(bx, by, 38, 'rgba(20,24,32,0.55)');
+      c.strokeStyle = PG_COL[E.you]; c.lineWidth = 5; c.beginPath(); c.arc(bx, by, 38, -Math.PI / 2, -Math.PI / 2 + ready * Math.PI * 2); c.stroke();
+      c.font = '800 12px system-ui, sans-serif'; c.fillStyle = '#ffffff'; c.fillText('РЫВОК', bx, by); c.globalAlpha = 1;
+    }
+    render();
+  })();
 
   // ======================= ПИНБОЛ-ДУЭЛЬ =======================
   // У каждого у своего края две лапки (левая и правая сторона своей половины).
