@@ -7803,7 +7803,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.30';
+  const NET_BUILD = '2.31';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -8293,12 +8293,16 @@
       const r = Math.round(NET.rttLast == null ? NET.rtt : NET.rttLast);
       // какая связь: напрямую телефон-телефон или через пересылающий сервер (TURN), если напрямую не пробиться
       const via = NT.via === 'elite' ? 'Элит · сервер Москва' : rtcOk && NT.via === 'qr' ? 'Рядом (Wi-Fi)' : rtcOk ? 'Напрямую (знакомство: ' + RELAY_NAME + ')' : NT.via === 'relay' ? 'Сервер ' + RELAY_NAME : NT.route === 'turn' ? 'P2P через TURN' : NT.route === 'direct' ? 'P2P напрямую' : 'P2P';
-      txt = via + ' · ' + r + ' мс' + (NT.via === 'elite' && NET.eliteFps && NET.eliteFps < 50 ? ' · сервер тормозит (' + NET.eliteFps + ' к/с)' : '') + (NET.buffered() > 24000 ? ' · затор' : '') + ((rtcOk && NT.rtc.fast.readyState === 'open') || (NT.fast && NT.fast.readyState === 'open') ? ' ⚡' : '');
+      const sp = NET.spike && performance.now() - NET.spike.at < 5000 ? ' · скачок ' + NET.spike.r + ' мс: ' + NET.spike.cause : '';
+      txt = via + ' · ' + r + ' мс' + sp + (NT.via === 'elite' && NET.eliteFps && NET.eliteFps < 50 ? ' · сервер тормозит (' + NET.eliteFps + ' к/с)' : '') + (NET.buffered() > 24000 ? ' · затор' : '') + ((rtcOk && NT.rtc.fast.readyState === 'open') || (NT.fast && NT.fast.readyState === 'open') ? ' ⚡' : '');
       cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
     }
     badgeEl.textContent = txt; badgeEl.className = cls;
   }
   NET.badge = netBadge;
+  // свой телефон: не подвисает ли (кадр дольше 150 мс — значит, телефон был занят чем-то другим)
+  NET.spikeN = {};
+  { let last = 0; const f = now => { if (NET.on && last && now - last > 150 && !document.hidden) NET.phoneStallAt = now; last = now; requestAnimationFrame(f); }; requestAnimationFrame(f); }
   // свой пинг до сервера: короткий запрос /health (не зависит от второго телефона)
   async function pingHost(host, n = 4) {
     let best = Infinity;
@@ -8428,7 +8432,7 @@
       case '_busy': netError('В этой комнате уже играют.'); return;
       case '_badver': if (NET.role === 'guest') { clearTimeout(NT.joinTimer); netError(OLD_VER_GUEST); } return;
       case '_ping': rawSend({ t: '_pong', ts: m.ts }); return;
-      case '_sp': rawSend({ t: '_sq', ts: m.ts }); NET.eliteFps = m.fps; return; // «Элит»: сервер меряет, не копится ли очередь до нас
+      case '_sp': rawSend({ t: '_sq', ts: m.ts }); NET.eliteFps = m.fps; if (m.sl > 100) NET.srvStallAt = performance.now(); return; // «Элит»: сервер меряет, не копится ли очередь до нас
       case '_rtc': if (m.sdp) rtcOnSdp(m.sdp); return;
       case '_ice': if (NT.rtc) NT.rtc.theirs++; rtcOnIce(m.c); return;
       case '_rtcfail': rtcClose(); netError('Напрямую соединиться не получилось. ' + (m.why || '') + ' Попробуйте другую сеть (например, Wi-Fi) или другой способ связи.'); return;
@@ -8446,6 +8450,13 @@
         const so = NET.rttS.slice().sort((a, b) => a - b);
         NET.rtt = so[so.length >> 1];
         NET.rttSpike = so.length >= 5 ? so[Math.floor(so.length * 0.9)] - NET.rtt : 0;
+        // СКАЧОК ПИНГА: кто виноват — сервер подвис, телефон подвис или интернет (потерянный пакет / очередь)
+        if (so.length >= 5 && r > Math.max(150, NET.rtt * 2 + 60)) {
+          const now = performance.now();
+          const cause = now - (NET.srvStallAt || -1e9) < 2500 ? 'сервер' : now - (NET.phoneStallAt || -1e9) < 2500 ? 'телефон' : 'интернет';
+          NET.spike = { at: now, r: Math.round(r), cause };
+          NET.spikeN[cause] = (NET.spikeN[cause] || 0) + 1;
+        }
         return;
       }
       case '_bye': netLost('Соперник вышел из игры'); return;
