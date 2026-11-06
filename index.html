@@ -1483,6 +1483,8 @@
   .eliteMap { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
   .eliteMap label { font-weight: 700; opacity: 0.85; }
   .eliteMap select { flex: 1; min-width: 0; padding: 9px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.25); color: inherit; font: inherit; }
+  .qrSelfieBox { display: flex; justify-content: center; }
+  .qrSelfie { width: 120px; height: 90px; object-fit: cover; border-radius: 12px; transform: scaleX(-1); border: 2px solid rgba(255,255,255,0.25); margin: 4px 0; background: #000; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -1493,10 +1495,11 @@
   <div class="hkCard">
     <h1 class="menuTitle">Настройки</h1>
     <div class="settingRow">
-      <div class="label">Полный экран<small>Убирает шапку Telegram — игра на весь экран. Поле само отодвинется от кнопок Telegram и выреза камеры</small></div>
+      <div class="label">Полный экран</div>
       <button class="switch" id="fsSwitch" role="switch" aria-checked="false" aria-label="Полный экран"><span></span></button>
     </div>
     <p class="fsNote" id="fsNote" hidden></p>
+    <div id="appNetSettings"></div>
     <div class="hkRow"><button class="hkPlay" id="appSettingsClose">Готово</button></div>
   </div>
 </div>
@@ -7803,7 +7806,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.32';
+  const NET_BUILD = '2.33';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -8654,6 +8657,30 @@
       setTimeout(() => { if (NET.lobby === 'qrguest' && !NET.on && NT.rtc === R) qrErr('Пока не соединились. Проверьте, что вы в одной сети: общий Wi-Fi или раздача с телефона одного из вас.'); }, 25000);
     } catch (e) { NET.lobby === 'qrguest' ? qrErr('Не получилось: ' + (e.message || e)) : (NET.qrStatus = 'Код не прочитался: ' + (e.message || e), setLobby('qrguest0')); }
   }
+  // ПРОЩЕ ПО QR: у создателя под его кодом сразу включается фронтальная камера (та, что над экраном).
+  // Телефоны ставят экранами друг к другу: друг сканирует код, показывает свой — и камера создателя
+  // ловит его сама, ничего нажимать не нужно. Нет такой камеры или распознавания — остаётся кнопка.
+  function qrInlineStop() { const S = NT.qrCam; NT.qrCam = null; if (S) { S.alive = false; try { S.stream && S.stream.getTracks().forEach(t => t.stop()); } catch (e) {} } }
+  function qrInline(box, onText) {
+    if (NT.qrCam && NT.qrCam.alive) { box.appendChild(NT.qrCam.video); NT.qrCam.video.play && NT.qrCam.video.play().catch(() => {}); return true; }
+    if (!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+    let det; try { det = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { return false; }
+    const video = document.createElement('video');
+    video.setAttribute('playsinline', ''); video.muted = true; video.className = 'qrSelfie';
+    box.appendChild(video);
+    const S = NT.qrCam = { alive: true, stream: null, video };
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(s => {
+      if (!S.alive) { s.getTracks().forEach(t => t.stop()); return; }
+      S.stream = s; video.srcObject = s; video.play().catch(() => {});
+      const tick = async () => {
+        if (!S.alive) return;
+        try { const r = await det.detect(video); const v = r && r[0] && r[0].rawValue; if (typeof v === 'string' && v.indexOf('PP1|') === 0) { qrInlineStop(); onText(v); return; } } catch (e) {}
+        setTimeout(tick, 200);
+      };
+      tick();
+    }).catch(() => { S.alive = false; video.remove(); if (NT.qrCam === S) NT.qrCam = null; });
+    return true;
+  }
   // сканер QR: встроенный в Telegram → камера браузера → вставка текста
   function scanQR(onText) {
     const ok = t => typeof t === 'string' && t.indexOf('PP1|') === 0;
@@ -8662,7 +8689,7 @@
     }
     const ov = document.createElement('div');
     ov.className = 'qrScan';
-    ov.innerHTML = '<video playsinline muted></video><div class="qrScanBar"><span>Наведи камеру на код друга</span><button class="backBtn qrPaste">Вставить текстом</button><button class="hkPlay qrClose">Закрыть</button></div>';
+    ov.innerHTML = '<video playsinline muted></video><div class="qrScanBar"><span>Наведи камеру на код друга</span><button class="backBtn qrFlip">🔄 Другая камера</button><button class="backBtn qrPaste">Вставить текстом</button><button class="hkPlay qrClose">Закрыть</button></div>';
     document.body.appendChild(ov);
     let stream = null, alive = true;
     const close = () => { alive = false; try { stream && stream.getTracks().forEach(t => t.stop()); } catch (e) {} ov.remove(); };
@@ -8676,16 +8703,20 @@
     if (!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { ov.querySelector('.qrPaste').click(); return; }
     let det; try { det = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { ov.querySelector('.qrPaste').click(); return; }
     const video = ov.querySelector('video');
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => {
+    let facing = 'environment', ticking = false;
+    const tick = async () => {
+      if (!alive) return;
+      try { const r = await det.detect(video); const v = r && r[0] && r[0].rawValue; if (ok(v)) { close(); onText(v); return; } } catch (e) {}
+      setTimeout(tick, 200);
+    };
+    const open = () => navigator.mediaDevices.getUserMedia({ video: { facingMode: facing } }).then(s => {
       if (!alive) { s.getTracks().forEach(t => t.stop()); return; }
+      try { stream && stream.getTracks().forEach(t => t.stop()); } catch (e) {}
       stream = s; video.srcObject = s; video.play().catch(() => {});
-      const tick = async () => {
-        if (!alive) return;
-        try { const r = await det.detect(video); const v = r && r[0] && r[0].rawValue; if (ok(v)) { close(); onText(v); return; } } catch (e) {}
-        setTimeout(tick, 200);
-      };
-      tick();
-    }).catch(() => { ov.querySelector('.qrPaste').click(); });
+      if (!ticking) { ticking = true; tick(); }
+    }).catch(() => { if (!stream) ov.querySelector('.qrPaste').click(); });
+    ov.querySelector('.qrFlip').onclick = () => { facing = facing === 'environment' ? 'user' : 'environment'; open(); };
+    open();
   }
   async function rtcStart() {
     if (NT.via !== 'relay' || !NET.on || NET.role !== 'host') return;
@@ -8741,6 +8772,7 @@
     sound(660, 0.1, 'triangle', 0.06); setTimeout(() => sound(990, 0.14, 'triangle', 0.06), 110);
   }
   function netClose(silent) {
+    qrInlineStop();
     if (NET.on && !silent) rawSend({ t: '_bye' });
     clearInterval(NT.pingTimer); clearTimeout(NT.joinTimer);
     try { NT.fast && NT.fast.close(); } catch (e) {} NT.fast = null;
@@ -8854,12 +8886,52 @@
     const done = () => { const b = stateBox.querySelector('.netCopy'); if (b) { b.textContent = 'Скопировано!'; setTimeout(() => { b.textContent = 'Скопировать ссылку'; }, 1500); } };
     try { navigator.clipboard.writeText(text).then(done, () => {}); } catch (e) {}
   }
+  // переключатели серверов: «Напрямую по России» — во вкладке, остальные — в настройках (⚙)
+  const SRV_TAB = ['ru'], SRV_SETTINGS = ['ruw', 'msk', 'mia', 'waw'];
+  function srvRows(keys) {
+    return keys.filter(k => SERVERS[k]).map(k => {
+      const [n, , lab] = SERVERS[k];
+      const on = NET.srvSel === k, v = NET.srvPing[k], title = lab || 'Сервер ' + n;
+      const off = k === 'ru' ? 'Без VPN. Телефоны знакомятся через твой сервер в Москве, а играют напрямую друг с другом'
+        : k === 'ruw' ? 'Сервер Варшава — только посредник для знакомства. Игра строго напрямую; не выйдет — игра скажет почему'
+        : k === 'msk' ? 'Без VPN. Вся игра идёт через твой сервер в Москве'
+        : 'С VPN. Вся игра идёт через твой сервер в ' + (k === 'mia' ? 'Майами — для VPN в США' : 'Варшаве — для VPN в Европе');
+      const info = !on ? off : v === undefined ? 'Проверяем задержку…' : v === null ? 'Сервер ' + n + ' не отвечает — проверь, что он запущен в Amvera' : (k === 'ru' || k === 'ruw' ? 'Сервер знакомства отвечает: <b>' : 'Задержка до сервера: <b>') + v + ' мс</b>';
+      return `<div class="settingRow netDirectRow"><div class="label">${title}<small>${info}</small></div>
+          <button class="switch netSrvSw" data-k="${k}" role="switch" aria-checked="${on}" aria-label="${title}"><span></span></button></div>`;
+    }).join('');
+  }
+  function saveSelG() {
+    try { localStorage.setItem('pp-direct', NET.directOnly ? '1' : '0'); localStorage.setItem('pp-srv', NET.srvSel); } catch (err) {}
+    applySrv();
+    if (/^\d{4}/.test(NET.myCode || '')) NET.myCode = NET.myCode.slice(0, 4) + METHOD_DIGIT[methodKey()];
+  }
+  function bindSrv(box) {
+    box.querySelectorAll('.netSrvSw').forEach(b => b.addEventListener('click', async () => {
+      const k = b.dataset.k;
+      NET.srvSel = NET.srvSel === k ? '' : k;
+      if (NET.srvSel) NET.directOnly = false;
+      saveSelG(); if (NET.lobby === 'idle') setLobby('idle'); renderSrvSettings();
+      if (!NET.srvSel) return;
+      delete NET.srvPing[k];
+      const v = await pingHost(SERVERS[k][1], 3);
+      NET.srvPing[k] = v;
+      if (NET.lobby === 'idle') setLobby('idle');
+      renderSrvSettings();
+    }));
+  }
+  function renderSrvSettings() {
+    const box = document.getElementById('appNetSettings');
+    if (!box) return;
+    box.innerHTML = srvRows(SRV_SETTINGS);
+    bindSrv(box);
+  }
+  { const b = document.getElementById('appSettingsBtn'); if (b) b.addEventListener('click', renderSrvSettings); }
   function setLobby(st) {
     NET.lobby = st;
     let h = '';
     if (st === 'idle') {
       h = `<div class="netTitle">Игра по сети</div>
-        <p>Создай комнату и отправь ссылку другу — или введи код, который прислал друг.</p><p class="netTip">Все переключатели выключены — обычный способ: знакомство через бесплатный зарубежный сервис, игра напрямую, а если не выйдет — через его пересылку.</p>
         <div class="netMyRow"><label>Номер твоей комнаты</label>
           <div class="netJoin"><input class="netMyCode" maxlength="5" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="${NET.myCode}"><button class="backBtn netDice" aria-label="Случайный номер">🎲</button></div>
           <small class="netMyHint">Последняя цифра — способ связи: <b>${METHOD_NAME[methodKey()]}</b></small></div>
@@ -8869,16 +8941,7 @@
         <div class="netJoin"><input class="netCode" maxlength="5" placeholder="12345" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button class="hkPlay netJoinBtn">Войти</button></div>
         <div class="settingRow netDirectRow"><div class="label">Только напрямую<small>Для игры с VPN. Знакомство через бесплатный зарубежный сервис, игра — напрямую, без пересылки</small></div>
           <button class="switch netDirectSw" role="switch" aria-checked="${NET.directOnly}" aria-label="Только напрямую"><span></span></button></div>
-        ${Object.entries(SERVERS).map(([k, [n, , lab]]) => {
-          const on = NET.srvSel === k, v = NET.srvPing[k], title = lab || 'Сервер ' + n;
-          const off = k === 'ru' ? 'Без VPN. Телефоны знакомятся через твой сервер в Москве, а играют напрямую друг с другом'
-            : k === 'ruw' ? 'Сервер Варшава — только посредник для знакомства. Игра строго напрямую; не выйдет — игра скажет почему'
-            : k === 'msk' ? 'Без VPN. Вся игра идёт через твой сервер в Москве'
-            : 'С VPN. Вся игра идёт через твой сервер в ' + (k === 'mia' ? 'Майами — для VPN в США' : 'Варшаве — для VPN в Европе');
-          const info = !on ? off : v === undefined ? 'Проверяем задержку…' : v === null ? 'Сервер ' + n + ' не отвечает — проверь, что он запущен в Amvera' : (k === 'ru' || k === 'ruw' ? 'Сервер знакомства отвечает: <b>' : 'Задержка до сервера: <b>') + v + ' мс</b>';
-          return `<div class="settingRow netDirectRow"><div class="label">${title}<small>${info}</small></div>
-          <button class="switch netSrvSw" data-k="${k}" role="switch" aria-checked="${on}" aria-label="${title}"><span></span></button></div>`;
-        }).join('')}
+        ${srvRows(SRV_TAB)}
         <p class="netTip">0 — обычный · 1 — только напрямую · 2 — по России · 3 — через Варшаву · 4 — Москва · 5 — Майами · 6 — Варшава. Включён может быть только один способ. Друг должен выбрать такой же${NET.srvSel ? ' (ссылка для друга уже с этим сервером)' : ''}.</p>
         <p class="netTip">${netInfo()}</p>`;
     } else if (st === 'creating') {
@@ -8893,8 +8956,9 @@
     } else if (st === 'qrhost') {
       h = `<div class="netTitle">Ты создаёшь игру</div>
         <p class="netQrNeed">Вы должны быть в одной сети: общий Wi-Fi или раздача с телефона одного из вас.</p>
-        ${NET.qrText ? `<p><b>1.</b> Покажи этот код другу — пусть нажмёт «Я подключаюсь» и отсканирует.</p><canvas class="netQrCv"></canvas>
-        <p><b>2.</b> Друг покажет ответный код — отсканируй его.</p><button class="hkPlay netQrScan">📷 Сканировать ответ друга</button>
+        ${NET.qrText ? `<p>${'BarcodeDetector' in window && navigator.mediaDevices ? 'Поставьте телефоны <b>экранами друг к другу</b>. Друг нажимает «Я подключаюсь» и сканирует этот код, а его ответный код поймает твоя фронтальная камера.' : 'Друг нажимает «Я подключаюсь» и сканирует этот код. Потом отсканируй его ответный код кнопкой ниже.'}</p><canvas class="netQrCv"></canvas>
+        <div class="qrSelfieBox"></div>
+        <button class="backBtn netQrScan">📷 Сканировать ответ вручную</button>
         <details class="netQrTxt"><summary>Код текстом</summary><textarea readonly>${NET.qrText}</textarea><button class="backBtn netQrCopy">Скопировать</button></details>` : ''}
         ${NET.qrStatus ? `<p class="netWait">${NET.qrStatus}</p>` : ''}
         <button class="backBtn netCancel">Отмена</button>`;
@@ -8937,6 +9001,7 @@
     } else if (st === 'error') {
       h = `<p class="netErr">${NET.lobbyErr || 'Ошибка связи'}</p><button class="hkPlay netRetry">Попробовать ещё</button>`;
     }
+    if (st !== 'qrhost') qrInlineStop();
     stateBox.innerHTML = h;
     const $ = s => stateBox.querySelector(s);
     const saveSel = () => { try { localStorage.setItem('pp-direct', NET.directOnly ? '1' : '0'); localStorage.setItem('pp-srv', NET.srvSel); } catch (err) {} applySrv();
@@ -8946,17 +9011,7 @@
       if (NET.directOnly) NET.srvSel = '';
       saveSel(); setLobby('idle');
     });
-    stateBox.querySelectorAll('.netSrvSw').forEach(b => b.addEventListener('click', async () => {
-      const k = b.dataset.k;
-      NET.srvSel = NET.srvSel === k ? '' : k;
-      if (NET.srvSel) NET.directOnly = false;
-      saveSel(); setLobby('idle');
-      if (!NET.srvSel) return;
-      delete NET.srvPing[k];
-      const v = await pingHost(SERVERS[k][1], 3);
-      NET.srvPing[k] = v;
-      if (NET.lobby === 'idle') setLobby('idle');
-    }));
+    bindSrv(stateBox);
     // при открытии вкладки — свежая задержка до выбранного сервера
     if (st === 'idle' && NET.srvSel && NET.srvPing[NET.srvSel] === undefined && !NET.srvPingBusy) {
       NET.srvPingBusy = true;
@@ -8982,12 +9037,13 @@
     }
     // режим «Рядом (QR)»
     if ($('.netQrCv') && NET.qrText) { try { QR.draw($('.netQrCv'), NET.qrText, 5); } catch (e) {} }
+    if (st === 'qrhost' && NET.qrText && !NET.on && $('.qrSelfieBox')) qrInline($('.qrSelfieBox'), qrHostAnswer);
     if ($('.netQrBtn')) $('.netQrBtn').addEventListener('click', () => setLobby('qrmenu'));
     if ($('.netQrBack')) $('.netQrBack').addEventListener('click', () => { netClose(true); NET.qrStatus = ''; setLobby('idle'); });
     if ($('.netQrHost')) $('.netQrHost').addEventListener('click', () => qrHostStart());
     if ($('.netQrJoin')) $('.netQrJoin').addEventListener('click', () => { NET.qrStatus = ''; setLobby('qrguest0'); scanQR(qrGuestOffer); });
     if ($('.netQrScan0')) $('.netQrScan0').addEventListener('click', () => scanQR(qrGuestOffer));
-    if ($('.netQrScan')) $('.netQrScan').addEventListener('click', () => scanQR(qrHostAnswer));
+    if ($('.netQrScan')) $('.netQrScan').addEventListener('click', () => { qrInlineStop(); scanQR(qrHostAnswer); });
     if ($('.netQrCopy')) $('.netQrCopy').addEventListener('click', () => copy(NET.qrText));
     if ($('.netDice')) $('.netDice').addEventListener('click', () => { NET.myCode = newCode(); setLobby('idle'); });
     if ($('.netTakenGen')) $('.netTakenGen').addEventListener('click', () => { const d = String(NET.takenCode || '')[4] || METHOD_DIGIT[methodKey()]; NET.myCode = rnd4() + d; hostRoom(); });
@@ -9566,7 +9622,8 @@
     // Для игр со столкновениями досчитываем соперника вперёд по его скорости — тогда оба на экране
     // в одном времени, и бойцы не проходят друг сквозь друга
     if (G.cfg.netExtrap && G.state === 'play') G.cfg.netExtrap(G, D, Math.min(0.3, (idl + NET.rtt) / 1000));
-    if (key && G.cfg.netPredict) predictOwn(G, D, key, B, now);
+    // в «Элит» ничего не угадываем: оба игрока — ровно как посчитал сервер
+    if (key && G.cfg.netPredict && NT.via !== 'elite') predictOwn(G, D, key, B, now);
     G.d = D;
   };
   // Свой боец у гостя двигается сразу от джойстика (тот же расчёт движения, что у хоста),
@@ -10372,7 +10429,7 @@
       // по сети: трещины льдины не меняются весь раунд — шлём их изредка, а числа — покороче
       netPack(D, full) {
         const r = v => (Math.abs(v) < 100 ? Math.round(v * 100) / 100 : Math.round(v * 10) / 10);
-        const o = { scale: r(D.scale || 1), t: r(D.t || 0), bonus: D.bonus ? { x: r(D.bonus.x), y: r(D.bonus.y), type: D.bonus.type, born: r(D.bonus.born) } : null };
+        const o = { scale: Math.round((D.scale || 1) * 10000) / 10000, t: r(D.t || 0), bonus: D.bonus ? { x: r(D.bonus.x), y: r(D.bonus.y), type: D.bonus.type, born: r(D.bonus.born) } : null };
         if (full) o.cracks = D.cracks;
         o.f = (D.f || []).map(f => { const q = {}; for (const k in f) q[k] = typeof f[k] === 'number' ? r(f[k]) : f[k]; return q; });
         o.drops = (D.drops || []).map(p => ({ x: r(p.x), y: r(p.y), vx: r(p.vx), vy: r(p.vy), life: r(p.life), r: r(p.r) }));
@@ -10705,7 +10762,7 @@
     new MutationObserver(() => { if (!tab.hidden) { if (E.st === 'idle') E.err = ''; loadStatus(); render(); } }).observe(tab, { attributes: true, attributeFilter: ['hidden'] });
 
     // ---------- плитки игр (те же иконки, что в «По сети») ----------
-    const ELITE_GAMES = [['tanks', 'quickStickTile', 'Танки: джойстик'], ['sumo', 'pgTile-sumo', 'Сумо']];
+    const ELITE_GAMES = [['tanks', 'quickStickTile', 'Танки: джойстик'], ['sumo', 'pgTile-sumo', 'Сумо'], ['lava', 'pgTile-lava', 'Лава']];
     const tiles = document.createElement('div');
     tiles.className = 'tiles'; tiles.id = 'tilesElite';
     tab.appendChild(tiles);
@@ -15018,6 +15075,55 @@
       return 0.0001;
     }
 
+    // СТЕНЫ ИЗ КЛЕТОК. Раньше каждая клетка была отдельным квадратом: на стыке двух клеток ровной стены
+    // мяч задевал угол соседней клетки и отскакивал наискосок — «не туда». Теперь угол считается углом,
+    // только если он настоящий (снаружи нет соседней стены); иначе это ровная грань, и отскок — как от зеркала.
+    // Из всех касаний за шаг сначала разбираем самое глубокое, потом проверяем снова (до 3 раз).
+    function hitTiles(C, b, BR, fx) {
+      const tw = C.tw, th = C.th, E = 0.72;
+      for (let iter = 0; iter < 3; iter++) {
+        const c0 = Math.floor((b.x - BR) / tw), c1 = Math.floor((b.x + BR) / tw);
+        const r0 = Math.floor((b.y - BR) / th), r1 = Math.floor((b.y + BR) / th);
+        let best = null;
+        for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+          if (!C.solid(c, r)) continue;
+          const rx = c * tw, ry = r * th;
+          const inX = b.x > rx && b.x < rx + tw, inY = b.y > ry && b.y < ry + th;
+          const px = Math.max(rx, Math.min(rx + tw, b.x)), py = Math.max(ry, Math.min(ry + th, b.y));
+          const dx = b.x - px, dy = b.y - py;
+          let nx, ny, pen;
+          if (inX && inY) {
+            // центр мяча внутри стены — выталкиваем через ближайшую открытую грань
+            const opts = [[b.x - rx, -1, 0], [rx + tw - b.x, 1, 0], [b.y - ry, 0, -1], [ry + th - b.y, 0, 1]]
+              .filter(o => !C.solid(c + o[1], r + o[2])).sort((a, q) => a[0] - q[0]);
+            if (!opts.length) continue;
+            nx = opts[0][1]; ny = opts[0][2]; pen = opts[0][0] + BR;
+          } else if (inX) {
+            ny = dy > 0 ? 1 : -1; nx = 0;
+            if (C.solid(c, r + ny)) continue; // грань закрыта соседней стеной
+            pen = BR - Math.abs(dy);
+          } else if (inY) {
+            nx = dx > 0 ? 1 : -1; ny = 0;
+            if (C.solid(c + nx, r)) continue;
+            pen = BR - Math.abs(dx);
+          } else {
+            // мяч у угла клетки
+            const sx = dx > 0 ? 1 : -1, sy = dy > 0 ? 1 : -1;
+            const side = C.solid(c + sx, r), vert = C.solid(c, r + sy);
+            if (side && vert) continue;                                    // внутренний угол — разберут соседи
+            if (side) { nx = 0; ny = sy; pen = BR - Math.abs(dy); }        // это ровная горизонтальная стена
+            else if (vert) { nx = sx; ny = 0; pen = BR - Math.abs(dx); }   // это ровная вертикальная стена
+            else { const d = Math.hypot(dx, dy); if (d < 0.001) continue; nx = dx / d; ny = dy / d; pen = BR - d; } // настоящий угол
+          }
+          if (pen <= 0) continue;
+          if (!best || pen > best.pen) best = { nx, ny, pen };
+        }
+        if (!best) return;
+        b.x += best.nx * best.pen; b.y += best.ny * best.pen;
+        const vn = b.vx * best.nx + b.vy * best.ny;
+        if (vn < 0) { b.vx -= (1 + E) * vn * best.nx; b.vy -= (1 + E) * vn * best.ny; if (fx) fx.wall(b, -vn); }
+      }
+    }
     // один шаг мяча. t — время раунда (с). fx — эффекты (у бота их нет).
     // Возвращает 'sink' (в лунке), 'water' (утонул) или null
     function stepBall(C, b, h, t, fx) {
@@ -15044,13 +15150,7 @@
       }
       b.x += b.vx * h; b.y += b.vy * h;
       // стены, камни, закрытые ворота
-      const c0 = Math.floor((b.x - BR) / C.tw), c1 = Math.floor((b.x + BR) / C.tw);
-      const r0 = Math.floor((b.y - BR) / C.th), r1 = Math.floor((b.y + BR) / C.th);
-      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
-        if (!C.solid(c, r)) continue;
-        const v = hitRect(b, BR, c * C.tw, r * C.th, C.tw, C.th, (ox, oy) => C.solid(c + ox, r + oy), 0, 0, 0.72);
-        if (v && fx) fx.wall(b, v);
-      }
+      hitTiles(C, b, BR, fx);
       // ездящие блоки — толкают мяч
       for (const m of C.movers) {
         const M = moverAt(m, t);
@@ -15543,7 +15643,15 @@
       localAim: true, // по сети гость целится у себя, хосту уходит только удар
       // по сети: трассу передаём номером (в ней есть функции), мячи сглаживаем
       netLerp: ['balls'],
-      netPack(D) { const o = Object.assign({}, D); delete o.course; delete o.flow; return o; },
+      // по сети снимок короче: координаты с 1 знаком, хвост мяча — только последние точки
+      // (раньше снимок был в разы длиннее, и на медленном интернете очередь росла — игра «отставала» всё сильнее)
+      netPack(D) {
+        const o = Object.assign({}, D); delete o.course; delete o.flow; delete o.bag;
+        const r = v => Math.round(v * 10) / 10;
+        if (D.balls) o.balls = D.balls.map(b => Object.assign({}, b, { x: r(b.x), y: r(b.y), vx: r(b.vx), vy: r(b.vy), lastX: r(b.lastX), lastY: r(b.lastY),
+          trail: (b.trail || []).slice(-10).map(([x, y, t]) => [r(x), r(y), Math.round(t)]) }));
+        return o;
+      },
       netUnpack(old, o) {
         const D = Object.assign({}, o);
         D.course = old && old.course && old.courseIdx === o.courseIdx && old.t0 === o.t0 ? old.course : course(golfG(), GOLF_ALL[o.courseIdx] || GOLF_ALL[0]);
@@ -15596,7 +15704,7 @@
           if (D.turn !== 1) { G.flash('Ход соперника', 'rgba(255,255,255,0.85)', 600, 1); return; }
           if (G.sentShot && G.now - G.sentShot < 2500) return; // удар уже отправлен
           const [jx, jy] = joyBase(G, 1);
-          G.loc = { id, i: 1, t0: G.now, dx: x - jx, dy: y - jy };
+          G.loc = { id, i: 1, t0: performance.now(), local: true, dx: x - jx, dy: y - jy };
           G.sound(520, 0.03, 'square', 0.02);
           return;
         }
@@ -15620,7 +15728,7 @@
           if (!a || a.id !== id) return;
           G.loc = null;
           if (G.state !== 'play' || D.phase !== 'aim' || D.turn !== 1) return;
-          const [ux, uy] = aimDir(G, D, a), p = powerAt(G.now - a.t0);
+          const [ux, uy] = aimDir(G, D, a), p = powerAt(performance.now() - a.t0);
           NET.send({ t: 'qshot', key: 'golf', a: [+ux.toFixed(4), +uy.toFixed(4), +p.toFixed(4)] });
           G.sentShot = G.now;
           G.sound(240 + p * 260, 0.08, 'triangle', 0.05 + p * 0.05); G.vibrate(8 + Math.round(p * 18));
@@ -15735,7 +15843,7 @@
         // стрелка силы
         const a = G.netMode() === 'guest' && G.loc ? G.loc : D.aim;
         if (a && D.phase === 'aim') {
-          const b = D.balls[a.i], [ux, uy] = aimDir(G, D, a), p = powerAt(now - a.t0);
+          const b = D.balls[a.i], [ux, uy] = aimDir(G, D, a), p = powerAt((a.local ? performance.now() : now) - a.t0);
           drawArrow(G, b.x, b.y, ux, uy, C.BR + 4, RAY_MIN + RAY_LEN, RAY_MIN + RAY_LEN * p, p, a.i, now);
         }
         // мячи (тот, чей ход, — сверху)
@@ -15791,7 +15899,7 @@
           const px = bx + bw + 6, ph = bh;
           c.fillStyle = '#252a35'; G.rr(px, by, 10, ph, 5); c.fill();
           if (aimMine) {
-            const p = powerAt(now - a.t0);
+            const p = powerAt((a.local ? performance.now() : now) - a.t0);
             c.fillStyle = PG_COL[i]; G.rr(px + 2, by + 2 + (ph - 4) * (1 - p), 6, (ph - 4) * p, 3); c.fill();
           }
         });
