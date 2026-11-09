@@ -1786,6 +1786,12 @@
   .accLogin .accRow .accEye { flex: none; padding: 8px 10px; font-size: 0.85rem; }
   .accLogin .accRow .hkPlay { flex: 1; }
   .accLogin > .hkPlay { padding: 11px; }
+  .accForm { margin: 0; }
+  .accLinkBtn { background: none !important; border: 0 !important; color: #8fb4ff !important; text-decoration: underline; padding: 4px !important; font-size: 0.88rem; align-self: center !important; }
+  .accHint { display: flex; align-items: center; gap: 8px; background: #2a2618; border: 1px solid #4a4020; border-radius: 12px; padding: 8px 10px; font-size: 0.85rem; color: #f0d98a; line-height: 1.3; }
+  .accHint span { flex: 1; }
+  .accHint .backBtn { flex: none; padding: 8px 10px; }
+  .accPwCode { letter-spacing: 0.3em !important; text-align: center !important; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -8191,7 +8197,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.84';
+  const NET_BUILD = '2.85';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -17902,7 +17908,8 @@
           body: JSON.stringify(body || {})
         });
         const j = await r.json().catch(() => ({}));
-        if (r.status === 401 && A.token) { setToken(null); } // аккаунт не найден (сбросили базу) — начнём заново
+        // вход сброшен (сменили пароль или «выйти везде»): становимся гостем и говорим об этом
+        if (r.status === 401 && A.token) { setToken(null); A.kicked = true; A.friends = []; A.inq = []; A.outq = []; A.recent = []; A.invites = []; A.chat = null; changed(); setTimeout(() => ensure(), 0); }
         if (r.status === 404 && !j.err) throw new Error('Друзья скоро заработают: сервер ещё обновляется');
         if (!r.ok) throw new Error(j.err || 'Сервер не ответил');
         return j;
@@ -17913,6 +17920,7 @@
     function setToken(t) { A.token = t; ls.set('pp-acct', t); if (!t) A.me = null; }
     function apply(j) {
       if (!j) return;
+      if (A.kicked && j.token) { A.kicked = false; A.msg = 'Вход в аккаунт на этом устройстве сброшен. Вернуться: «У меня уже есть аккаунт»'; }
       if (j.token) setToken(j.token);
       if (j.me) A.me = j.me;
       ['friends', 'inq', 'outq', 'recent', 'invites'].forEach(k => { if (Array.isArray(j[k])) A[k] = j[k]; });
@@ -18084,30 +18092,39 @@
       const pwForm = () => {
         const eye = `<button class="backBtn accEye" type="button" aria-label="Показать пароль">${A.pwShow ? 'Скрыть' : 'Показать'}</button>`;
         const t = A.pwShow ? 'text' : 'password';
-        if (A.pwMode === 'login') return `<div class="accLogin"><p class="accSmall">Вход в свой аккаунт</p>
-          <input class="netCode accPwIn accPwLogin" placeholder="Логин" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false">
-          <div class="accRow"><input class="netCode accPwIn accPwPass" type="${t}" placeholder="Пароль" maxlength="64" autocomplete="current-password">${eye}</div>
-          <div class="accRow"><button class="hkPlay accPwGo">Войти</button><button class="backBtn accPwCancel">Отмена</button></div></div>`;
-        if (A.pwMode === 'set') return `<div class="accLogin"><p class="accSmall">Логин — латиница, цифры, _. Пароль — от 8 символов.</p>
-          <input class="netCode accPwIn accPwLogin" placeholder="Логин, например vanya_07" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false">
-          <div class="accRow"><input class="netCode accPwIn accPwPass" type="${t}" placeholder="Пароль" maxlength="64" autocomplete="new-password">${eye}</div>
-          <div class="accRow"><button class="hkPlay accPwGo">Сохранить</button><button class="backBtn accPwCancel">Отмена</button></div></div>`;
-        if (A.pwMode === 'change') return `<div class="accLogin"><p class="accSmall">Смена пароля</p>
-          <div class="accRow"><input class="netCode accPwIn accPwOld" type="${t}" placeholder="Старый пароль" maxlength="64" autocomplete="current-password">${eye}</div>
-          <input class="netCode accPwIn accPwPass" type="${t}" placeholder="Новый пароль" maxlength="64" autocomplete="new-password">
-          <div class="accRow"><button class="hkPlay accPwGo">Сменить</button><button class="backBtn accPwCancel">Отмена</button></div></div>`;
-        if (A.pwMode === 'logout') return `<div class="accLogin"><p class="accSmall">Выйти из аккаунта на этом телефоне? Вернуться можно через ${esc(via)}.</p>
-          <div class="accRow"><button class="hkPlay accOutGo">Выйти</button><button class="backBtn accPwCancel">Отмена</button></div></div>`;
+        const btns = (go) => `<div class="accRow"><button class="hkPlay accPwGo" type="submit">${go}</button><button class="backBtn accPwCancel" type="button">Отмена</button></div>`;
+        const loginIn = (ph, val) => `<input class="netCode accPwIn accPwLogin" name="username" placeholder="${ph}" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false" value="${esc(val || '')}">`;
+        const passIn = (cls, ph, ac, withEye) => `<div class="accRow"><input class="netCode accPwIn ${cls}" name="${cls === 'accPwOld' ? 'current-password' : 'password'}" type="${t}" placeholder="${ph}" maxlength="64" autocomplete="${ac}">${withEye ? eye : ''}</div>`;
+        // формы — настоящие <form>: так iPhone и Android предложат сохранить пароль
+        const form = (inner) => `<form class="accLogin accForm" autocomplete="on" novalidate>${inner}</form>`;
+        if (A.pwMode === 'login') return form(`<p class="accSmall">Вход в свой аккаунт</p>${loginIn('Логин', A.pwLogin)}${passIn('accPwPass', 'Пароль', 'current-password', 1)}${btns('Войти')}
+          <button class="backBtn accLinkBtn accForgot" type="button">Забыли пароль?</button>`);
+        if (A.pwMode === 'set') return form(`<p class="accSmall">Логин и пароль нужны, чтобы войти в этот аккаунт с другого телефона. Логин — латиница, цифры, _. Пароль — от 8 символов.</p>${loginIn('Логин, например vanya_07')}${passIn('accPwPass', 'Пароль', 'new-password', 1)}${btns('Сохранить')}`);
+        if (A.pwMode === 'change') return form(`<p class="accSmall">После смены пароля все другие устройства выйдут из аккаунта — на случай, если его кто-то узнал.</p>
+          <input type="text" name="username" autocomplete="username" value="${esc(me.login || '')}" hidden>
+          ${passIn('accPwOld', 'Старый пароль', 'current-password', 1)}${passIn('accPwPass', 'Новый пароль', 'new-password', 0)}${btns('Сменить')}`);
+        if (A.pwMode === 'forgot') return form(`<p class="accSmall">Бот @${esc(c.tg || 'pifpafgamebot')} пришлёт код в Telegram — если он привязан к аккаунту.</p>${loginIn('Логин', A.pwLogin)}${btns('Прислать код')}`);
+        if (A.pwMode === 'reset') return form(`<p class="accSmall">Код пришёл от бота в Telegram. Не пришёл за минуту? Значит, к аккаунту не привязан Telegram — тогда пароль не восстановить.</p>
+          <input type="text" name="username" autocomplete="username" value="${esc(A.pwLogin || '')}" hidden>
+          <input class="netCode accPwIn accPwCode" placeholder="Код из 6 цифр" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+          ${passIn('accPwPass', 'Новый пароль', 'new-password', 1)}${btns('Сменить и войти')}`);
+        if (A.pwMode === 'logout') return `<div class="accLogin"><p class="accSmall">«Здесь» — выйти только на этом телефоне. «Везде» — на всех устройствах сразу: нужно, если входил на чужом телефоне или думаешь, что аккаунт кто-то знает. Вернуться можно через ${esc(via)}.</p>
+          <div class="accRow"><button class="hkPlay accOutGo">Выйти здесь</button><button class="backBtn accOutAll">Выйти везде</button></div><button class="backBtn accPwCancel">Отмена</button></div>`;
         return '';
       };
       if (A.pwMode) h += pwForm();
-      else if (A.tgWait) h += `<div class="accLogin"><p class="accSmall">Открой Telegram и нажми «Запустить» в боте — вход выполнится сам.</p><a class="hkPlay accTgGo" href="${esc(A.tgWait.link)}" target="_blank" rel="noopener">Открыть Telegram</a><button class="backBtn accTgCancel">Отмена</button></div>`;
+      else if (A.tgWait) h += `<div class="accLogin"><p class="accSmall">Открой Telegram, нажми «Запустить», а потом «Да, это я». Бот спрашивает, чтобы никто не вошёл в твой аккаунт по присланной ссылке.</p><a class="hkPlay accTgGo" href="${esc(A.tgWait.link)}" target="_blank" rel="noopener">Открыть Telegram</a><button class="backBtn accTgCancel">Отмена</button></div>`;
       else if (!linked) {
         const bs = [c.vk && `<button class="backBtn accVk">VK</button>`, c.ya && `<button class="backBtn accYa">Яндекс</button>`, c.tg && `<button class="backBtn accTg">Telegram</button>`].filter(Boolean);
         h += `<div class="accLogin"><p class="accSmall">Сохрани аккаунт, чтобы не потерять друзей при смене телефона</p>
           <button class="hkPlay accPwSet">Логин и пароль</button>${bs.length ? `<div class="accRow">${bs.join('')}</div>` : ''}
           <button class="backBtn accPwHave">У меня уже есть аккаунт</button></div>`;
-      } else h += `<p class="accSmall accVia">Вход: ${esc(via)} ✓</p><div class="accRow">${me.login ? '<button class="backBtn accPwChange">Сменить пароль</button>' : '<button class="backBtn accPwSet">Задать логин и пароль</button>'}<button class="backBtn accOut">Выйти</button></div>`;
+      } else {
+        h += `<p class="accSmall accVia">Вход: ${esc(via)} ✓</p>`;
+        // пароль без Telegram не восстановить — подскажем
+        if (me.login && !me.tg && c.tg) h += `<div class="accHint"><span>Привяжи Telegram — тогда забытый пароль можно будет восстановить</span><button class="backBtn accTg">Telegram</button></div>`;
+        h += `<div class="accRow">${me.login ? '<button class="backBtn accPwChange">Сменить пароль</button>' : '<button class="backBtn accPwSet">Задать логин и пароль</button>'}<button class="backBtn accOut">Выйти</button></div>`;
+      }
       h += `</div>`;
       if (A.msg) h += `<p class="accMsg">${esc(A.msg)}</p>`;
       if (A.err) h += `<p class="netErr">${esc(A.err)}</p>`;
@@ -18143,29 +18160,37 @@
       on('.accPwCancel', () => { A.pwMode = null; A.err = ''; render(true); });
       on('.accEye', () => { A.pwShow = !A.pwShow; box.querySelectorAll('.accPwPass, .accPwOld').forEach(i => { i.type = A.pwShow ? 'text' : 'password'; }); const e = box.querySelector('.accEye'); if (e) e.textContent = A.pwShow ? 'Скрыть' : 'Показать'; });
       if ($('.accPwLogin')) $('.accPwLogin').oninput = e => { const i = e.target, v = i.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20); if (i.value !== v) i.value = v; };
-      box.querySelectorAll('.accPwIn').forEach(i => { i.onkeydown = e => { if (e.key === 'Enter') { const g = box.querySelector('.accPwGo'); if (g) g.click(); } }; });
-      on('.accPwGo', async () => {
-        const v = q => { const e = box.querySelector(q); return e ? e.value : ''; };
+      const fm = box.querySelector('.accForm');
+      on('.accForgot', () => { const l = box.querySelector('.accPwLogin'); A.pwLogin = l ? l.value : ''; pwOpen('forgot'); });
+      if (fm) fm.onsubmit = async e => {
+        e.preventDefault();
+        const v = q => { const el = box.querySelector(q); return el ? el.value : ''; };
         const btn = box.querySelector('.accPwGo'); btn.disabled = true;
+        const showErr = msg => { btn.disabled = false; let er = box.querySelector('.accPwErr'); if (!er) { er = document.createElement('p'); er.className = 'netErr accPwErr'; btn.parentNode.after(er); } er.textContent = msg; };
         const mode = A.pwMode;
         try {
-          if (mode === 'login') {
-            const j = await api('pw/login', { login: v('.accPwLogin'), password: v('.accPwPass') });
-            A.pwMode = null; apply(j); A.msg = 'Ты вошёл в свой аккаунт'; A.err = '';
-          } else if (mode === 'set') {
-            const j = await api('pw/set', { login: v('.accPwLogin'), password: v('.accPwPass') });
-            A.pwMode = null; apply(j); A.msg = 'Аккаунт сохранён'; A.err = '';
-          } else if (mode === 'change') {
-            const j = await api('pw/set', { old: v('.accPwOld'), password: v('.accPwPass') });
-            A.pwMode = null; apply(j); A.msg = 'Пароль изменён'; A.err = '';
+          if (mode === 'login') { apply(await api('pw/login', { login: v('.accPwLogin'), password: v('.accPwPass') })); A.msg = 'Ты вошёл в свой аккаунт'; }
+          else if (mode === 'set') { apply(await api('pw/set', { login: v('.accPwLogin'), password: v('.accPwPass') })); A.msg = 'Аккаунт сохранён: теперь в него можно войти с любого телефона'; }
+          else if (mode === 'change') { apply(await api('pw/set', { old: v('.accPwOld'), password: v('.accPwPass') })); A.msg = 'Пароль изменён. Все другие устройства вышли из аккаунта'; }
+          else if (mode === 'forgot') {
+            const l = v('.accPwLogin'); if (!l) return showErr('Введи логин');
+            await api('pw/forgot', { login: l }); A.pwLogin = l; A.pwMode = 'reset'; A.err = ''; render(true); const ci = box.querySelector('.accPwCode'); if (ci) ci.focus(); return;
           }
-        } catch (e) { A.err = e.message; btn.disabled = false; const er = box.querySelector('.accPwErr'); if (er) er.textContent = e.message; else { const p = document.createElement('p'); p.className = 'netErr accPwErr'; p.textContent = e.message; btn.parentNode.after(p); } return; }
+          else if (mode === 'reset') { apply(await api('pw/reset', { login: A.pwLogin, code: v('.accPwCode'), password: v('.accPwPass') })); A.msg = 'Пароль изменён, ты вошёл. Все другие устройства вышли из аккаунта'; }
+          A.pwMode = null; A.err = '';
+        } catch (e2) { return showErr(e2.message); }
         render(true);
+      };
+      if ($('.accPwCode')) $('.accPwCode').oninput = e => { const i = e.target, d = i.value.replace(/\D/g, '').slice(0, 6); if (i.value !== d) i.value = d; };
+      on('.accOutAll', async () => {
+        try { await api('logout_all', {}); } catch (e) {}
+        setToken(null); A.pwMode = null; A.friends = []; A.inq = []; A.outq = []; A.recent = []; A.invites = []; A.chat = null; A.kicked = false;
+        A.msg = 'Ты вышел на всех устройствах. Вернуться: «У меня уже есть аккаунт»'; render(true); await ensure(); render(true);
       });
       on('.accOutGo', async () => {
         try { await api('logout', {}); } catch (e) {}
         setToken(null); A.pwMode = null; A.friends = []; A.inq = []; A.outq = []; A.recent = []; A.invites = []; A.chat = null;
-        A.msg = 'Ты вышел. Это новый гостевой профиль'; render(true); await ensure(); render(true);
+        A.msg = 'Ты вышел. Вернуться: «У меня уже есть аккаунт»'; render(true); await ensure(); render(true);
       });
       on('.accAddGo', () => { const i = $('.accAdd'); const v = i.value.replace(/\D/g, ''); if (v.length !== 8) { A.err = 'ID друга — 8 цифр, он есть у него во «Друзьях»'; return render(true); } i.value = ''; addByNum(v); });
       if ($('.accAdd')) { const i = $('.accAdd'); i.onkeydown = e => { if (e.key === 'Enter') $('.accAddGo').click(); }; i.oninput = () => { const d = i.value.replace(/\D/g, '').slice(0, 8); const f = d.length > 4 ? d.slice(0, 4) + ' ' + d.slice(4) : d; if (i.value !== f) i.value = f; }; }
