@@ -1780,6 +1780,12 @@
   .accMatch { text-align: left; }
   .accChat > .accChCall { padding: 10px; font-size: 0.95rem; }
   .accNoWrap { white-space: nowrap; }
+  .accPwIn { text-transform: none; letter-spacing: 0; text-align: left; font-size: 1rem; font-weight: 600; padding: 10px; width: 100%; }
+  .accPwIn::placeholder { text-transform: none; letter-spacing: 0; }
+  .accLogin .accRow .accPwIn { flex: 1; }
+  .accLogin .accRow .accEye { flex: none; padding: 8px 10px; font-size: 0.85rem; }
+  .accLogin .accRow .hkPlay { flex: 1; }
+  .accLogin > .hkPlay { padding: 11px; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -8185,7 +8191,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.83';
+  const NET_BUILD = '2.84';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -18059,6 +18065,7 @@
       // ничего не поменялось — не перерисовываем (иначе на телефоне прыгает клавиатура)
       const sig = JSON.stringify([A.me, A.friends.map(f => [f.id, f.name, f.on, f.busy, f.un, f.on ? 0 : ago(f.seen)]), A.inq, A.outq, A.recent, A.msg, A.err, A.edit, A.tgWait, A.qr, A.menu, A.cfg && 1]);
       if (!force && sig === lastSig && box.dataset.view === 'list') return;
+      if (!force && A.pwMode && box.dataset.view === 'list') return; // пока вводишь пароль — не трогаем поля
       lastSig = sig; box.dataset.view = 'list';
       const keep = document.activeElement && box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' ? { cls: document.activeElement.className, v: document.activeElement.value, s: document.activeElement.selectionStart } : null;
       if (!A.me) {
@@ -18067,23 +18074,45 @@
         return;
       }
       const me = A.me, c = A.cfg || {};
-      const linked = me.tg || me.vk || me.ya;
-      const via = [me.tg && 'Telegram', me.vk && 'VK', me.ya && 'Яндекс'].filter(Boolean).join(', ');
+      const linked = me.tg || me.vk || me.ya || me.login;
+      const via = [me.login && 'логин ' + me.login, me.tg && 'Telegram', me.vk && 'VK', me.ya && 'Яндекс'].filter(Boolean).join(', ');
       let h = `<div class="panel accCard">
         <div class="accMe">${av(me)}
           ${A.edit ? `<input class="netCode accName" maxlength="12" value="${esc(me.name)}" autocomplete="off"><button class="hkPlay accSave">OK</button>`
             : `<div class="accWho"><b>${esc(me.name)}</b>${idLine(me)}</div><button class="backBtn accEdit" aria-label="Изменить имя">✎</button><button class="backBtn accCopy" aria-label="Скопировать ID"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>`}
         </div>`;
-      if (A.tgWait) h += `<div class="accLogin"><p class="accSmall">Открой Telegram и нажми «Запустить» в боте — вход выполнится сам.</p><a class="hkPlay accTgGo" href="${esc(A.tgWait.link)}" target="_blank" rel="noopener">Открыть Telegram</a><button class="backBtn accTgCancel">Отмена</button></div>`;
+      const pwForm = () => {
+        const eye = `<button class="backBtn accEye" type="button" aria-label="Показать пароль">${A.pwShow ? 'Скрыть' : 'Показать'}</button>`;
+        const t = A.pwShow ? 'text' : 'password';
+        if (A.pwMode === 'login') return `<div class="accLogin"><p class="accSmall">Вход в свой аккаунт</p>
+          <input class="netCode accPwIn accPwLogin" placeholder="Логин" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false">
+          <div class="accRow"><input class="netCode accPwIn accPwPass" type="${t}" placeholder="Пароль" maxlength="64" autocomplete="current-password">${eye}</div>
+          <div class="accRow"><button class="hkPlay accPwGo">Войти</button><button class="backBtn accPwCancel">Отмена</button></div></div>`;
+        if (A.pwMode === 'set') return `<div class="accLogin"><p class="accSmall">Логин — латиница, цифры, _. Пароль — от 8 символов.</p>
+          <input class="netCode accPwIn accPwLogin" placeholder="Логин, например vanya_07" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false">
+          <div class="accRow"><input class="netCode accPwIn accPwPass" type="${t}" placeholder="Пароль" maxlength="64" autocomplete="new-password">${eye}</div>
+          <div class="accRow"><button class="hkPlay accPwGo">Сохранить</button><button class="backBtn accPwCancel">Отмена</button></div></div>`;
+        if (A.pwMode === 'change') return `<div class="accLogin"><p class="accSmall">Смена пароля</p>
+          <div class="accRow"><input class="netCode accPwIn accPwOld" type="${t}" placeholder="Старый пароль" maxlength="64" autocomplete="current-password">${eye}</div>
+          <input class="netCode accPwIn accPwPass" type="${t}" placeholder="Новый пароль" maxlength="64" autocomplete="new-password">
+          <div class="accRow"><button class="hkPlay accPwGo">Сменить</button><button class="backBtn accPwCancel">Отмена</button></div></div>`;
+        if (A.pwMode === 'logout') return `<div class="accLogin"><p class="accSmall">Выйти из аккаунта на этом телефоне? Вернуться можно через ${esc(via)}.</p>
+          <div class="accRow"><button class="hkPlay accOutGo">Выйти</button><button class="backBtn accPwCancel">Отмена</button></div></div>`;
+        return '';
+      };
+      if (A.pwMode) h += pwForm();
+      else if (A.tgWait) h += `<div class="accLogin"><p class="accSmall">Открой Telegram и нажми «Запустить» в боте — вход выполнится сам.</p><a class="hkPlay accTgGo" href="${esc(A.tgWait.link)}" target="_blank" rel="noopener">Открыть Telegram</a><button class="backBtn accTgCancel">Отмена</button></div>`;
       else if (!linked) {
         const bs = [c.vk && `<button class="backBtn accVk">VK</button>`, c.ya && `<button class="backBtn accYa">Яндекс</button>`, c.tg && `<button class="backBtn accTg">Telegram</button>`].filter(Boolean);
-        h += bs.length ? `<div class="accLogin"><p class="accSmall">Войди, чтобы не потерять друзей при смене телефона</p><div class="accRow">${bs.join('')}</div></div>` : '';
-      } else h += `<p class="accSmall accVia">Вход: ${via} ✓</p>`;
+        h += `<div class="accLogin"><p class="accSmall">Сохрани аккаунт, чтобы не потерять друзей при смене телефона</p>
+          <button class="hkPlay accPwSet">Логин и пароль</button>${bs.length ? `<div class="accRow">${bs.join('')}</div>` : ''}
+          <button class="backBtn accPwHave">У меня уже есть аккаунт</button></div>`;
+      } else h += `<p class="accSmall accVia">Вход: ${esc(via)} ✓</p><div class="accRow">${me.login ? '<button class="backBtn accPwChange">Сменить пароль</button>' : '<button class="backBtn accPwSet">Задать логин и пароль</button>'}<button class="backBtn accOut">Выйти</button></div>`;
       h += `</div>`;
       if (A.msg) h += `<p class="accMsg">${esc(A.msg)}</p>`;
       if (A.err) h += `<p class="netErr">${esc(A.err)}</p>`;
       // добавить
-      h += `<div class="panel accCard"><div class="accRow"><input class="netCode accAdd" placeholder="ID друга: 8 цифр" maxlength="11" inputmode="numeric" autocomplete="off" enterkeyhint="send"><button class="hkPlay accAddGo">Добавить</button></div>
+      h += `<div class="panel accCard"><div class="accRow"><input class="netCode accAdd" placeholder="ID друга" maxlength="11" inputmode="numeric" autocomplete="off" enterkeyhint="send"><button class="hkPlay accAddGo">Добавить</button></div>
         <div class="accRow"><button class="backBtn accShare">Пригласить ссылкой</button><button class="backBtn accQr">${A.qr ? 'Скрыть QR' : 'Мой QR'}</button></div>
         ${A.qr ? '<canvas class="accQrCv"></canvas><p class="accSmall">Друг наводит камеру — и вы друзья</p>' : ''}</div>`;
       if (A.inq.length) h += `<div class="accHead">Хотят дружить</div>` + A.inq.map(u => `<div class="accItem">${av(u)}<div class="accWho"><b>${esc(u.name)}</b>${idLine(u)}</div><button class="hkPlay accYes" data-id="${u.id}">Принять</button><button class="backBtn accNo" data-id="${u.id}" aria-label="Отклонить">✕</button></div>`).join('');
@@ -18106,6 +18135,38 @@
       on('.accYa', () => oauthGo('ya'));
       on('.accTg', () => tgStart());
       on('.accTgCancel', () => { A.tgWait = null; render(); });
+      const pwOpen = m => { A.pwMode = m; A.pwShow = false; A.err = ''; render(true); const i = box.querySelector('.accPwIn'); if (i) i.focus(); };
+      on('.accPwSet', () => pwOpen('set'));
+      on('.accPwHave', () => pwOpen('login'));
+      on('.accPwChange', () => pwOpen('change'));
+      on('.accOut', () => pwOpen('logout'));
+      on('.accPwCancel', () => { A.pwMode = null; A.err = ''; render(true); });
+      on('.accEye', () => { A.pwShow = !A.pwShow; box.querySelectorAll('.accPwPass, .accPwOld').forEach(i => { i.type = A.pwShow ? 'text' : 'password'; }); const e = box.querySelector('.accEye'); if (e) e.textContent = A.pwShow ? 'Скрыть' : 'Показать'; });
+      if ($('.accPwLogin')) $('.accPwLogin').oninput = e => { const i = e.target, v = i.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20); if (i.value !== v) i.value = v; };
+      box.querySelectorAll('.accPwIn').forEach(i => { i.onkeydown = e => { if (e.key === 'Enter') { const g = box.querySelector('.accPwGo'); if (g) g.click(); } }; });
+      on('.accPwGo', async () => {
+        const v = q => { const e = box.querySelector(q); return e ? e.value : ''; };
+        const btn = box.querySelector('.accPwGo'); btn.disabled = true;
+        const mode = A.pwMode;
+        try {
+          if (mode === 'login') {
+            const j = await api('pw/login', { login: v('.accPwLogin'), password: v('.accPwPass') });
+            A.pwMode = null; apply(j); A.msg = 'Ты вошёл в свой аккаунт'; A.err = '';
+          } else if (mode === 'set') {
+            const j = await api('pw/set', { login: v('.accPwLogin'), password: v('.accPwPass') });
+            A.pwMode = null; apply(j); A.msg = 'Аккаунт сохранён'; A.err = '';
+          } else if (mode === 'change') {
+            const j = await api('pw/set', { old: v('.accPwOld'), password: v('.accPwPass') });
+            A.pwMode = null; apply(j); A.msg = 'Пароль изменён'; A.err = '';
+          }
+        } catch (e) { A.err = e.message; btn.disabled = false; const er = box.querySelector('.accPwErr'); if (er) er.textContent = e.message; else { const p = document.createElement('p'); p.className = 'netErr accPwErr'; p.textContent = e.message; btn.parentNode.after(p); } return; }
+        render(true);
+      });
+      on('.accOutGo', async () => {
+        try { await api('logout', {}); } catch (e) {}
+        setToken(null); A.pwMode = null; A.friends = []; A.inq = []; A.outq = []; A.recent = []; A.invites = []; A.chat = null;
+        A.msg = 'Ты вышел. Это новый гостевой профиль'; render(true); await ensure(); render(true);
+      });
       on('.accAddGo', () => { const i = $('.accAdd'); const v = i.value.replace(/\D/g, ''); if (v.length !== 8) { A.err = 'ID друга — 8 цифр, он есть у него во «Друзьях»'; return render(true); } i.value = ''; addByNum(v); });
       if ($('.accAdd')) { const i = $('.accAdd'); i.onkeydown = e => { if (e.key === 'Enter') $('.accAddGo').click(); }; i.oninput = () => { const d = i.value.replace(/\D/g, '').slice(0, 8); const f = d.length > 4 ? d.slice(0, 4) + ' ' + d.slice(4) : d; if (i.value !== f) i.value = f; }; }
       on('.accShare', share);
