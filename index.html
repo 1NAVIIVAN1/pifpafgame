@@ -1685,6 +1685,101 @@
   .lineHome .netPanel .netErr { font-size: 0.8rem; margin: 6px 0 0; }
   .lineHome #tilesTanks .tilesDivider { margin: 4px 0 2px; }
   .lineHome .modeBar button[data-m="lab"] span { hyphens: manual; overflow-wrap: normal; }
+  /* --- Друзья и профиль --- */
+  .modeBar button { position: relative; }
+  .fBadge { position: absolute; top: 3px; right: 6px; min-width: 17px; height: 17px; border-radius: 9px; background: var(--tank2); color: #fff; font-size: 0.68rem; font-weight: 800; line-height: 17px; padding: 0 4px; }
+  .fBadge[hidden] { display: none; }
+  .friendsBox { display: flex; flex-direction: column; gap: 10px; }
+  .friendsBox[hidden] { display: none; }
+  .accCard { gap: 10px; padding: 12px; }
+  .accMe, .accItem, .accRow, .accOpp { display: flex; align-items: center; gap: 8px; }
+  .accRow > * { flex: 1; min-width: 0; }
+  .accRow .hkPlay { flex: none; padding: 10px 14px; font-size: 0.95rem; }
+  .accRow .backBtn { align-self: stretch; padding: 10px 8px; text-align: center; }
+  .accAv { flex: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: hsl(var(--h) 70% 85%); background: hsl(var(--h) 45% 28%); }
+  .accMe .accAv { width: 46px; height: 46px; font-size: 1.2rem; }
+  .accWho { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+  .accWho b { font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .accTag { font-size: 0.82rem; color: #9298a6; font-variant-numeric: tabular-nums; }
+  .accMe .accWho b { font-size: 1.15rem; }
+  .accMe .backBtn { flex: none; padding: 8px 10px; }
+  .accName { flex: 1; min-width: 0; font-size: 1.05rem; padding: 9px 10px; text-align: left; letter-spacing: 0; }
+  .accMe .hkPlay { flex: none; padding: 10px 14px; }
+  .accSmall { font-size: 0.82rem; color: #9298a6; line-height: 1.35; }
+  .accVia { color: #4fd17a; }
+  .accLogin { display: flex; flex-direction: column; gap: 8px; }
+  .accLogin > .hkPlay { text-align: center; text-decoration: none; }
+  .accLogin > .backBtn { align-self: stretch; text-align: center; }
+  .accAdd { font-size: 1rem; padding: 10px; text-align: left; letter-spacing: 0; }
+  .accQrCv { align-self: center; background: #fff; border-radius: 10px; padding: 8px; max-width: 220px; width: 60%; image-rendering: pixelated; }
+  .accHead { font-size: 0.8rem; font-weight: 800; color: #9298a6; text-transform: uppercase; letter-spacing: 0.06em; margin: 6px 2px -2px; }
+  .accItem { background: #20242e; border-radius: 14px; padding: 8px 8px 8px 10px; }
+  .accItem.dim { opacity: 0.75; }
+  .accItem .hkPlay { flex: none; padding: 9px 12px; font-size: 0.9rem; border-radius: 11px; }
+  .accItem .backBtn { flex: none; align-self: stretch; padding: 8px 10px; }
+  .accSt { font-size: 0.8rem; color: #8a90a0; }
+  .accSt.on { color: #4fd17a; }
+  .accSt.busy { color: var(--shell); }
+  .accSt.on::before, .accSt.busy::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 5px; vertical-align: 1px; }
+  .accEmpty { padding: 4px 2px; }
+  .accMsg { font-size: 0.9rem; color: #4fd17a; font-weight: 700; padding: 0 2px; }
+  .accOpp { flex-wrap: wrap; background: #262b36; border-radius: 12px; padding: 8px 10px; font-size: 0.9rem; }
+  .accOpp span { flex: 1; min-width: 150px; }
+  .accOpp .hkPlay { flex: none; padding: 8px 12px; font-size: 0.9rem; }
+  .accOpp .backBtn { flex: none; padding: 8px 10px; }
+  .accToasts { position: fixed; left: 50%; transform: translateX(-50%); top: calc(10px + env(safe-area-inset-top, 0px)); z-index: 400; display: flex; flex-direction: column; gap: 8px; width: min(420px, calc(100vw - 24px)); pointer-events: none; }
+  .accToast { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: #2a2f3b; border: 1px solid #3a4152; border-radius: 14px; padding: 10px 10px 10px 14px; color: var(--fg); font-size: 0.95rem; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,0.35); animation: accIn 0.25s ease-out; }
+  .accToast span { flex: 1; }
+  .accToast .hkPlay { flex: none; padding: 8px 14px; font-size: 0.95rem; }
+  .accToast .backBtn { flex: none; align-self: stretch; }
+  @keyframes accIn { from { transform: translateY(-12px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .accAdd { text-transform: none; }
+  .accAdd::placeholder { text-transform: none; letter-spacing: 0; }
+  .accCard > .accRow:first-child { flex-wrap: wrap; }
+  .accCard > .accRow:first-child .accAdd { flex: 1 1 130px; }
+  .accSt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .accItem .accMore { padding: 8px 7px; }
+  .accMe .accCopy { display: flex; align-items: center; }
+  @media (max-width: 360px) { .accItem .hkPlay { padding: 8px 9px; font-size: 0.85rem; } .accItem { gap: 6px; padding: 7px 6px 7px 8px; } .accAv { width: 32px; height: 32px; font-size: 0.9rem; } .accMe .accAv { width: 40px; height: 40px; } }
+  .accName { text-transform: none; }
+  /* --- Чат --- */
+  button.accWho { background: none; border: 0; color: inherit; text-align: left; padding: 2px 0; font: inherit; cursor: pointer; }
+  .accUn { display: inline-block; font-style: normal; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9px; background: var(--tank2); color: #fff; font-size: 0.7rem; text-align: center; margin-left: 6px; padding: 0 5px; vertical-align: 2px; }
+  .accChat { gap: 8px; }
+  .accChHead { display: flex; align-items: center; gap: 8px; }
+  .accChHead .backBtn { flex: none; padding: 8px 11px; }
+  .accChHead .hkPlay { flex: none; padding: 9px 12px; font-size: 0.9rem; border-radius: 11px; }
+  .accChWho { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+  .accChWho .accAv { width: 34px; height: 34px; font-size: 0.95rem; }
+  .accChMenu { display: flex; gap: 8px; }
+  .accChMenu[hidden] { display: none; }
+  .accChMenu .backBtn { flex: 1; text-align: center; padding: 9px 6px; }
+  .accChMenu .accChBlock { color: #ff8a7a; }
+  .accChMsgs, .amMsgs { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; overscroll-behavior: contain; }
+  .accChMsgs { min-height: 160px; max-height: min(46vh, 420px); padding: 4px 2px; }
+  .amMsgs { max-height: 150px; }
+  .amMsgs[hidden], .amHead[hidden], .amCtl[hidden] { display: none; }
+  .accMsgB { align-self: flex-start; max-width: 82%; background: #2c313d; border-radius: 14px 14px 14px 4px; padding: 7px 11px; font-size: 0.95rem; line-height: 1.3; overflow-wrap: anywhere; }
+  .accMsgB.me { align-self: flex-end; background: var(--tank1); color: #fff; border-radius: 14px 14px 4px 14px; }
+  .accMsgB i { font-style: normal; color: #9aa3b6; font-size: 0.85rem; }
+  .accPhs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .accPhs::-webkit-scrollbar { display: none; }
+  .accPh { flex: none; background: #262b36; border: 1px solid #343a48; color: var(--fg); border-radius: 16px; padding: 6px 11px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .accChText, .amIn { text-transform: none; letter-spacing: 0; text-align: left; font-size: 1rem; font-weight: 600; padding: 10px; }
+  .accChText::placeholder, .amIn::placeholder { text-transform: none; letter-spacing: 0; }
+  .accChIn .hkPlay, .amCtl .hkPlay { flex: none; padding: 10px 14px; }
+  .accMatch { display: flex; flex-direction: column; gap: 8px; background: #262b36; border-radius: 12px; padding: 8px 10px; }
+  .amHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.9rem; }
+  .amHead span { flex: 1; min-width: 140px; }
+  .amHead .hkPlay { flex: none; padding: 8px 12px; font-size: 0.9rem; }
+  .amHead .backBtn { flex: none; padding: 8px 10px; }
+  .amCtl { display: flex; flex-direction: column; gap: 6px; }
+  .accMatch .accMsgB { background: #313747; }
+  .accMatch .accMsgB.me { background: var(--tank1); }
+  .accMatch .accPh { background: #1f232c; }
+  .accMatch { text-align: left; }
+  .accChat > .accChCall { padding: 10px; font-size: 0.95rem; }
+  .accNoWrap { white-space: nowrap; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -8090,7 +8185,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.80';
+  const NET_BUILD = '2.83';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -8755,6 +8850,8 @@
       case '_srvfail': srvCleanup(); srvSet('fail', m.who === 'timeout' ? srvFailText('timeout') : 'Друг не смог подключиться к серверу ' + RELAY_NAME + ' — пусть выключит VPN, а потом нажмите «Попробовать» ещё раз. Пока играем по P2P.'); return;
     }
     if (m.t === '_lobby') { if (NET.role === 'guest') guestToLobby(); return; }
+    if (m.t === '_who') { if (window.PPACC && m.u) PPACC.p2pOpp(m.u); return; }
+    if (m.t === '_chat') { if (window.PPACC) PPACC.matchMsg(m.text, NT.via === 'elite' ? 'elite' : 'p2p'); return; }
     if (m.t[0] === 'g') gravMsg(m);
     else if (m.t[0] === 'q') partyMsg(m);
     else if (m.t[0] === 'n') neonMsg(m);
@@ -9036,6 +9133,9 @@
   }
   function connected() {
     clearInterval(NT.pingTimer);
+    // свой тег — сопернику (после игры сможет добавить в друзья)
+    if (NT.via !== 'elite' && window.PPACC) PPACC.matchOn('p2p');
+    if (NT.via !== 'elite' && window.PPACC) PPACC.ensure().then(() => { const u = PPACC.pub(); if (u && NET.on && NT.via !== 'elite') NET.send({ t: '_who', u }); }).catch(() => {});
     NET.rttS = []; NET.rttSpike = 0; NET.rttLast = null; NET.jitReset();
     NT.alive = performance.now();
     NT.pingTimer = setInterval(() => {
@@ -9067,10 +9167,12 @@
     try { NT.bc && NT.bc.close(); } catch (e) {}
     { const ws = NT.ws; NT.ws = null; try { ws && ws.close(); } catch (e) {} }
     if (NT.via === 'elite') NT.wasElite = true;
+    NT.wasEliteNow = NT.via === 'elite';
     clearTimeout(NT.relayTimer); NT.via = null; NT.reconnSince = 0; NT.peerWait = 0; NT.relayOk = false; NT.relayCode = null;
     NT.conn = NT.peer = NT.bc = null;
     NT.hostCode = null; NT.hostRetries = 0; NT.probed = false; NT.probe = false; srvCleanup(); NET.srvState = ''; NET.srvNote = ''; NT.joinStep = null; NT.iceFail = false; NET.stage = '';
     const wasGuest = NET.role === 'guest';
+    if (NET.on && !NT.wasEliteNow && window.PPACC) PPACC.matchOff('p2p');
     NET.on = false; NET.role = null; NET.code = null;
     document.body.classList.remove('netOn', 'netGuest');
     badgeEl.hidden = true;
@@ -11359,7 +11461,9 @@
       E.ws = ws;
       const to = setTimeout(() => { if (E.ws === ws && ws.readyState !== 1) { closeWs(); E.st = 'idle'; E.err = 'Сервер Москва не отвечает. Попробуй ещё раз через минуту.'; render(); } }, 8000);
       ws.onopen = () => {
-        clearTimeout(to); send(first);
+        clearTimeout(to);
+        if (window.PPACC && PPACC.token()) first.acct = PPACC.token(); // чтобы сервер сказал, кто соперник
+        send(first);
         E.replyT = setTimeout(() => { if (E.ws === ws && E.st === 'connecting') { closeWs(); E.st = 'idle'; E.err = OLD; render(); } }, 6000);
         E.pingT = setInterval(() => send({ t: 'p', ts: performance.now() }), 5000); // пока выбираем игру — связь не засыпает
       };
@@ -11376,20 +11480,44 @@
       if (m.t === 'p') return;
       if (m.t === 'full') { closeWs(); E.st = 'full'; E.status = { busy: m.busy, max: m.max }; return render(); }
       if (m.t === 'badver') { closeWs(); E.st = 'idle'; E.err = m.srv > m.you ? 'На сервере игра новее, чем у тебя. Полностью закрой игру и открой заново — она обновится.' : 'На сервере старая версия игры. Загрузи новый server.js в Amvera (приложение pifpaf, Москва) и нажми «Пересобрать».'; return render(); }
-      if (m.t === 'created') { clearTimeout(E.replyT); E.st = 'waiting'; E.code = m.code; E.you = 0; return render(); }
+      if (m.t === 'created') { clearTimeout(E.replyT); E.st = 'waiting'; E.code = m.code; E.you = 0; if (E.onCreated) { const f = E.onCreated; E.onCreated = null; f(m.code); } return render(); }
+      if (m.t === 'eopp') { if (window.PPACC) PPACC.eliteOpp(m.u, m.fr); return; }
       if (m.t === 'taken') { closeWs(); E.st = 'idle'; E.err = 'Номер ' + m.code + ' сейчас занят. Нажми 🎲 или введи другой.'; return render(); }
       if (m.t === 'nf') { closeWs(); E.st = 'idle'; E.err = 'Матча с таким кодом нет.'; return render(); }
       if (m.t === 'busy') { closeWs(); E.st = 'idle'; E.err = 'В этом матче уже двое.'; return render(); }
-      if (m.t === 'joined') { clearTimeout(E.replyT); E.code = m.code; E.you = 1; E.st = 'ready'; vibrate([20, 40, 20]); return render(); }
-      if (m.t === 'peer') { E.st = 'ready'; vibrate([20, 40, 20]); sound(660, 0.1, 'triangle', 0.06); return render(); }
+      if (m.t === '_chat') { if (window.PPACC) PPACC.matchMsg(m.text, 'elite'); return; }
+      if (m.t === 'joined') { clearTimeout(E.replyT); E.code = m.code; E.you = 1; E.st = 'ready'; vibrate([20, 40, 20]); if (window.PPACC) PPACC.matchOn('elite'); return render(); }
+      if (m.t === 'peer') { E.st = 'ready'; if (window.PPACC) PPACC.matchOn('elite'); vibrate([20, 40, 20]); sound(660, 0.1, 'triangle', 0.06); return render(); }
       if (m.t === 'starting') { E.st = 'starting'; return render(); }
       if (m.t === 'srverr') { closeWs(); E.st = 'idle'; E.err = 'Сервер не смог запустить игру. Попробуй ещё раз.'; return render(); }
-      if (m.t === 'left') { closeWs(); endPick(); E.st = 'idle'; E.err = m.why === 'timeout' ? 'Матч закрыт: долго не начинали.' : 'Соперник отключился — матч закрыт.'; return render(); }
+      if (m.t === 'left') { if (window.PPACC) PPACC.matchOff('elite'); closeWs(); endPick(); E.st = 'idle'; E.err = m.why === 'timeout' ? 'Матч закрыт: долго не начинали.' : 'Соперник отключился — матч закрыт.'; return render(); }
       // игра запущена на сервере: дальше этим соединением управляет обычный сетевой модуль (мы — гость)
       if (m.t === 'egame') { clearInterval(E.pingT); E.ws = null; clearTimeout(E.replyT); E.st = 'playing'; render(); NET.eliteAttach(ws); }
     }
     // матч закончился (вышли, связь пропала) — назад во вкладку «Элит»
-    NET.onEliteEnd = () => { E.st = 'idle'; E.ws = null; endPick(); render(); loadStatus(); };
+    NET.onEliteEnd = () => { if (window.PPACC) PPACC.matchOff('elite'); E.st = 'idle'; E.ws = null; endPick(); render(); loadStatus(); };
+    // для «Друзей»: позвать друга (создаём матч) и принять приглашение (входим по коду)
+    const toElite = () => { if (NET.on && NT_busy()) return false; NET.showEliteTab(); return true; };
+    const NT_busy = () => NET.on; // идёт обычная «Сеть» — не мешаем
+    window.PPElite = {
+      async create(cb) {
+        if (!toElite()) return;
+        if (E.st === 'waiting' && E.code) return cb(E.code);
+        if (E.st !== 'idle' && E.st !== 'full') { hint('Сначала закончи текущий матч'); return; }
+        if (window.PPACC) await PPACC.ensure();
+        E.onCreated = cb;
+        try { audioBus(); } catch (e) {}
+        connect({ t: 'create', code: rnd4e(), v: NET_VER });
+      },
+      chat(text) { const m = { t: '_chat', text }; if (NET.on) NET.send(m); else if (E.ws) send(m); },
+      async join(code) {
+        if (!toElite()) return;
+        if (E.st !== 'idle' && E.st !== 'full') { closeWs(); E.st = 'idle'; }
+        if (window.PPACC) await PPACC.ensure();
+        try { audioBus(); } catch (e) {}
+        connect({ t: 'join', code: String(code), v: NET_VER });
+      }
+    };
     render();
   })();
 
@@ -17711,6 +17839,460 @@
     });
   }
 
+  // ======================= АККАУНТ И ДРУЗЬЯ =======================
+  // Номер игрока (ID из 8 цифр) выдаётся сразу (гостевой аккаунт на сервере в Москве). Вход через Telegram / VK / Яндекс
+  // нужен, чтобы открыть тот же аккаунт на другом телефоне. «Позвать» создаёт матч в «Сеть++» и зовёт друга туда.
+  (function () {
+    const Q = new URLSearchParams(location.search);
+    const API = (() => {
+      if (Q.get('api')) return Q.get('api').replace(/\/$/, '');
+      if (Q.get('elite')) return Q.get('elite').replace(/^ws/, 'http').replace(/\/elite.*$/, '');
+      return 'https://pifpaf-m3ivan.msk1.amvera.tech';
+    })();
+    const tgApp = window.Telegram && window.Telegram.WebApp;
+    const inTg = !!(tgApp && tgApp.initData);
+    const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} } };
+    const fmtNum = n => (n ? String(n).replace(/^(\d{4})(\d{4})$/, '$1 $2') : '');
+    const idLine = u => (u.num ? `<span class="accTag">ID ${fmtNum(u.num)}</span>` : '');
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const A = { token: ls.get('pp-acct'), me: null, friends: [], inq: [], outq: [], recent: [], invites: [], cfg: null, err: '', msg: '', edit: false, tgWait: null, qr: false, menu: null, opp: null, oppSent: false, oppHide: false, seenInv: {}, chat: null, mc: { ctx: null, on: false, msgs: [] } };
+    const PHRASES = ['Привет!', 'Хорошая игра 👍', 'Реванш?', 'Ещё одну?', 'Классно!', 'Мне пора', '😂', '🔥', 'GG'];
+    // ---------- чистка текста: ссылки, телефоны и мат — звёздочками ----------
+    const LOOK = { a: 'а', e: 'е', o: 'о', p: 'р', c: 'с', x: 'х', y: 'у', k: 'к', m: 'м', t: 'т', b: 'в', h: 'н', '3': 'з', '0': 'о', '6': 'б', 'ё': 'е' };
+    const BAD = [
+      /(?<![а-яё])ху[йеяи](?!ст|рг)/g, /пизд/g, /(?<![а-яё])(?:за|вы|по|на|от|у|раз|до|пере|при|об|съ|въ|подъ|долбо|долба)?еб(?:а[лнтш]|ан|ал|ну|ут|ет|ёт|л[аои]|уч|ыр|ись|ищ|ош)/g,
+      /(?<![а-яё])бл[яэ](?=д|т|[^а-яё]|$)/g, /(?<![а-яё])(?:[ао]|на|по|за|от|вы)ху[еяйи]/g, /(?<![а-яё])сук(?:а|и|у|ой)(?![а-яё])/g, /муда[кч]|мудил/g, /пид[оа]р/g, /гандон|гондон/g, /залуп/g, /шлюх/g, /долбо[её]б/g, /(?<![а-яё])еблан/g
+    ];
+    function cleanText(s) {
+      s = String(s || '').normalize('NFC').replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+      if (!s) return '';
+      // ссылки, @ники и телефоны
+      s = s.replace(/(?:https?:\/\/|www\.)\S+|\b[\w.-]+\.(?:ru|com|net|org|рф|me|io|gg|xyz|su|ua|by|kz|info|site|online|link|ly|to|cc)\b\S*|t\.me\/\S*|@[A-Za-z0-9_]{4,}|\+?\d[\d\s\-()]{8,}\d/gi, m => '*'.repeat(Math.min(m.length, 6)));
+      const low = s.toLowerCase(); let norm = '';
+      for (const ch of low) norm += LOOK[ch] || ch;
+      const arr = [...s];
+      if (arr.length !== [...norm].length) return s;
+      const hit = new Array(arr.length).fill(false);
+      const nArr = [...norm], nStr = nArr.join('');
+      for (const re of BAD) { re.lastIndex = 0; let m; while ((m = re.exec(nStr))) { let a = [...nStr.slice(0, m.index)].length, b = a + [...m[0]].length; while (a > 0 && /[а-яёa-z0-9]/.test(nArr[a - 1])) a--; while (b < nArr.length && /[а-яёa-z0-9]/.test(nArr[b])) b++; for (let i = a; i < b; i++) hit[i] = true; if (m[0].length === 0) re.lastIndex++; } }
+      return arr.map((c, i) => (hit[i] && c !== ' ' ? '*' : c)).join('');
+    }
+
+    const listeners = [];
+    let msgT = null, lastMsg = '';
+    const changed = () => {
+      if (A.msg && A.msg !== lastMsg) { clearTimeout(msgT); msgT = setTimeout(() => { A.msg = ''; lastMsg = ''; changed(); }, 4000); }
+      lastMsg = A.msg;
+      listeners.forEach(f => { try { f(); } catch (e) {} });
+    };
+
+    // ---------- связь с сервером ----------
+    async function api(path, body, get) {
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000);
+      try {
+        const r = await fetch(API + '/api/' + path, get ? { signal: ctl.signal, cache: 'no-store' } : {
+          method: 'POST', signal: ctl.signal, cache: 'no-store',
+          headers: Object.assign({ 'content-type': 'application/json' }, A.token ? { authorization: 'Bearer ' + A.token } : {}),
+          body: JSON.stringify(body || {})
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.status === 401 && A.token) { setToken(null); } // аккаунт не найден (сбросили базу) — начнём заново
+        if (r.status === 404 && !j.err) throw new Error('Друзья скоро заработают: сервер ещё обновляется');
+        if (!r.ok) throw new Error(j.err || 'Сервер не ответил');
+        return j;
+      } catch (e) {
+        throw new Error(e && e.name === 'AbortError' ? 'Сервер не отвечает' : (e && e.message && /[а-я]/i.test(e.message) ? e.message : 'Нет связи с сервером'));
+      } finally { clearTimeout(to); }
+    }
+    function setToken(t) { A.token = t; ls.set('pp-acct', t); if (!t) A.me = null; }
+    function apply(j) {
+      if (!j) return;
+      if (j.token) setToken(j.token);
+      if (j.me) A.me = j.me;
+      ['friends', 'inq', 'outq', 'recent', 'invites'].forEach(k => { if (Array.isArray(j[k])) A[k] = j[k]; });
+      (j.news || []).forEach(t => toast(t));
+      if (A.opp && A.friends.some(f => f.id === A.opp.id)) A.opp.fr = true;
+      showInvites();
+      changed();
+    }
+    let ensuring = null;
+    // аккаунт создаётся, только когда он нужен (открыл «Друзья», играешь по сети, пришёл по ссылке)
+    function ensure() {
+      if (ensuring) return ensuring;
+      ensuring = (async () => {
+        if (!A.cfg) A.cfg = await api('config', null, true).catch(() => null);
+        if (inTg && A.cfg && A.cfg.tg && !(A.me && A.me.tg)) {
+          try { apply(await api('tg/webapp', { initData: tgApp.initData })); return; } catch (e) {}
+        }
+        if (A.token) { apply(await api('sync', { busy: busy() })); if (A.token) return; }
+        apply(await api('guest', {}));
+      })().catch(e => { A.err = e.message; changed(); }).finally(() => { ensuring = null; });
+      return ensuring;
+    }
+    const busy = () => { const h = document.getElementById('homeScreen'); return !h || !h.offsetParent; };
+    let syncT = null, lastSync = 0;
+    async function sync() {
+      if (!A.token || document.hidden) return;
+      lastSync = Date.now();
+      try { apply(await api('sync', { busy: busy() })); A.err = ''; } catch (e) { /* тихо: попробуем позже */ }
+    }
+    // пока открыт главный экран — раз в 8 с (чтобы приглашение пришло быстро), в игре — раз в 30 с
+    function loop() {
+      clearTimeout(syncT);
+      const gap = busy() ? 30000 : 8000;
+      if (Date.now() - lastSync >= gap - 50) sync();
+      if (A.chat && box && !box.hidden && !document.hidden && Date.now() - chatT > 3000) chatPull();
+      syncT = setTimeout(loop, 2000);
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && A.token) sync(); });
+
+    // ---------- всплывашки ----------
+    const toastBox = document.createElement('div');
+    toastBox.className = 'accToasts';
+    document.body.appendChild(toastBox);
+    function toast(text, btns, ms) {
+      const t = document.createElement('div');
+      t.className = 'accToast';
+      t.innerHTML = `<span>${esc(text)}</span>`;
+      (btns || []).forEach(([label, fn, main]) => { const b = document.createElement('button'); b.className = main ? 'hkPlay' : 'backBtn'; b.textContent = label; b.onclick = () => { t.remove(); fn(); }; t.appendChild(b); });
+      toastBox.appendChild(t);
+      try { vibrate && vibrate(btns ? [30, 60, 30] : 20); } catch (e) {}
+      setTimeout(() => t.remove(), ms || (btns ? 60000 : 4000));
+      return t;
+    }
+    function showInvites() {
+      A.invites.forEach(v => {
+        if (A.seenInv[v.id]) return;
+        A.seenInv[v.id] = 1;
+        try { sound(660, 0.12, 'triangle', 0.06); } catch (e) {}
+        toast(`${v.from.name} зовёт играть`, [['Играть', () => acceptInvite(v), true], ['Нет', () => api('invite/answer', { id: v.id, yes: false }).catch(() => {})]], 110000);
+      });
+    }
+    function acceptInvite(v) {
+      api('invite/answer', { id: v.id, yes: true }).catch(() => {});
+      if (window.PPElite) window.PPElite.join(v.room);
+    }
+
+    // ---------- вход ----------
+    const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const rnd = n => b64url(crypto.getRandomValues(new Uint8Array(n)));
+    const redirectUri = () => location.origin + location.pathname;
+    async function oauthGo(p) {
+      await ensure();
+      const ver = rnd(48), st = p + '.' + rnd(12);
+      const ch = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ver)));
+      ls.set('pp-oauth', JSON.stringify({ p, ver, st }));
+      const ru = encodeURIComponent(redirectUri());
+      location.href = p === 'vk'
+        ? `https://id.vk.com/authorize?response_type=code&client_id=${A.cfg.vk}&scope=vkid.personal_info&redirect_uri=${ru}&state=${st}&code_challenge=${ch}&code_challenge_method=S256`
+        : `https://oauth.yandex.ru/authorize?response_type=code&client_id=${A.cfg.ya}&redirect_uri=${ru}&state=${st}&code_challenge=${ch}&code_challenge_method=S256&force_confirm=no`;
+    }
+    // вернулись от VK / Яндекса
+    async function oauthBack() {
+      const code = Q.get('code'), st = Q.get('state');
+      if (!code || !st) return false;
+      let o = null; try { o = JSON.parse(ls.get('pp-oauth') || 'null'); } catch (e) {}
+      ls.set('pp-oauth', null);
+      const u = new URL(location.href); ['code', 'state', 'device_id', 'type', 'expires_in', 'ext_id', 'payload', 'cid'].forEach(k => u.searchParams.delete(k));
+      history.replaceState(null, '', u.toString());
+      if (!o || o.st !== st) return false;
+      openFriends();
+      A.msg = 'Входим…'; changed();
+      try {
+        const j = await api('oauth', { provider: o.p, code, verifier: o.ver, device_id: Q.get('device_id') || '', redirect_uri: redirectUri(), state: st });
+        apply(j); A.msg = j.switched ? 'Открыт твой аккаунт' : 'Готово: аккаунт сохранён'; A.err = '';
+      } catch (e) { A.err = e.message; A.msg = ''; }
+      changed();
+      return true;
+    }
+    async function tgStart() {
+      await ensure();
+      try { const j = await api('tg/start', {}); A.tgWait = { code: j.code, link: j.link, at: Date.now() }; A.err = ''; changed(); tgPoll(); }
+      catch (e) { A.err = e.message; changed(); }
+    }
+    async function tgPoll() {
+      const w = A.tgWait; if (!w) return;
+      if (Date.now() - w.at > 600000) { A.tgWait = null; changed(); return; }
+      try {
+        const j = await api('tg/check', { code: w.code });
+        if (j.wait) { setTimeout(tgPoll, 2000); return; }
+        A.tgWait = null; apply(j); A.msg = j.switched ? 'Открыт твой аккаунт' : 'Telegram привязан'; changed();
+      } catch (e) { A.tgWait = null; A.err = e.message; changed(); }
+    }
+
+    // ---------- действия ----------
+    const act = (path, body, okMsg) => ensure().then(() => api(path, body)).then(j => { apply(j); A.err = ''; if (okMsg) A.msg = typeof okMsg === 'function' ? okMsg(j) : okMsg; changed(); return j; }).catch(e => { A.err = e.message; changed(); });
+    const addByNum = num => act('friend/add', { num }, j => (j.ok === 'friends' ? 'Теперь вы друзья' : 'Заявка отправлена'));
+    const addById = id => act('friend/add', { id }, j => (j.ok === 'friends' ? 'Теперь вы друзья' : 'Заявка отправлена'));
+    function invite(f) {
+      if (!window.PPElite) return;
+      A.msg = ''; changed();
+      window.PPElite.create(code => {
+        api('invite', { to: f.id, room: code }).then(j => toast(j.on ? `Позвали ${f.name}. Ждём…` : `${f.name} не в игре — позвали через Telegram, если он привязан`)).catch(e => toast(e.message));
+      });
+    }
+    const myLink = () => 'https://pifpafgame.ru/?friend=' + (A.me ? A.me.id : '');
+    async function share() {
+      const link = myLink(), text = `Добавь меня в друзья в PifPaf: ${A.me.name}, ID ${fmtNum(A.me.num)}`;
+      if (inTg && tgApp.openTelegramLink) { tgApp.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text)); return; }
+      if (navigator.share) { try { await navigator.share({ text, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+      copy(link, 'Ссылка скопирована');
+    }
+    function copy(s, okText) {
+      const done = () => toast(okText || 'Скопировано');
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(done, () => fallback());
+      else fallback();
+      function fallback() { const t = document.createElement('textarea'); t.value = s; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch (e) {} t.remove(); }
+    }
+
+    // ---------- экран «Друзья» ----------
+    const HUES = [210, 160, 20, 330, 270, 45, 190, 0];
+    const hue = id => HUES[[...String(id)].reduce((a, c) => a + c.charCodeAt(0), 0) % HUES.length];
+    const av = u => `<span class="accAv" style="--h:${hue(u.id)}">${esc((u.name || '?')[0].toUpperCase())}</span>`;
+    const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `был ${Math.max(1, m)} мин назад` : m < 1440 ? `был ${Math.round(m / 60)} ч назад` : `был ${Math.round(m / 1440)} дн назад`; };
+    let box = null;
+    function mount(el) { box = el; listeners.push(render); render(); }
+    let lastSig = '';
+    function render(force) {
+      if (!box || box.hidden) return;
+      if (A.chat) return renderChat();
+      // ничего не поменялось — не перерисовываем (иначе на телефоне прыгает клавиатура)
+      const sig = JSON.stringify([A.me, A.friends.map(f => [f.id, f.name, f.on, f.busy, f.un, f.on ? 0 : ago(f.seen)]), A.inq, A.outq, A.recent, A.msg, A.err, A.edit, A.tgWait, A.qr, A.menu, A.cfg && 1]);
+      if (!force && sig === lastSig && box.dataset.view === 'list') return;
+      lastSig = sig; box.dataset.view = 'list';
+      const keep = document.activeElement && box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' ? { cls: document.activeElement.className, v: document.activeElement.value, s: document.activeElement.selectionStart } : null;
+      if (!A.me) {
+        box.innerHTML = `<div class="panel accCard"><p class="netWait">${A.err ? '' : 'Загружаем профиль…'}</p>${A.err ? `<p class="netErr">${esc(A.err)}</p><button class="hkPlay accRetry">Ещё раз</button>` : ''}</div>`;
+        const r = box.querySelector('.accRetry'); if (r) r.onclick = () => { A.err = ''; render(); ensure(); };
+        return;
+      }
+      const me = A.me, c = A.cfg || {};
+      const linked = me.tg || me.vk || me.ya;
+      const via = [me.tg && 'Telegram', me.vk && 'VK', me.ya && 'Яндекс'].filter(Boolean).join(', ');
+      let h = `<div class="panel accCard">
+        <div class="accMe">${av(me)}
+          ${A.edit ? `<input class="netCode accName" maxlength="12" value="${esc(me.name)}" autocomplete="off"><button class="hkPlay accSave">OK</button>`
+            : `<div class="accWho"><b>${esc(me.name)}</b>${idLine(me)}</div><button class="backBtn accEdit" aria-label="Изменить имя">✎</button><button class="backBtn accCopy" aria-label="Скопировать ID"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>`}
+        </div>`;
+      if (A.tgWait) h += `<div class="accLogin"><p class="accSmall">Открой Telegram и нажми «Запустить» в боте — вход выполнится сам.</p><a class="hkPlay accTgGo" href="${esc(A.tgWait.link)}" target="_blank" rel="noopener">Открыть Telegram</a><button class="backBtn accTgCancel">Отмена</button></div>`;
+      else if (!linked) {
+        const bs = [c.vk && `<button class="backBtn accVk">VK</button>`, c.ya && `<button class="backBtn accYa">Яндекс</button>`, c.tg && `<button class="backBtn accTg">Telegram</button>`].filter(Boolean);
+        h += bs.length ? `<div class="accLogin"><p class="accSmall">Войди, чтобы не потерять друзей при смене телефона</p><div class="accRow">${bs.join('')}</div></div>` : '';
+      } else h += `<p class="accSmall accVia">Вход: ${via} ✓</p>`;
+      h += `</div>`;
+      if (A.msg) h += `<p class="accMsg">${esc(A.msg)}</p>`;
+      if (A.err) h += `<p class="netErr">${esc(A.err)}</p>`;
+      // добавить
+      h += `<div class="panel accCard"><div class="accRow"><input class="netCode accAdd" placeholder="ID друга: 8 цифр" maxlength="11" inputmode="numeric" autocomplete="off" enterkeyhint="send"><button class="hkPlay accAddGo">Добавить</button></div>
+        <div class="accRow"><button class="backBtn accShare">Пригласить ссылкой</button><button class="backBtn accQr">${A.qr ? 'Скрыть QR' : 'Мой QR'}</button></div>
+        ${A.qr ? '<canvas class="accQrCv"></canvas><p class="accSmall">Друг наводит камеру — и вы друзья</p>' : ''}</div>`;
+      if (A.inq.length) h += `<div class="accHead">Хотят дружить</div>` + A.inq.map(u => `<div class="accItem">${av(u)}<div class="accWho"><b>${esc(u.name)}</b>${idLine(u)}</div><button class="hkPlay accYes" data-id="${u.id}">Принять</button><button class="backBtn accNo" data-id="${u.id}" aria-label="Отклонить">✕</button></div>`).join('');
+      h += `<div class="accHead">Друзья${A.friends.length ? ' · ' + A.friends.length : ''}</div>`;
+      if (!A.friends.length) h += `<p class="accSmall accEmpty">Пока никого. Отправь другу свой ID <b class="accNoWrap">${fmtNum(me.num)}</b> или ссылку.</p>`;
+      h += A.friends.map(f => `<div class="accItem">${av(f)}<button class="accWho accOpen" data-id="${f.id}"><b>${esc(f.name)}${f.un ? `<i class="accUn">${f.un}</i>` : ''}</b><span class="accSt ${f.on ? (f.busy ? 'busy' : 'on') : ''}">${f.un ? 'новое сообщение' : f.on ? (f.busy ? 'в игре' : 'в сети') : ago(f.seen)}</span></button>
+        ${A.menu === f.id ? `<button class="backBtn accDel" data-id="${f.id}">Удалить</button>` : `<button class="hkPlay accCall" data-id="${f.id}">Позвать</button>`}<button class="backBtn accMore" data-id="${f.id}" aria-label="Ещё">⋯</button></div>`).join('');
+      if (A.outq.length) h += `<div class="accHead">Ждут ответа</div>` + A.outq.map(u => `<div class="accItem dim">${av(u)}<div class="accWho"><b>${esc(u.name)}</b>${idLine(u)}</div><button class="backBtn accCancel" data-id="${u.id}">Отменить</button></div>`).join('');
+      const rec = A.recent.filter(r => !r.friend && !A.outq.some(o => o.id === r.id) && !A.inq.some(o => o.id === r.id));
+      if (rec.length) h += `<div class="accHead">Недавние соперники</div>` + rec.map(u => `<div class="accItem">${av(u)}<div class="accWho"><b>${esc(u.name)}</b>${idLine(u)}</div><button class="backBtn accAddId" data-id="${u.id}">В друзья</button></div>`).join('');
+      box.innerHTML = h;
+      const $ = q => box.querySelector(q), $$ = q => box.querySelectorAll(q);
+      const on = (q, f) => { const e = $(q); if (e) e.onclick = f; };
+      on('.accEdit', () => { A.edit = true; render(); const i = $('.accName'); if (i) { i.focus(); i.select(); } });
+      on('.accSave', () => { const v = $('.accName').value; A.edit = false; act('name', { name: v }, 'Имя изменено'); });
+      if ($('.accName')) $('.accName').oninput = e => { const i = e.target; const v = i.value.replace(/[^A-Za-zА-Яа-яЁё]/g, '').slice(0, 12); if (i.value !== v) i.value = v; };
+      if ($('.accName')) $('.accName').onkeydown = e => { if (e.key === 'Enter') $('.accSave').click(); if (e.key === 'Escape') { A.edit = false; render(); } };
+      on('.accCopy', () => copy(String(me.num), 'ID скопирован'));
+      on('.accVk', () => oauthGo('vk'));
+      on('.accYa', () => oauthGo('ya'));
+      on('.accTg', () => tgStart());
+      on('.accTgCancel', () => { A.tgWait = null; render(); });
+      on('.accAddGo', () => { const i = $('.accAdd'); const v = i.value.replace(/\D/g, ''); if (v.length !== 8) { A.err = 'ID друга — 8 цифр, он есть у него во «Друзьях»'; return render(true); } i.value = ''; addByNum(v); });
+      if ($('.accAdd')) { const i = $('.accAdd'); i.onkeydown = e => { if (e.key === 'Enter') $('.accAddGo').click(); }; i.oninput = () => { const d = i.value.replace(/\D/g, '').slice(0, 8); const f = d.length > 4 ? d.slice(0, 4) + ' ' + d.slice(4) : d; if (i.value !== f) i.value = f; }; }
+      on('.accShare', share);
+      on('.accQr', () => { A.qr = !A.qr; render(); });
+      if ($('.accQrCv')) { try { QR.draw($('.accQrCv'), myLink(), 4); } catch (e) {} }
+      $$('.accYes').forEach(b => b.onclick = () => act('friend/answer', { id: b.dataset.id, yes: true }, 'Теперь вы друзья'));
+      $$('.accNo').forEach(b => b.onclick = () => act('friend/answer', { id: b.dataset.id, yes: false }));
+      $$('.accCancel').forEach(b => b.onclick = () => act('friend/remove', { id: b.dataset.id }));
+      $$('.accAddId').forEach(b => b.onclick = () => addById(b.dataset.id));
+      $$('.accMore').forEach(b => b.onclick = () => { A.menu = A.menu === b.dataset.id ? null : b.dataset.id; render(); });
+      $$('.accDel').forEach(b => b.onclick = () => { A.menu = null; act('friend/remove', { id: b.dataset.id }, 'Удалён из друзей'); });
+      $$('.accCall').forEach(b => b.onclick = () => { const f = A.friends.find(x => x.id === b.dataset.id); if (f) invite(f); });
+      $$('.accOpen').forEach(b => b.onclick = () => openChat(b.dataset.id));
+      if (keep) { const i = box.querySelector('input.' + keep.cls.split(' ').join('.')); if (i) { i.value = keep.v; i.focus(); try { i.setSelectionRange(keep.s, keep.s); } catch (e) {} } }
+    }
+
+    // ---------- личный чат с другом ----------
+    function openChat(id) {
+      const f = A.friends.find(x => x.id === id); if (!f) return;
+      A.chat = { id, m: [], menu: false, load: true };
+      box.dataset.view = '';
+      render();
+      chatPull();
+    }
+    function closeChat() { A.chat = null; box.dataset.view = ''; render(true); sync(); }
+    let chatT = 0;
+    async function chatPull() {
+      const c = A.chat; if (!c) return;
+      chatT = Date.now();
+      try { const j = await api('chat/get', { id: c.id }); if (A.chat === c) { c.m = j.m || []; c.load = false; c.err = ''; const f = A.friends.find(x => x.id === c.id); if (f && f.un) { f.un = 0; changed(); } renderChat(); } }
+      catch (e) { if (A.chat === c) { c.load = false; c.err = e.message; renderChat(); } }
+    }
+    async function chatSend(text) {
+      const c = A.chat; if (!c) return;
+      text = String(text || '').trim(); if (!text) return;
+      c.m.push([1, cleanText(text), Date.now()]); renderChat(); // сразу показываем у себя
+      try { const j = await api('chat/send', { id: c.id, text }); if (A.chat === c) { c.m = j.m || c.m; c.err = ''; renderChat(); } }
+      catch (e) { if (A.chat === c) { c.err = e.message; renderChat(); } }
+    }
+    const bubbles = (list, mineKey) => list.map(x => `<div class="accMsgB ${x[mineKey] ? 'me' : ''}">${esc(x[1])}</div>`).join('');
+    const phraseBtns = () => PHRASES.map(t => `<button class="accPh">${esc(t)}</button>`).join('');
+    function renderChat() {
+      if (!box || box.hidden || !A.chat) return;
+      const c = A.chat, f = A.friends.find(x => x.id === c.id);
+      if (!f) { A.chat = null; return render(true); }
+      if (box.dataset.view !== 'chat:' + c.id) {
+        box.dataset.view = 'chat:' + c.id;
+        box.innerHTML = `<div class="panel accCard accChat">
+          <div class="accChHead"><button class="backBtn accBack" aria-label="Назад">←</button><div class="accChWho"></div><button class="backBtn accChMore" aria-label="Ещё">⋯</button></div>
+          <button class="hkPlay accChCall">Позвать играть</button>
+          <div class="accChMenu" hidden><button class="backBtn accChDel">Удалить из друзей</button><button class="backBtn accChBlock">Заблокировать</button></div>
+          <div class="accChMsgs"></div>
+          <div class="accPhs">${phraseBtns()}</div>
+          <div class="accRow accChIn"><input class="netCode accChText" maxlength="200" placeholder="Сообщение" autocomplete="off" enterkeyhint="send"><button class="hkPlay accChSend" aria-label="Отправить">➤</button></div>
+        </div>`;
+        const $ = q => box.querySelector(q);
+        $('.accBack').onclick = closeChat;
+        $('.accChCall').onclick = () => { const ff = A.friends.find(x => x.id === c.id); if (ff) invite(ff); };
+        $('.accChMore').onclick = () => { const m = $('.accChMenu'); m.hidden = !m.hidden; };
+        $('.accChDel').onclick = () => { act('friend/remove', { id: c.id }, 'Удалён из друзей'); A.chat = null; };
+        $('.accChBlock').onclick = () => { act('block', { id: c.id }, 'Игрок заблокирован'); A.chat = null; };
+        const inp = $('.accChText');
+        const go = () => { const v = inp.value; inp.value = ''; chatSend(v); inp.focus(); };
+        $('.accChSend').onclick = go;
+        inp.onkeydown = e => { if (e.key === 'Enter') go(); };
+        box.querySelectorAll('.accPh').forEach(b => b.onclick = () => chatSend(b.textContent));
+      }
+      const who = box.querySelector('.accChWho');
+      who.innerHTML = `${av(f)}<div class="accWho"><b>${esc(f.name)}<span class="accTag"> · ID ${fmtNum(f.num)}</span></b><span class="accSt ${f.on ? (f.busy ? 'busy' : 'on') : ''}">${f.on ? (f.busy ? 'в игре' : 'в сети') : ago(f.seen)}</span></div>`;
+      const ms = box.querySelector('.accChMsgs');
+      const html = c.load ? '<p class="accSmall">Загрузка…</p>' : c.m.length ? bubbles(c.m, 0) : `<p class="accSmall">Напиши ${esc(f.name)} что-нибудь или позови сыграть.</p>`;
+      const err = c.err ? `<p class="netErr">${esc(c.err)}</p>` : '';
+      if (ms.dataset.h !== html + err) { ms.dataset.h = html + err; ms.innerHTML = html + err; ms.scrollTop = ms.scrollHeight; }
+    }
+
+    // ---------- чат с соперником (в плашках «Сеть» и «Сеть++») ----------
+    const blocks = {};
+    function matchBlock(ctx) {
+      if (blocks[ctx]) return blocks[ctx];
+      const d = document.createElement('div');
+      d.className = 'accMatch';
+      d.innerHTML = `<div class="amHead"></div><div class="amMsgs"></div><div class="amCtl"><div class="accPhs">${phraseBtns()}</div><div class="accRow"><input class="netCode amIn" maxlength="200" placeholder="Написать сопернику" autocomplete="off" enterkeyhint="send"><button class="hkPlay amSend" aria-label="Отправить">➤</button></div></div>`;
+      const inp = d.querySelector('.amIn');
+      const go = t => { t = String(t || '').trim(); if (!t || !A.mc.on) return; sendMatch(t); };
+      d.querySelector('.amSend').onclick = () => { go(inp.value); inp.value = ''; };
+      inp.onkeydown = e => { if (e.key === 'Enter') { go(inp.value); inp.value = ''; } };
+      d.querySelectorAll('.accPh').forEach(b => b.onclick = () => go(b.textContent));
+      inp.addEventListener('focus', () => { d._focus = true; });
+      inp.addEventListener('blur', () => { setTimeout(() => { if (document.activeElement !== inp) d._focus = false; }, 0); });
+      blocks[ctx] = d;
+      return d;
+    }
+    let lastSend = 0;
+    function sendMatch(text) {
+      if (Date.now() - lastSend < 650) return; lastSend = Date.now();
+      const t = cleanText(text); if (!t) return;
+      if (A.mc.ctx === 'elite') { if (window.PPElite) window.PPElite.chat(t); }
+      else if (typeof NET !== 'undefined' && NET.on) NET.send({ t: '_chat', text: t });
+      A.mc.msgs.push([1, t]); while (A.mc.msgs.length > 30) A.mc.msgs.shift();
+      oppChips();
+    }
+    const oppName = () => (A.opp ? A.opp.name : 'Соперник');
+    function oppChip(panel, ctx) {
+      if (!panel) return;
+      const o = A.opp, mc = A.mc;
+      const showFr = o && A.me && !o.fr && !A.oppHide && o.id !== A.me.id;
+      const showChat = mc.ctx === ctx && (mc.on || mc.msgs.length);
+      const d = matchBlock(ctx);
+      if (!showFr && !showChat) { if (d.parentNode) d.remove(); return; }
+      const head = !showFr ? (showChat && o ? `<span>Соперник: <b>${esc(o.name)}</b></span>` : '')
+        : A.oppSent ? `<span>Заявка отправлена: <b>${esc(o.name)}</b></span>`
+        : `<span>Соперник: <b>${esc(o.name)}</b></span><button class="hkPlay accOppAdd">В друзья</button><button class="backBtn accOppX" aria-label="Скрыть">✕</button>`;
+      const hd = d.querySelector('.amHead');
+      if (hd.dataset.h !== head) {
+        hd.dataset.h = head; hd.innerHTML = head; hd.hidden = !head;
+        const add = hd.querySelector('.accOppAdd'); if (add) add.onclick = () => { A.oppSent = true; oppChips(); addById(o.id); };
+        const x = hd.querySelector('.accOppX'); if (x) x.onclick = () => { A.oppHide = true; oppChips(); };
+      }
+      const msgs = showChat ? mc.msgs.slice(-6).map(m => `<div class="accMsgB ${m[0] ? 'me' : ''}">${m[0] ? '' : `<i>${esc(oppName())}:</i> `}${esc(m[1])}</div>`).join('') : '';
+      const ms = d.querySelector('.amMsgs');
+      if (ms.dataset.h !== msgs) { ms.dataset.h = msgs; ms.innerHTML = msgs; ms.hidden = !msgs; ms.scrollTop = ms.scrollHeight; }
+      d.querySelector('.amCtl').hidden = !(showChat && mc.on);
+      if (d.parentNode !== panel) {
+        const had = d._focus;
+        panel.appendChild(d);
+        if (had) { const i = d.querySelector('.amIn'); try { i.focus({ preventScroll: true }); } catch (e) {} }
+      }
+    }
+
+    // ---------- «Добавить соперника в друзья» в плашках «Сеть» и «Сеть++» ----------
+    const PANELS = [['netPanel', 'p2p'], ['elitePanel', 'elite']];
+    const oppChips = () => PANELS.forEach(([id, ctx]) => oppChip(document.getElementById(id), ctx));
+    PANELS.forEach(([id, ctx]) => { const p = document.getElementById(id); if (p) new MutationObserver(() => oppChip(p, ctx)).observe(p, { childList: true }); });
+    listeners.push(oppChips);
+    function setOpp(u, fr) {
+      if (!u || !u.id || (A.opp && A.opp.id === u.id)) { if (A.opp && u && A.opp.id === u.id && fr) { A.opp.fr = true; oppChips(); } return; }
+      A.opp = { id: String(u.id), name: String(u.name || '').slice(0, 16), num: String(u.num || '').replace(/\D/g, '').slice(0, 8), fr: !!fr || A.friends.some(f => f.id === u.id) };
+      A.oppSent = false; A.oppHide = false;
+      oppChips();
+    }
+
+    // ---------- открыть «Друзья» ----------
+    function openFriends() { if (window.pgHome && window.pgHome.setMode) window.pgHome.setMode('friends'); }
+
+    // ---------- для других модулей ----------
+    window.PPACC = {
+      mount,
+      token: () => A.token,
+      pub: () => (A.me ? { id: A.me.id, name: A.me.name, num: A.me.num } : null),
+      ensure,
+      // соперник по «Сети» (P2P) прислал свой тег
+      p2pOpp(u) { setOpp(u, false); if (A.token && u && u.id) api('recent', { id: u.id }).catch(() => {}); },
+      // сервер «Сеть++» сказал, кто соперник
+      eliteOpp(u, fr) { setOpp(u, fr); },
+      matchOn(ctx) { if (A.mc.ctx !== ctx || !A.mc.on) { A.mc = { ctx, on: true, msgs: A.mc.ctx === ctx && A.mc.on ? A.mc.msgs : [] }; } oppChips(); },
+      matchOff(ctx) { if (A.mc.ctx === ctx) { A.mc.on = false; oppChips(); } },
+      matchMsg(text, ctx) {
+        const t = cleanText(text); if (!t) return;
+        if (A.mc.ctx !== ctx) A.mc = { ctx, on: true, msgs: [] };
+        A.mc.msgs.push([0, t]); while (A.mc.msgs.length > 30) A.mc.msgs.shift();
+        oppChips();
+        // во время игры плашку не видно — коротко покажем сверху
+        const panel = document.getElementById(ctx === 'elite' ? 'elitePanel' : 'netPanel');
+        if (!panel || !panel.offsetParent) toast(`${oppName()}: ${t}`, null, 3500);
+        try { sound(880, 0.05, 'sine', 0.04); } catch (e) {}
+      },
+      badge: () => A.inq.length + A.invites.length + A.friends.reduce((n, f) => n + (f.un || 0), 0),
+      onChange: f => listeners.push(f),
+      shown() { if (!A.token || !A.me) ensure(); else sync(); box && (box.dataset.view = ''); render(true); }
+    };
+
+    // ---------- старт ----------
+    (async () => {
+      const back = await oauthBack().catch(() => false);
+      const fr = Q.get('friend'), ej = Q.get('ejoin'), ch = Q.get('chat');
+      if (fr || ej || ch || Q.get('friends')) {
+        const u = new URL(location.href); ['friend', 'ejoin', 'friends', 'chat'].forEach(k => u.searchParams.delete(k)); history.replaceState(null, '', u.toString());
+      }
+      if (fr && /^[A-Za-z0-9]{6,16}$/.test(fr)) { openFriends(); await ensure(); if (!A.me || A.me.id !== fr) addById(fr); }
+      else if (Q.get('friends')) openFriends();
+      else if (ch && /^[A-Za-z0-9]{6,16}$/.test(ch)) { openFriends(); await ensure(); if (A.friends.some(f => f.id === ch)) openChat(ch); }
+      if (ej && /^\d{4}$/.test(ej)) setTimeout(() => window.PPElite && window.PPElite.join(ej), 300);
+      if (!back && (A.token || inTg)) { if (A.token) sync(); else ensure(); }
+      loop();
+    })();
+  })();
+
   // ======================= ГЛАВНЫЙ ЭКРАН: РЕЖИМЫ =======================
   // Сверху выбор «Вдвоём / С ботом / По сети», колба — лаборатория (бывшая вкладка «Тестирование»).
   // Старые вкладки остаются внутри (спрятаны) — новый экран просто переключает их, сетевой код не трогаем.
@@ -17746,6 +18328,7 @@
       flask: '<path d="M9 3h6M10 9h4M10 3v6L6 20a.7.7 0 0 0 .5 1h11a.7.7 0 0 0 .5-1L14 9V3"/>',
       gear: '<path d="M10.3 4.3c.4-1.8 2.9-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.5 1.8 3 0 3.5a1.7 1.7 0 0 0-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.5 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.9-2.4-2.4a1.7 1.7 0 0 0-1-2.6c-1.8-.5-1.8-3 0-3.5a1.7 1.7 0 0 0 1-2.5c-.9-1.6.9-3.3 2.4-2.4 1 .6 2.3.1 2.6-1.1z"/><circle cx="12" cy="12" r="3"/>',
       play: '<path d="M7 4v16l13-8z"/>',
+      heart: '<path d="M19.5 12.6L12 20l-7.5-7.4A5 5 0 1 1 12 6a5 5 0 1 1 7.5 6.6z"/>',
       server: '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5v.01M7 16.5v.01"/>'
     };
     const svg = (k, cls) => `<svg class="${cls || 'li'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.target}</svg>`;
@@ -17771,7 +18354,7 @@
 
     // --- режимы ---
     const bar = el('div', 'modeBar');
-    bar.innerHTML = `<button data-m="two">${svg('users')}Вдвоём</button><button data-m="bot">${svg('robot')}С ботом</button><span class="modeSep"></span><button data-m="net" data-s="net">${svg('world')}Сеть</button><button data-m="net" data-s="elite">${svg('server')}<span>Сеть<b class="plus">++</b></span></button><span class="modeSep"></span><button data-m="lab">${svg('flask')}<span>Лабо&shy;ратория</span></button>`;
+    bar.innerHTML = `<button data-m="two">${svg('users')}Вдвоём</button><button data-m="bot">${svg('robot')}С ботом</button><span class="modeSep"></span><button data-m="net" data-s="net">${svg('world')}Сеть</button><button data-m="net" data-s="elite">${svg('server')}<span>Сеть<b class="plus">++</b></span></button><span class="modeSep"></span><button data-m="friends">${svg('heart')}<span>Друзья</span><b class="fBadge" hidden></b></button><span class="modeSep"></span><button data-m="lab">${svg('flask')}<span>Лабо&shy;ратория</span></button>`;
     tabs.parentNode.insertBefore(bar, tabs);
     tabs.classList.add('oldTabs');
 
@@ -17780,7 +18363,8 @@
     const botBar = el('div', 'botBar', '<span>Бот по умолчанию</span><div class="segmented"><button data-i="0">Лёгкий</button><button data-i="1">Средний</button><button data-i="2">Злой</button></div>');
     const netSw = el('div', 'segmented netSw', '<button data-s="net">Обычная</button><button data-s="elite">Элит · сервер</button>');
     const botGrid = el('div', 'tiles'), botOffT = el('div', 'tilesDivider', '<span>Только вдвоём</span>'), botOff = el('div', 'tiles');
-    tabs.after(labHead, cont, botBar, netSw, botGrid, botOffT, botOff);
+    const friendsBox = el('div', 'friendsBox'); friendsBox.hidden = true;
+    tabs.after(labHead, cont, botBar, netSw, botGrid, botOffT, botOff, friendsBox);
     // эти игры — только в Лаборатории (не во «Вдвоём» и не в «С ботом»)
     const LAB_IDS = ['pgTile-blocks', 'pgTile-band', 'pgTile-flag', 'pgTile-laser'];
     (() => { const lab = document.getElementById('tilesTanks'); LAB_IDS.forEach(id => { const t = document.getElementById(id); if (t && lab) lab.appendChild(t); }); })();
@@ -17861,6 +18445,7 @@
       netSw.hidden = true; // «Сеть» и «Сеть++» теперь в левой полосе
       botGrid.hidden = botOffT.hidden = botOff.hidden = mode !== 'bot';
       if (mode === 'bot') buildBot();
+      friendsBox.hidden = mode !== 'friends';
       botBar.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.i === botLv())));
       netSw.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === netSub)));
       syncing = true;
@@ -17868,6 +18453,7 @@
       else if (mode === 'bot') { oldTab('mini'); document.getElementById('tilesMini').hidden = true; }
       else if (mode === 'net') oldTab(netSub);
       else if (mode === 'lab') oldTab('tanks');
+      else if (mode === 'friends') { oldTab('mini'); document.getElementById('tilesMini').hidden = true; if (window.PPACC) PPACC.shown(); }
       syncing = false;
       renderCont();
     }
@@ -17915,6 +18501,12 @@
     // вернулись на главный экран — обновим «Продолжить»
     new MutationObserver(() => { if (!home.hidden) renderCont(); }).observe(home, { attributes: true, attributeFilter: ['hidden', 'style', 'class'] });
     document.querySelectorAll('.hkOverlay').forEach(o => new MutationObserver(renderCont).observe(o, { attributes: true, attributeFilter: ['hidden'] }));
+    // «Друзья»: экран и кружок с числом заявок и приглашений
+    if (window.PPACC) {
+      PPACC.mount(friendsBox);
+      const badge = bar.querySelector('.fBadge');
+      PPACC.onChange(() => { const n = PPACC.badge(); badge.hidden = !n; badge.textContent = n; });
+    }
     window.pgHome = { setMode, render };
   })();
 
