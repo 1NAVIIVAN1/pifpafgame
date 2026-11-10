@@ -1691,6 +1691,29 @@
   .fBadge[hidden] { display: none; }
   .friendsBox { display: flex; flex-direction: column; gap: 10px; }
   .friendsBox[hidden] { display: none; }
+  /* выбор способа игры при приглашении */
+  .accWays { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 4px; }
+  .accWayBtn { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 12px 14px; border-radius: 16px; border: 2px solid transparent; background: rgba(255,255,255,.07); color: inherit; font: inherit; cursor: pointer; }
+  .accWayBtn b { font-size: 15px; font-weight: 800; }
+  .accWayBtn small { font-size: 12.5px; opacity: .6; line-height: 1.3; }
+  .accWayBtn.on { border-color: var(--tank1, #4fa3ff); }
+  /* подсказка про клавиши на компьютере */
+  .howKeys { grid-column: 1 / -1; flex-basis: 100%; font-size: 12.5px; line-height: 1.35; opacity: .65; text-align: center; padding: 2px 4px 0; }
+  /* инвентарь */
+  .invBox { display: flex; flex-direction: column; gap: 12px; }
+  .invBox[hidden] { display: none; }
+  .invHead { display: flex; flex-direction: column; gap: 4px; padding: 2px 2px 0; }
+  .invHead b { font-size: 18px; font-weight: 800; }
+  .invHead span { font-size: 13px; opacity: .6; line-height: 1.35; }
+  .invGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .invCard { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 8px 10px; border: 0; border-radius: 18px; background: rgba(255,255,255,.06); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .invCard canvas { width: 100%; aspect-ratio: 5 / 3; border-radius: 12px; display: block; }
+  .invCard.locked canvas { filter: saturate(.75) brightness(.8); }
+  .invName { font-size: 14px; font-weight: 800; padding: 0 2px; }
+  .invLock { font-size: 12px; opacity: .55; padding: 0 2px; }
+  .invCard.locked::after { content: '🔒'; position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,.55); display: grid; place-items: center; font-size: 13px; }
+  .invToast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); background: rgba(20,22,30,.95); color: #fff; padding: 10px 16px; border-radius: 14px; font-size: 14px; opacity: 0; pointer-events: none; transition: .2s; z-index: 9999; max-width: calc(100% - 32px); text-align: center; }
+  .invToast.on { opacity: 1; transform: translate(-50%, 0); }
   .accCard { gap: 10px; padding: 12px; }
   .accMe, .accItem, .accRow, .accOpp { display: flex; align-items: center; gap: 8px; }
   .accRow > * { flex: 1; min-width: 0; }
@@ -5240,6 +5263,38 @@
   // страховка: пальцев на экране не осталось — биты свободны
   window.addEventListener('touchend', e => { if (!e.touches.length) bats.forEach(b => b.id = null); });
   window.addEventListener('touchcancel', e => { if (!e.touches.length) bats.forEach(b => b.id = null); });
+  // --- клавиатура: синий WASD, красный стрелки (по сети — любые, своей битой) ---
+  {
+    const HK_KEYS = { KeyW: [0, 0, -1], KeyS: [0, 0, 1], KeyA: [0, -1, 0], KeyD: [0, 1, 0], ArrowUp: [1, 0, -1], ArrowDown: [1, 0, 1], ArrowLeft: [1, -1, 0], ArrowRight: [1, 1, 0] };
+    const held = new Set(), was = [false, false];
+    let kbSent = 0, lastT = 0;
+    const KEY_SPEED = 650; // px/с — с клавиатуры бита едет с постоянной скоростью
+    window.addEventListener('keydown', e => { if (!hkActive || !HK_KEYS[e.code]) return; e.preventDefault(); held.add(e.code); });
+    window.addEventListener('keyup', e => { held.delete(e.code); });
+    window.addEventListener('blur', () => held.clear());
+    const step = () => {
+      requestAnimationFrame(step);
+      const tNow = performance.now(), fdt = Math.min(0.05, (tNow - (lastT || tNow)) / 1000); lastT = tNow;
+      if (!hkRunning) { held.clear(); return; }
+      const net = NET.on && NET.game === 'hockey', me = net ? (NET.role === 'host' ? 0 : 1) : -1;
+      const v = [[0, 0], [0, 0]];
+      held.forEach(c => { const d = HK_KEYS[c]; const k = net ? me : d[0]; v[k][0] += d[1]; v[k][1] += d[2]; });
+      [0, 1].forEach(i => {
+        if (!net && i === 1 && hkOpts.opp !== 'human') return;
+        if (net && i !== me) return;
+        const b = bats[i], on = v[i][0] || v[i][1];
+        if (!on && !was[i]) return;
+        let [x, y] = v[i]; const m = Math.hypot(x, y) || 1; x /= m; y /= m;
+        if (net && me === 1) { x = -x; y = -y; } // у гостя стол повёрнут
+        const lead = net && me === 1 ? KEY_SPEED * 0.12 : KEY_SPEED * fdt; // гость видит биту с задержкой — цель чуть дальше
+        const [tx, ty] = on ? clampBat(b, b.x + x * lead, b.y + y * lead) : [b.x, b.y]; // отпустил клавиши — бита стоит
+        was[i] = !!on;
+        if (net && me === 1) { const t = performance.now(); if (t - kbSent > 30 || !on) { kbSent = t; NET.send({ t: 'kb', x: Math.round(tx), y: Math.round(ty) }); } }
+        else if (b.id == null) { b.tx = tx; b.ty = ty; }
+      });
+    };
+    requestAnimationFrame(step);
+  }
 
   // --- бот за красного ---
   function hkBotThink(now) {
@@ -8207,7 +8262,7 @@
   const BOT_NAME = 'pifpafgame';
   const NET_ALPHA = '0123456789'; // код комнаты — 5 цифр
   // версия «языка» сетевой игры: у обоих телефонов должна совпадать (Telegram любит помнить старую страницу)
-  const NET_VER = 15;
+  const NET_VER = 16;
   // свой сервер связи (Россия): оба телефона подключаются к нему, он пересылает ходы.
   // Пусто — только старый бесплатный способ (PeerJS). Для проверки: ?relay=ws://адрес
   // свои серверы связи — выбираются переключателями во вкладке «По сети» (до подключения)
@@ -8215,7 +8270,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.87';
+  const NET_BUILD = '2.92';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -8872,6 +8927,14 @@
         return;
       }
       case '_bye': netLost('Соперник вышел из игры'); return;
+      case '_elobby': { // «Сеть++»: игра закончилась, комната живёт — назад к выбору игры
+        if (NT.via !== 'elite') return;
+        const ws = NT.ws; NT.ws = null; if (ws) { ws.onmessage = null; ws.onclose = null; }
+        clearTimeout(NT.lobbyT); lostEl.hidden = leaveEl.hidden = eLeaveEl.hidden = true;
+        netClose(true); NT.wasElite = false; stopNetGames(); setLobby('idle');
+        if (NET.onEliteLobby && ws) NET.onEliteLobby(ws); else { try { ws && ws.close(); } catch (e) {} }
+        return;
+      }
       case '_direct': netError('У соперника включено «Только напрямую», а напрямую соединиться не получилось. Попробуйте другую сеть (например, Wi-Fi) или пусть соперник выключит этот переключатель.'); return;
       case '_srvwarn': srvSet('warn', 'Друг хочет перейти на сервер ' + RELAY_NAME + ' — так быстрее. Выключи VPN, если он включён.'); return;
       case '_srvtry': if (NET.role === 'host') srvUpgradeHost(); return;
@@ -9233,8 +9296,9 @@
     NET.showNetTab();
   }
   // «Элит»: игра уже запущена на сервере — дальше это соединение работает как обычная сетевая игра, мы — гость
-  NET.eliteAttach = ws => {
+  NET.eliteAttach = (ws, you) => {
     netClose(true);
+    NET.eliteYou = you | 0;
     NT.wasElite = false;
     NT.via = 'elite'; NT.ws = ws;
     NET.role = 'guest'; NET.on = true; NET.game = null; NET.code = 'Сеть++';
@@ -9250,7 +9314,8 @@
     setLobby('connected');
     NET.showNetTab();
   }
-  NET.askLeave = () => { leaveEl.hidden = false; };
+  // в «Сеть++» создатель может выйти к выбору другой игры — друг остаётся в комнате
+  NET.askLeave = () => { if (NT.via === 'elite' && NET.eliteYou === 0) eLeaveEl.hidden = false; else leaveEl.hidden = false; };
   function netLost(text) {
     if (!NET.on && NET.lobby !== 'waiting') return;
     const was = NET.on;
@@ -9283,6 +9348,14 @@
   const leaveEl = mkModal('Выйти из игры?', 'Сетевая игра закончится и для соперника.', '<button class="backBtn netStay">Остаться</button><button class="hkPlay netGo">Выйти</button>');
   leaveEl.querySelector('.netStay').addEventListener('click', () => { leaveEl.hidden = true; });
   leaveEl.querySelector('.netGo').addEventListener('click', () => { leaveEl.hidden = true; netLeave(); });
+  const eLeaveEl = mkModal('Выйти из игры?', 'Можно выбрать другую игру — друг останется с тобой в комнате.', '<button class="backBtn netStay">Остаться</button><button class="hkPlay netPick">Другая игра</button><button class="backBtn netGo">Отключиться</button>');
+  eLeaveEl.querySelector('.netStay').addEventListener('click', () => { eLeaveEl.hidden = true; });
+  eLeaveEl.querySelector('.netGo').addEventListener('click', () => { eLeaveEl.hidden = true; netLeave(); });
+  eLeaveEl.querySelector('.netPick').addEventListener('click', () => {
+    eLeaveEl.hidden = true; rawSend({ t: '_lobby' });
+    // старый сервер не умеет — через 5 с просто выходим
+    clearTimeout(NT.lobbyT); NT.lobbyT = setTimeout(() => { if (NT.via === 'elite' && NET.on) netLeave(); }, 5000);
+  });
 
   function openLobby() {
     NET.showNetTab();
@@ -10124,6 +10197,7 @@
         if (G.state === 'play' || G.state === 'countdown') G.remotePress(m.s, !!m.d);
       }
       else if (m.t === 'qp') G.remoteRaw(m.k, m.x, m.y, m.id);
+      else if (m.t === 'qk') G.remoteKey(m.c, m.d);
       else if (m.t === 'qshot') { if (G.cfg.netShot && Array.isArray(m.a)) G.cfg.netShot(G, m.a); }
       else if (m.t === 'qsweep') { if (G.cfg.netSweep) G.cfg.netSweep(G, +m.x || 0, +m.y || 0); }
       else if (m.t === 'qre') { if (G.state === 'over') G.net.start(); }
@@ -10410,6 +10484,22 @@
     if (code) setTimeout(() => { applySrv(); openLobby(); joinRoom(code); }, 300);
   }
   NET.openLobby = openLobby;
+  // для «Друзей»: k = 'ru' (Wi‑Fi или 4G) или '' (Telegram + VPN); cb(номер комнаты), когда комната готова
+  NET.inviteHost = (k, cb, fail) => {
+    if (NET.on) { fail && fail('Сначала закончи текущую сетевую игру'); return; }
+    if (NET.lobby === 'waiting' && NET.code && String(NET.code)[4] === METHOD_DIGIT[k]) { NET.showNetTab(); cb(NET.code); return; }
+    NET.myCode = rnd4() + METHOD_DIGIT[k];
+    NET.showNetTab(); hostRoom();
+    const t0 = Date.now(), wait = () => {
+      if (NET.role !== 'host') return fail && fail('Комната закрыта');
+      if (NET.lobby === 'waiting' && NET.code) return cb(NET.code);
+      if (NET.lobby === 'error' || Date.now() - t0 > 20000) return fail && fail('Не получилось создать комнату — попробуй ещё раз');
+      setTimeout(wait, 300);
+    };
+    wait();
+  };
+  NET.cancelHost = () => { if (!NET.on && NET.role === 'host') { netClose(true); setLobby('idle'); } };
+  NET.inviteJoin = code => { if (NET.on) return false; NET.showNetTab(); applySrv(); openLobby(); joinRoom(String(code)); return true; };
 
   // ======================= ОБЩИЙ КАРКАС НОВЫХ ИГР =======================
   // Каждая игра описывается объектом cfg и получает готовое: меню настроек, отсчёт,
@@ -10419,6 +10509,27 @@
   const PG_DARK = ['#1f5fb8', '#b02a22'];
   const PG_GLOW = ['rgba(79, 163, 255, ', 'rgba(255, 90, 79, '];
   const pgGames = [];
+  // КЛАВИАТУРНЫЙ ПРИЦЕЛ для игр «натяни и отпусти» (гольф, кёрлинг, футбол):
+  // держишь Пробел (синий) / Enter (красный) — сила качается туда-обратно, A/D (синий) или ←/→ (красный) — поворот, отпустил — удар.
+  // По сети любые из этих клавиш — твои.
+  const PGAIM = {
+    who(G, code) { // 0/1 — чья кнопка; -1 — не наша клавиша; -2 — клавиша бота (игнор)
+      const i = code === 'Space' ? 0 : (code === 'Enter' || code === 'NumpadEnter') ? 1 : -1;
+      if (i < 0) return -1;
+      if (G.netMode()) return G.me();
+      return i === 1 && G.bot ? -2 : i;
+    },
+    pow: ms => { const u = (ms / 1000) % 2; return Math.max(0.04, u < 1 ? u : 2 - u); },
+    // поворот: +1 — по часовой (для любого игрока это «вправо» с его стороны стола)
+    turn(G, i) {
+      const h = G.keysHeld; if (!h) return 0;
+      const L = G.netMode() ? (h.has('KeyA') || h.has('ArrowLeft')) : h.has(i ? 'ArrowLeft' : 'KeyA');
+      const R = G.netMode() ? (h.has('KeyD') || h.has('ArrowRight')) : h.has(i ? 'ArrowRight' : 'KeyD');
+      return (R ? 1 : 0) - (L ? 1 : 0);
+    },
+    // шаг кадра: сколько секунд прошло с прошлого вызова для этого прицела
+    dt(a) { const t = performance.now(), d = a._kt ? Math.min(0.05, (t - a._kt) / 1000) : 0; a._kt = t; return d; }
+  };
   let pgLast = performance.now();
 
   function partyGame(cfg) {
@@ -10777,6 +10888,13 @@
       G.keyVec.forEach(v => { const m = Math.hypot(v.x, v.y); if (m) { v.x /= m; v.y /= m; } });
     }
     const keySide = { KeyA: [0, 'L'], KeyD: [0, 'R'], ArrowLeft: [1, 'R'], ArrowRight: [1, 'L'] };
+    // по сети любые клавиши — твоей стороны: у гостя «синие» клавиши становятся «красными», у хоста — наоборот
+    const TO_RED = { Space: 'Enter', KeyW: 'ArrowUp', KeyS: 'ArrowDown', KeyA: 'ArrowLeft', KeyD: 'ArrowRight', KeyE: 'ShiftRight', ShiftLeft: 'ShiftRight', Digit1: 'Digit7', Digit2: 'Digit8', Digit3: 'Digit9', Digit4: 'Digit0' };
+    const TO_BLUE = { Enter: 'Space', NumpadEnter: 'Space', ArrowUp: 'KeyW', ArrowDown: 'KeyS', ArrowLeft: 'KeyA', ArrowRight: 'KeyD', ShiftRight: 'ShiftLeft', Digit7: 'Digit1', Digit8: 'Digit2', Digit9: 'Digit3', Digit0: 'Digit4' };
+    const netCode = code => { const nm = G.netMode(); return nm ? ((G.me() === 1 ? TO_RED : TO_BLUE)[code] || code) : code; };
+    // гость в играх со своим управлением: нажатия клавиш — хосту (у гольфа, кёрлинга, футбола прицел свой, на месте)
+    const fwdKeys = () => ctl === 'raw' && cfg.onKey && !cfg.netShot && G.netMode() === 'guest';
+    G.remoteKey = (c, down) => { if (isLive() && cfg.onKey) cfg.onKey(G, String(c), !!down); };
     window.addEventListener('keydown', e => {
       if (!G.active || !isLive()) return;
       let fire = e.code === 'Space' ? 0 : (e.code === 'Enter' || e.code === 'NumpadEnter') ? 1 : -1;
@@ -10784,9 +10902,10 @@
       if (KEYDIR[e.code] || fire >= 0) e.preventDefault();
       if (e.repeat) return;
       if (G.bot && (fire === 1 || (KEYDIR[e.code] && KEYDIR[e.code][0] === 1) || (keySide[e.code] && keySide[e.code][0] === 1))) return;
-      if (cfg.onKey && cfg.onKey(G, e.code, true)) return;
+      if (KEYDIR[e.code]) { held.add(e.code); keyVecs(); } // направление с клавиш — во всех играх (BK.inp и G.dir берут его отсюда)
+      if (fwdKeys()) { NET.send({ t: 'qk', c: netCode(e.code), d: 1 }); return; }
+      if (cfg.onKey && cfg.onKey(G, netCode(e.code), true)) return;
       if (ctl === 'joyBtn') {
-        if (KEYDIR[e.code]) { held.add(e.code); keyVecs(); }
         if (fire >= 0 && !G.btn[fire].down) { G.btn[fire].down = true; G.btn[fire].id = 'key'; btnPress(fire, 'B'); }
       } else if (ctl === 'sides') {
         const s = keySide[e.code];
@@ -10798,14 +10917,16 @@
     });
     window.addEventListener('keyup', e => {
       if (!G.active) return;
-      if (cfg.onKey && cfg.onKey(G, e.code, false)) return;
       if (held.delete(e.code)) keyVecs();
+      if (fwdKeys()) { NET.send({ t: 'qk', c: netCode(e.code), d: 0 }); return; }
+      if (cfg.onKey && cfg.onKey(G, netCode(e.code), false)) return;
       let fire = e.code === 'Space' ? 0 : (e.code === 'Enter' || e.code === 'NumpadEnter') ? 1 : -1;
       if (G.netMode() && fire >= 0) fire = G.me();
       if (ctl === 'joyBtn' && fire >= 0 && G.btn[fire].id === 'key') { G.btn[fire].down = false; G.btn[fire].id = null; btnRelease(fire, 'B'); }
       if (ctl === 'sides') { const s = keySide[e.code]; if (s) btnRelease(G.netMode() ? G.me() : s[0], s[1]); }
     });
     window.addEventListener('blur', () => { held.clear(); keyVecs(); });
+    G.keysHeld = held;
     // итоговое направление: клавиши важнее джойстика
     G.dir = i => {
       if (i === 1 && G.bot) return G.botDir;
@@ -10827,6 +10948,8 @@
         else newRound();
       }
       if (!guest && G.bot && (G.state === 'play' || G.state === 'countdown')) cfg.bot(G, dt, now, G.bot);
+      // хост по сети: клавиши гостя (он шлёт своё направление) — как клавиши красного, для игр, которые читают G.keyVec
+      if (G.netMode() === 'host') { const r = G.remote, k = G.keyVec[1]; k.x = r && r.on ? r.x : 0; k.y = r && r.on ? r.y : 0; }
       if (!guest && G.state !== 'menu' && G.state !== 'over') cfg.update(G, dt, now);
       // рисуем
       c.setTransform(1, 0, 0, 1, 0, 0);
@@ -11338,8 +11461,8 @@
         h = `<p>Код матча:</p><div class="netBig">${E.code}</div><p class="netWait">Ждём соперника… Скажи ему код — он вводит его в «Сеть++» → «Войти к другу».</p><button class="backBtn eCancel">Отмена</button>`;
       } else if (E.st === 'ready') {
         h = E.you === 0
-          ? `<div class="netOk">Соперник подключился!</div><p>Выбери игру ниже, настрой её и нажми «Играть» — игра начнётся у обоих.</p><button class="backBtn eCancel">Отключиться</button>`
-          : `<div class="netOk">Подключено!</div><p>Ждём, пока соперник выберет игру и нажмёт «Играть». Твоя сторона всегда снизу.</p><button class="backBtn eCancel">Отключиться</button>`;
+          ? `<div class="netOk">Соперник в комнате</div><p>Выбери игру ниже, настрой её и нажми «Играть» — игра начнётся у обоих. После игры можно выбрать другую — друг останется здесь.</p><button class="backBtn eCancel">Отключиться</button>`
+          : `<div class="netOk">Ты в комнате</div><p${E.again ? ' class="netWait"' : ''}>${E.again ? 'Друг выбирает другую игру…' : 'Ждём, пока друг выберет игру и нажмёт «Играть». Твоя сторона всегда снизу.'}</p><button class="backBtn eCancel">Отключиться</button>`;
       } else if (E.st === 'starting') {
         h = `<p class="netWait">Запускаем игру на сервере…</p>`;
       } else if (E.st === 'full') {
@@ -11497,15 +11620,26 @@
         E.replyT = setTimeout(() => { if (E.ws === ws && E.st === 'connecting') { closeWs(); E.st = 'idle'; E.err = OLD; render(); } }, 6000);
         E.pingT = setInterval(() => send({ t: 'p', ts: performance.now() }), 5000); // пока выбираем игру — связь не засыпает
       };
+      bindWs(ws);
+    }
+    function bindWs(ws) {
       ws.onmessage = e => { if (E.ws !== ws) return; let m; try { m = JSON.parse(e.data); } catch (er) { return; } onMsg(m, ws); };
       ws.onclose = () => {
         if (E.ws !== ws) return;
         E.ws = null; clearInterval(E.pingT);
         if (E.st !== 'idle') { E.st = 'idle'; if (!E.err) E.err = 'Связь с сервером пропала.'; }
+        if (window.PPACC) PPACC.matchOff('elite');
         endPick();
         render();
       };
     }
+    // игра закончилась, комната осталась: снова выбираем игру (выбирает создатель)
+    NET.onEliteLobby = ws => {
+      E.ws = ws; bindWs(ws);
+      clearInterval(E.pingT); E.pingT = setInterval(() => send({ t: 'p', ts: performance.now() }), 5000);
+      E.st = 'ready'; E.err = ''; E.again = true; endPick();
+      NET.showEliteTab(); render();
+    };
     function onMsg(m, ws) {
       if (m.t === 'p') return;
       if (m.t === 'full') { closeWs(); E.st = 'full'; E.status = { busy: m.busy, max: m.max }; return render(); }
@@ -11522,7 +11656,7 @@
       if (m.t === 'srverr') { closeWs(); E.st = 'idle'; E.err = 'Сервер не смог запустить игру. Попробуй ещё раз.'; return render(); }
       if (m.t === 'left') { if (window.PPACC) PPACC.matchOff('elite'); closeWs(); endPick(); E.st = 'idle'; E.err = m.why === 'timeout' ? 'Матч закрыт: долго не начинали.' : 'Соперник отключился — матч закрыт.'; return render(); }
       // игра запущена на сервере: дальше этим соединением управляет обычный сетевой модуль (мы — гость)
-      if (m.t === 'egame') { clearInterval(E.pingT); E.ws = null; clearTimeout(E.replyT); E.st = 'playing'; render(); NET.eliteAttach(ws); }
+      if (m.t === 'egame') { E.again = false; clearInterval(E.pingT); E.ws = null; clearTimeout(E.replyT); E.st = 'playing'; render(); NET.eliteAttach(ws, E.you); }
     }
     // матч закончился (вышли, связь пропала) — назад во вкладку «Элит»
     NET.onEliteEnd = () => { if (window.PPACC) PPACC.matchOff('elite'); E.st = 'idle'; E.ws = null; endPick(); render(); loadStatus(); };
@@ -12212,6 +12346,30 @@
             D.energy[i] -= card.cost; spawn(G, i, card, x, y); D.sel[i] = null;
           } else if (D.energy[i] < card.cost) G.flash('Мало энергии', '#ffd23f', 700, i);
         }
+      },
+      // клавиатура: синий — 1, 2, 3, 4; красный — 7, 8, 9, 0. Отряд встаёт перед своим замком, бомба — в ближайшего врага
+      onKey(G, code, down) {
+        const KB = { Digit1: [0, 0], Digit2: [0, 1], Digit3: [0, 2], Digit4: [0, 3], Digit7: [1, 0], Digit8: [1, 1], Digit9: [1, 2], Digit0: [1, 3],
+          Numpad1: [0, 0], Numpad2: [0, 1], Numpad3: [0, 2], Numpad4: [0, 3] }[code];
+        if (!KB) return false;
+        if (!down) return true;
+        const D = G.d, k = KB[1]; let i = KB[0];
+        if (i === 1 && G.bot) return true;
+        if (G.state !== 'play') return true;
+        const card = CARDS[k];
+        if (D.energy[i] < card.cost) { G.flash('Мало энергии', '#ffd23f', 700, i); return true; }
+        let x, y;
+        if (card.spell) {
+          const [cx, cy] = castlePos(G, i);
+          const foes = D.units.filter(u => u.side !== i && u.hp > 0);
+          if (foes.length) { const f = foes.reduce((a, b) => Math.hypot(a.x - cx, a.y - cy) < Math.hypot(b.x - cx, b.y - cy) ? a : b); x = f.x; y = f.y; }
+          else [x, y] = castlePos(G, 1 - i).map((v, n) => n ? v + (i ? -40 : 40) : v);
+        } else {
+          const lx = G.W / 2 + (Math.random() - 0.5) * 120, ly = G.H / 2 + RIVER / 2 + 40 + Math.random() * 30;
+          [x, y] = loc(G, i, lx, ly);
+        }
+        D.energy[i] -= card.cost; D.sel[i] = null; spawn(G, i, card, x, y);
+        return true;
       },
       move(G, x, y, id) {
         const d = G.d.drag[id];
@@ -13035,6 +13193,30 @@
         D.aim = { p: best, x, y, id, tick: 0 };
         G.sound(400, 0.03, 'sine', 0.03);
       },
+      // клавиатура: держишь Пробел / Enter — выбрана фишка ближе к мячу, сила качается; A/D или ←/→ — поворот,
+      // W/S или ↑/↓ — другая фишка; отпустил — удар
+      onKey(G, code, down) {
+        const D = G.d, guest = G.netMode() === 'guest', a0 = guest ? G.loc : D.aim;
+        if (a0 && a0.id === 'key' && down && ['KeyW', 'KeyS', 'ArrowUp', 'ArrowDown'].includes(code)) {
+          const mine = D.pucks.map((p, k) => [p, k]).filter(([p]) => p.team === a0.i);
+          const cur = mine.findIndex(([, k]) => k === a0.pi), [p, k] = mine[(cur + (code === 'KeyS' || code === 'ArrowDown' ? 1 : mine.length - 1)) % mine.length];
+          a0.pi = k; if (!guest) a0.p = p; a0.kang = Math.atan2(D.ball.y - p.y, D.ball.x - p.x); G.sound(460, 0.03, 'sine', 0.03);
+          return true;
+        }
+        const i = PGAIM.who(G, code); if (i === -1) return false; if (i < 0) return true;
+        if (!down) { if (a0 && a0.id === 'key') this.up(G, a0.x, a0.y, 'key'); return true; }
+        if (G.state !== 'play' || D.phase !== 'aim') return true;
+        if (D.turn !== i) { say(G, i, 'Сейчас ход соперника', '#ffffff', 15); return true; }
+        if (guest && (G.loc || (G.sentShot && G.now - G.sentShot < 2500))) return true;
+        if (!guest && D.aim) return true;
+        let pi = -1, bd = 1e9;
+        D.pucks.forEach((p, k) => { const d = Math.hypot(p.x - D.ball.x, p.y - D.ball.y); if (p.team === i && d < bd) { bd = d; pi = k; } });
+        if (pi < 0) return true;
+        const p = D.pucks[pi], a = { id: 'key', i, pi, x: p.x, y: p.y, tick: 0, kang: Math.atan2(D.ball.y - p.y, D.ball.x - p.x), t0: performance.now() };
+        if (guest) G.loc = a; else { a.p = p; D.aim = a; }
+        G.sound(400, 0.03, 'sine', 0.03);
+        return true;
+      },
       move(G, x, y, id) {
         if (G.netMode() === 'guest') {
           const a = G.loc, p = a && G.d.pucks[a.pi];
@@ -13284,6 +13466,13 @@
           G.rr(bar.x - bar.w / 2, bar.y - bar.h / 2, bar.w, bar.h, 5); c.fillStyle = '#c9a6ff'; c.fill();
           c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(bar.x - bar.w / 2 + 6, bar.y - 2, bar.w - 12, 2);
         }
+        // прицел с клавиатуры: поворот и качание силы
+        { const k = G.netMode() === 'guest' ? G.loc : D.aim, p = k && D.pucks[k.pi];
+          if (k && k.id === 'key' && p && D.phase === 'aim') {
+            k.kang += PGAIM.turn(G, k.i) * 1.6 * PGAIM.dt(k);
+            const d = 15 + PGAIM.pow(performance.now() - k.t0) * (PULL_MAX - 15);
+            k.x = p.x - Math.cos(k.kang) * d; k.y = p.y - Math.sin(k.kang) * d;
+          } }
         // прицел: пунктир пути фишки и куда пойдёт мяч
         const a = G.netMode() === 'guest' && G.loc && D.pucks[G.loc.pi] ? { p: D.pucks[G.loc.pi], x: G.loc.x, y: G.loc.y } : D.aim;
         if (a) {
@@ -13463,6 +13652,25 @@
         }
         D.aim = { id, ax: x, ay: y, x, y };
       },
+      // клавиатура: держишь Пробел / Enter — сила качается, A/D или ←/→ — поворот, отпустил — бросок;
+      // пока свой камень едет — держи ту же клавишу, это натирание льда
+      onKey(G, code, down) {
+        const i = PGAIM.who(G, code); if (i === -1) return false; if (i < 0) return true;
+        const D = G.d, guest = G.netMode() === 'guest';
+        if (!down) {
+          if (G.kSweep === i) { G.kSweep = null; return true; }
+          const a = guest ? G.loc : D.aim; if (a && a.id === 'key') this.up(G, a.x, a.y, 'key');
+          return true;
+        }
+        if (G.state !== 'play') return true;
+        if (D.phase === 'moving') { if (G.opts.sweep && D.mover === i) G.kSweep = i; return true; }
+        if (D.phase !== 'aim') return true;
+        if (D.turn !== i) { G.flash('Ход соперника', 'rgba(255,255,255,0.8)', 600, i); return true; }
+        const [sx, sy] = startPos(G, i), a = { id: 'key', ax: sx, ay: sy, x: sx, y: sy, kang: i ? Math.PI / 2 : -Math.PI / 2, base: i ? Math.PI / 2 : -Math.PI / 2, t0: performance.now() };
+        if (guest) { if (G.loc || (G.sentShot && G.now - G.sentShot < 2500)) return true; G.loc = a; }
+        else { if (D.aim) return true; D.aim = a; }
+        return true;
+      },
       move(G, x, y, id) {
         if (G.netMode() === 'guest') {
           const D = G.d, pt = (G.lptr || {})[id];
@@ -13640,6 +13848,24 @@
           c.strokeStyle = PG_COL[st.team]; c.lineWidth = 2.5; c.setLineDash([5, 4]);
           c.beginPath(); c.moveTo(cx, cy); c.lineTo(st.x, st.y); c.stroke(); c.setLineDash([]);
           c.strokeStyle = '#ffd23f'; c.lineWidth = 3; c.beginPath(); c.arc(st.x, st.y, SR + 5 + Math.sin(now / 120) * 2, 0, Math.PI * 2); c.stroke();
+        }
+        // прицел с клавиатуры: поворот и качание силы
+        { const k = G.netMode() === 'guest' ? G.loc : D.aim;
+          if (k && k.id === 'key' && D.phase === 'aim') {
+            k.kang = Math.max(k.base - 0.6, Math.min(k.base + 0.6, k.kang + PGAIM.turn(G, D.turn) * 0.9 * PGAIM.dt(k)));
+            const d = 15 + PGAIM.pow(performance.now() - k.t0) * (PULL_MAX - 15);
+            k.x = k.ax - Math.cos(k.kang) * d; k.y = k.ay - Math.sin(k.kang) * d;
+          }
+          // натирание клавишей: тереть лёд прямо перед своим камнем
+          if (G.kSweep != null && G.opts.sweep && D.phase === 'moving' && D.mover === G.kSweep && G.state === 'play') {
+            const st = D.stones.filter(s => s.team === G.kSweep && !s.out).pop();
+            if (st) {
+              const sp = Math.hypot(st.vx, st.vy) || 1, x = st.x + st.vx / sp * (SR + 14) + (Math.random() - 0.5) * 16, y = st.y + st.vy / sp * (SR + 14);
+              if (G.netMode() === 'guest') { if (G.now - (G.sweepSent || 0) > 80) { G.sweepSent = G.now; NET.send({ t: 'qsweep', key: 'curling', x: +x.toFixed(1), y: +y.toFixed(1) }); } }
+              else if (G.now - (G.kSweepAt || 0) > 70) { G.kSweepAt = G.now; D.sweepUntil = G.now + 160; D.sweepPts.push({ x, y, t: G.now }); }
+              if (Math.random() < 0.15) G.sound(2000 + Math.random() * 1500, 0.02, 'triangle', 0.01);
+            }
+          } else if (D.phase !== 'moving') G.kSweep = null;
         }
         // прицел
         const aimA = G.netMode() === 'guest' && G.loc ? G.loc : D.aim;
@@ -14354,6 +14580,7 @@
     }
     // тянешь джойстик назад — мяч летит вперёд (как рогатка); палец в центре — прямо на лунку
     function aimDir(G, D, a) {
+      if (a.kang != null) return [Math.cos(a.kang), Math.sin(a.kang)]; // прицел с клавиатуры
       const d = Math.hypot(a.dx, a.dy);
       if (d >= 8) return [-a.dx / d, -a.dy / d];
       const b = D.balls[a.i], [hx, hy] = D.course.hole, dd = Math.hypot(hx - b.x, hy - b.y) || 1;
@@ -14554,6 +14781,19 @@
         D.aim = { id, i, t0: G.now, dx: x - jx, dy: y - jy };
         G.sound(520, 0.03, 'square', 0.02);
       },
+      // клавиатура: держишь Пробел / Enter — прицел на лунку и качается сила, A/D или ←/→ — поворот, отпустил — удар
+      onKey(G, code, down) {
+        const i = PGAIM.who(G, code); if (i === -1) return false; if (i < 0) return true;
+        const D = G.d, guest = G.netMode() === 'guest';
+        if (!down) { const a = guest ? G.loc : D.aim; if (a && a.id === 'key') this.up(G, 0, 0, 'key'); return true; }
+        if (G.state !== 'play' || D.phase !== 'aim' || !D.balls) return true;
+        if (D.turn !== i) { G.flash('Ход соперника', 'rgba(255,255,255,0.85)', 600, i); return true; }
+        const b = D.balls[i], [hx, hy] = D.course.hole, kang = Math.atan2(hy - b.y, hx - b.x);
+        if (guest) { if (G.loc || (G.sentShot && G.now - G.sentShot < 2500)) return true; G.loc = { id: 'key', i: 1, t0: performance.now(), local: true, dx: 0, dy: 0, kang }; }
+        else { if (D.aim) return true; D.aim = { id: 'key', i, t0: G.now, dx: 0, dy: 0, kang }; }
+        G.sound(520, 0.03, 'square', 0.02);
+        return true;
+      },
       move(G, x, y, id) {
         if (G.netMode() === 'guest') { const a = G.loc; if (a && a.id === id) { const [jx, jy] = joyBase(G, 1); a.dx = x - jx; a.dy = y - jy; } return; }
         const D = G.d, a = D.aim;
@@ -14677,6 +14917,7 @@
         GolfCore.draw(c, C, roundT(G, now), { now, gateOpen: C.gateOpen, starsTaken: D.stars, bumpHit: D.bumpHit, btnHit: D.btnHit });
         // стрелка силы
         const a = G.netMode() === 'guest' && G.loc ? G.loc : D.aim;
+        if (a && a.id === 'key' && (G.netMode() !== 'guest' || a === G.loc)) a.kang += PGAIM.turn(G, a.i) * 1.6 * PGAIM.dt(a);
         if (a && D.phase === 'aim') {
           const b = D.balls[a.i], [ux, uy] = aimDir(G, D, a), p = powerAt((a.local ? performance.now() : now) - a.t0);
           drawArrow(G, b.x, b.y, ux, uy, C.BR + 4, RAY_MIN + RAY_LEN, RAY_MIN + RAY_LEN * p, p, a.i, now);
@@ -14685,7 +14926,7 @@
         const order = D.turn === 0 ? [1, 0] : [0, 1];
         for (const i of order) {
           const b = D.balls[i];
-          for (const [x, y, t] of b.trail || []) { if (now - t >= 350) continue; c.globalAlpha = (1 - (now - t) / 350) * 0.55; G.circle(x, y, C.BR * (0.4 + 0.5 * (1 - (now - t) / 350)), PG_COL[i]); }
+          if (!(window.PPFX && PPFX.draw(c, b.trail, i, now, C.BR))) for (const [x, y, t] of b.trail || []) { if (now - t >= 350) continue; c.globalAlpha = (1 - (now - t) / 350) * 0.55; G.circle(x, y, C.BR * (0.4 + 0.5 * (1 - (now - t) / 350)), PG_COL[i]); }
           c.globalAlpha = 1;
           if (b.in) {
             const k = Math.max(0, 1 - (now - b.sinkAt) / 300);
@@ -15324,15 +15565,17 @@
           else if (!T.moved && dt < 300) tryRotate(G, P, 1);
         }
       },
+      // синий: WASD + Пробел, красный: стрелки + Enter (у каждого своё поле, повёрнутое к нему)
       onKey(G, code, down) {
         if (!down) return false;
-        const P = G.d.P && G.d.P[0]; if (!P || P.dead || G.state !== 'play') return false;
-        if (code === 'ArrowLeft' || code === 'KeyA') { tryMove(P, -1, 0); return true; }
-        if (code === 'ArrowRight' || code === 'KeyD') { tryMove(P, 1, 0); return true; }
-        if (code === 'ArrowUp' || code === 'KeyW') { tryRotate(G, P, 1); return true; }
-        if (code === 'ArrowDown' || code === 'KeyS') { tryMove(P, 0, 1); return true; }
-        if (code === 'Space') { hardDrop(G, P); return true; }
-        return false;
+        const K = { KeyA: [0, 'L'], KeyD: [0, 'R'], KeyW: [0, 'U'], KeyS: [0, 'D'], Space: [0, 'X'],
+          ArrowLeft: [1, 'L'], ArrowRight: [1, 'R'], ArrowUp: [1, 'U'], ArrowDown: [1, 'D'], Enter: [1, 'X'], NumpadEnter: [1, 'X'] }[code];
+        if (!K) return false;
+        let i = K[0]; if (i === 1 && G.bot) return true;
+        const P = G.d.P && G.d.P[i]; if (!P || P.dead || G.state !== 'play') return true;
+        if (K[1] === 'L') tryMove(P, -1, 0); else if (K[1] === 'R') tryMove(P, 1, 0); else if (K[1] === 'U') tryRotate(G, P, 1);
+        else if (K[1] === 'D') tryMove(P, 0, 1); else hardDrop(G, P);
+        return true;
       },
       update(G, dt, now) {
         const D = G.d; if (!D.P) return;
@@ -15562,11 +15805,15 @@
         }
       },
       upAll(G) { for (const P of G.d.P || []) { P.joy = null; P.gest = null; } },
+      // синий: Пробел — выстрел, E / левый Shift — рывок; красный: Enter и правый Shift
       onKey(G, code, down) {
-        const P = G.d.P && G.d.P[0]; if (!P || !down) return false;
-        if (code === 'Space') { shoot(G, P, P.face[0], P.face[1]); return true; }
-        if (code === 'ShiftLeft' || code === 'KeyE') { const k = G.keyVec[0]; dash(G, P, k.x, k.y); return true; }
-        return false;
+        const K = { Space: [0, 's'], KeyE: [0, 'd'], ShiftLeft: [0, 'd'], Enter: [1, 's'], NumpadEnter: [1, 's'], ShiftRight: [1, 'd'] }[code];
+        if (!K) return false;
+        let i = K[0]; if (i === 1 && G.bot) return true;
+        const P = G.d.P && G.d.P[i]; if (!P || !down || G.netMode() === 'guest') return true;
+        if (K[1] === 's') shoot(G, P, P.face[0], P.face[1]);
+        else { const k = G.keyVec[i]; dash(G, P, k.x, k.y); }
+        return true;
       },
       update(G, dt, now) {
         const D = G.d; if (!D.P) return;
@@ -16006,7 +16253,7 @@
       },
       onKey(G, code, down) {
         if (!btn) return false;
-        if (onBtn2 && (code === 'KeyE' || code === 'ShiftRight')) { const j = code === 'KeyE' ? 0 : 1; if (j === 1 && G.bot) return true; const Q = G.d.P && G.d.P[j]; if (Q && down) onBtn2(G, Q, true); return true; }
+        if (onBtn2 && (code === 'KeyE' || code === 'ShiftLeft' || code === 'ShiftRight')) { const j = code === 'ShiftRight' ? 1 : 0; if (j === 1 && G.bot) return true; const Q = G.d.P && G.d.P[j]; if (Q && down) onBtn2(G, Q, true); return true; }
         const i = code === 'Space' ? 0 : (code === 'Enter' || code === 'NumpadEnter') ? 1 : -1;
         if (i < 0) return false;
         if (i === 1 && G.bot) return true;
@@ -16139,6 +16386,7 @@
       if (!play || P.dead) return { x: 0, y: 0 };
       if (P.i === 1 && G.bot) return P.bot || { x: 0, y: 0 };
       if (P.joy && P.joy.on) { const [vx, vy] = BK.unflip(P.i, P.joy.x, P.joy.y), m = Math.max(0.35, P.joy.mag); return { x: vx * m, y: vy * m }; }
+      if (P.i === 1 && G.netMode && G.netMode() === 'host' && G.remote && G.remote.on) return { x: G.remote.x, y: G.remote.y }; // клавиши гостя
       const k = G.keyVec[P.i]; return { x: k.x, y: k.y };
     };
     BK.move = (P, inp, dt, acc, vmax, fr) => {
@@ -17684,6 +17932,23 @@
   //  • кнопка «Играть» всегда видна внизу окна.
   // Старые кнопки остаются в разметке (спрятаны) — новые просто нажимают их, логика игр не меняется.
   (function () {
+    // на компьютере — строка про клавиши (по названию игры)
+    const KB_DEF = 'Синий: WASD + Пробел · Красный: стрелки + Enter';
+    const KB_AIM = 'Держи Пробел (синий) или Enter (красный) — сила, A/D или ←/→ — поворот, отпусти — удар';
+    const KB = {
+      'Танки': 'Синий: Пробел, E — сквозь дерево · Красный: Enter, правый Shift',
+      'Аэрохоккей': 'Синий: WASD · Красный: стрелки · или мышью',
+      'Неон': 'Синий: WASD · Красный: стрелки',
+      'Гравитация': 'Синий: A / D — ствол, держи Пробел — сила · Красный: ← / → и Enter',
+      'Пинбол': 'Синий: A / D · Красный: ← / →',
+      'Мини-гольф': KB_AIM, 'Кёрлинг': KB_AIM + '. Пока камень едет — держи: натирание', 'Футбол': KB_AIM + '. W/S или ↑/↓ — другая фишка',
+      'Армии': 'Синий: 1, 2, 3, 4 · Красный: 7, 8, 9, 0 · или мышью',
+      'Кистень': 'Синий: WASD · Красный: стрелки',
+      'Блок-битва': 'Синий: WASD, Пробел — сбросить · Красный: стрелки, Enter',
+      'Стрелы': 'Синий: WASD, Пробел, E — рывок · Красный: стрелки, Enter, правый Shift',
+      'Лазерная арена': 'Синий: WASD, Пробел, левый Shift · Красный: стрелки, Enter, правый Shift'
+    };
+    const isPC = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches; } catch (e) { return false; } };
     const HOW = {
       'Танки: джойстик': [['🕹️', 'Слева — езда'], ['🎯', 'Справа — тап или потяни'], ['✊', 'Держи — сквозь дерево']],
       'Танки': [['🔄', 'Танк крутится сам'], ['👆', 'Жми — выстрел и рывок'], ['↩️', 'Отпусти — разворот']],
@@ -17731,7 +17996,9 @@
         more.addEventListener('click', () => { const on = !card.classList.contains('showDesc'); card.classList.toggle('showDesc', on); more.textContent = on ? 'Скрыть правила' : 'Подробные правила'; });
         const upd = () => {
           const h = HOW[(title.textContent || '').trim()];
-          how.innerHTML = h ? h.map(([i, t]) => `<div class="howTile"><span class="howIco">${i}</span><span>${t}</span></div>`).join('') : '';
+          const nm = (title.textContent || '').trim();
+          how.innerHTML = (h ? h.map(([i, t]) => `<div class="howTile"><span class="howIco">${i}</span><span>${t}</span></div>`).join('') : '')
+            + (isPC() ? `<div class="howKeys">⌨️ ${KB[nm] || KB_DEF}</div>` : '');
           card.classList.toggle('hasHow', !!h);
           more.hidden = !h || !(desc.textContent || '').trim();
         };
@@ -18003,11 +18270,12 @@
         if (A.seenInv[v.id]) return;
         A.seenInv[v.id] = 1;
         try { sound(660, 0.12, 'triangle', 0.06); } catch (e) {}
-        toast(`${v.from.name} зовёт играть`, [['Играть', () => acceptInvite(v), true], ['Нет', () => api('invite/answer', { id: v.id, yes: false }).catch(() => {})]], 110000);
+        toast(`${v.from.name} зовёт играть${/^\d{5}$/.test(String(v.room)) ? ' по сети' : ' в Сеть++'}`, [['Играть', () => acceptInvite(v), true], ['Нет', () => api('invite/answer', { id: v.id, yes: false }).catch(() => {})]], 110000);
       });
     }
     function acceptInvite(v) {
       api('invite/answer', { id: v.id, yes: true }).catch(() => {});
+      if (/^\d{5}$/.test(String(v.room))) { if (typeof NET !== 'undefined' && NET.inviteJoin && !NET.inviteJoin(v.room)) toast('Сначала закончи текущую игру'); return; }
       if (window.PPElite) window.PPElite.join(v.room);
     }
 
@@ -18063,12 +18331,28 @@
     const act = (path, body, okMsg) => ensure().then(() => api(path, body)).then(j => { apply(j); A.err = ''; if (okMsg) A.msg = typeof okMsg === 'function' ? okMsg(j) : okMsg; changed(); return j; }).catch(e => { A.err = e.message; changed(); });
     const addByNum = num => act('friend/add', { num }, j => (j.ok === 'friends' ? 'Теперь вы друзья' : 'Заявка отправлена'));
     const addById = id => act('friend/add', { id }, j => (j.ok === 'friends' ? 'Теперь вы друзья' : 'Заявка отправлена'));
+    // позвать друга: сначала выбираем, как играть. 4 цифры комнаты — «Сеть++», 5 — обычная «Сеть»
+    const WAYS = [
+      ['elite', 'Сеть++', 'Игру считает сервер в Москве. После игры можно сразу выбрать другую'],
+      ['ru', 'Сеть · Wi‑Fi или 4G', 'Без VPN, напрямую через Москву'],
+      ['tg', 'Сеть · Telegram + VPN', 'Для поочерёдных игр']
+    ];
     function invite(f) {
-      if (!window.PPElite) return;
       A.msg = ''; changed();
-      window.PPElite.create(code => {
-        api('invite', { to: f.id, room: code }).then(j => toast(j.on ? `Позвали ${f.name}. Ждём…` : `${f.name} не в игре — позвали через Telegram, если он привязан`)).catch(e => toast(e.message));
-      });
+      let box = document.querySelector('.accWayPick');
+      if (!box) { box = document.createElement('div'); box.className = 'hkOverlay netOverlay accWayPick'; document.body.appendChild(box); }
+      const last = ls.get('pp-invway') || 'elite';
+      box.innerHTML = `<div class="hkCard"><h1 class="menuTitle">Как играть с ${esc(f.name)}?</h1><div class="accWays">${WAYS.map(([k, t, s]) => `<button class="accWayBtn${k === last ? ' on' : ''}" data-k="${k}"><b>${t}</b><small>${s}</small></button>`).join('')}</div><div class="hkRow"><button class="backBtn accWayNo">Отмена</button></div></div>`;
+      box.hidden = false;
+      box.querySelector('.accWayNo').onclick = () => { box.hidden = true; };
+      box.onclick = e => { if (e.target === box) box.hidden = true; };
+      box.querySelectorAll('.accWayBtn').forEach(b => b.onclick = () => { box.hidden = true; ls.set('pp-invway', b.dataset.k); inviteVia(f, b.dataset.k); });
+    }
+    function inviteVia(f, k) {
+      const send = code => api('invite', { to: f.id, room: code }).then(j => toast(j.on ? `Позвали ${f.name}. Ждём…` : `${f.name} не в игре — позвали через Telegram, если он привязан`)).catch(e => toast(e.message));
+      if (k === 'elite') { if (typeof NET !== 'undefined' && NET.cancelHost) NET.cancelHost(); if (window.PPElite) window.PPElite.create(send); return; }
+      if (typeof NET === 'undefined' || !NET.inviteHost) return;
+      NET.inviteHost(k === 'ru' ? 'ru' : '', send, msg => toast(msg));
     }
     const myLink = () => 'https://pifpafgame.ru/?friend=' + (A.me ? A.me.id : '');
     async function share() {
@@ -18440,6 +18724,119 @@
     })();
   })();
 
+  // ======================= ЭФФЕКТЫ ПОЛЁТА МЯЧА + ИНВЕНТАРЬ =======================
+  // 5 эффектов следа мяча в мини-гольфе. Пока все закрыты (owned пуст) — в игре рисуется обычный след.
+  // Позже предметы будут выдаваться на аккаунт по ID (сервер), тогда owned/eq заполнятся оттуда.
+  // След мяча — точки [x, y, t] за последние 350 мс (golf.js). Случайность — из t, чтобы у обоих в сети было одинаково.
+  (function () {
+    const LIFE = 350;
+    const hash = (t, s) => { const v = Math.sin(t * 12.9898 + s * 78.233) * 43758.5453; return v - Math.floor(v); };
+    const dot = (c, x, y, r, col) => { c.fillStyle = col; c.beginPath(); c.arc(x, y, Math.max(0.1, r), 0, Math.PI * 2); c.fill(); };
+    function star(c, x, y, r, col) {
+      c.fillStyle = col; c.beginPath();
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, rr = k % 2 ? r * 0.38 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+      c.closePath(); c.fill();
+    }
+    const age = (now, t) => Math.min(1, (now - t) / LIFE);
+
+    const LIST = [
+      { id: 'comet', name: 'Комета', draw(c, T, now, R) {
+        c.lineCap = 'round';
+        for (let k = 1; k < T.length; k++) {
+          const [x0, y0] = T[k - 1], [x1, y1, t] = T[k], f = 1 - age(now, t); if (f <= 0) continue;
+          c.strokeStyle = `rgba(255,214,120,${0.35 * f})`; c.lineWidth = R * 2.2 * f; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+          c.strokeStyle = `rgba(255,255,235,${0.8 * f})`; c.lineWidth = R * 0.9 * f; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+        }
+        c.lineCap = 'butt';
+      } },
+      { id: 'fire', name: 'Огонь', draw(c, T, now, R) {
+        for (const [x, y, t] of T) {
+          const a = age(now, t), f = 1 - a; if (f <= 0) continue;
+          const h = hash(t, 1), col = a < 0.25 ? '255,243,176' : a < 0.6 ? '255,177,61' : '255,90,31';
+          c.globalAlpha = 0.85 * f; dot(c, x + Math.sin(h * 6.28 + now / 70) * 3 * a, y - a * 12, R * (0.35 + 0.75 * f) * (0.7 + h * 0.5), `rgb(${col})`);
+        }
+        c.globalAlpha = 1;
+      } },
+      { id: 'rainbow', name: 'Радуга', draw(c, T, now, R) {
+        c.lineCap = 'round';
+        for (let k = 1; k < T.length; k++) {
+          const [x0, y0] = T[k - 1], [x1, y1, t] = T[k], f = 1 - age(now, t); if (f <= 0) continue;
+          c.strokeStyle = `hsla(${(t * 0.6) % 360},95%,62%,${0.85 * f})`; c.lineWidth = R * 1.3 * f + 1; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+        }
+        c.lineCap = 'butt';
+      } },
+      { id: 'stars', name: 'Звёздная пыль', draw(c, T, now, R) {
+        for (const [x, y, t] of T) {
+          const h = hash(t, 2); if (h > 0.55) continue;
+          const f = 1 - age(now, t); if (f <= 0) continue;
+          const a = hash(t, 3) * 6.28, d = R * (0.6 + hash(t, 4) * 1.2);
+          c.globalAlpha = f * (0.55 + 0.45 * Math.sin(now / 55 + h * 40));
+          star(c, x + Math.cos(a) * d, y + Math.sin(a) * d, 2 + 3.5 * f, h < 0.3 ? '#fff6c0' : '#bfe3ff');
+        }
+        c.globalAlpha = 1;
+      } },
+      { id: 'bubbles', name: 'Пузыри', draw(c, T, now, R) {
+        for (const [x, y, t] of T) {
+          const h = hash(t, 5); if (h > 0.45) continue;
+          const a = age(now, t), f = 1 - a; if (f <= 0) continue;
+          const r = R * (0.3 + hash(t, 6) * 0.45) * (0.7 + a * 0.7), bx = x + (hash(t, 7) - 0.5) * R * 1.6, by = y - a * 9;
+          c.strokeStyle = `rgba(200,240,255,${0.85 * f})`; c.lineWidth = 1.3; c.beginPath(); c.arc(bx, by, r, 0, Math.PI * 2); c.stroke();
+          dot(c, bx - r * 0.35, by - r * 0.35, r * 0.25, `rgba(255,255,255,${0.8 * f})`);
+        }
+      } }
+    ];
+    const BY = Object.fromEntries(LIST.map(e => [e.id, e]));
+    // что есть у игрока и что надето: пока пусто — всё закрыто
+    const S = { owned: [], eq: [null, null] };
+    window.PPFX = {
+      list: LIST, state: S,
+      owns: id => S.owned.includes(id),
+      // нарисовать след мяча игрока i; false — эффекта нет, рисуй обычный след
+      draw(c, T, i, now, R) { const id = S.eq[i]; if (!id || !BY[id] || !S.owned.includes(id) || !T || !T.length) return false; BY[id].draw(c, T, now, R); return true; }
+    };
+
+    // ---------- вкладка «Инвентарь» ----------
+    const toast = msg => { let t = document.querySelector('.invToast'); if (!t) { t = document.createElement('div'); t.className = 'invToast'; document.body.appendChild(t); } t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1800); };
+    window.PPINV = {
+      mount(box) {
+        box.innerHTML = `<div class="invHead"><b>Инвентарь</b><span>Эффекты полёта мяча в мини-гольфе. Пока все закрыты.</span></div><div class="invGrid"></div>`;
+        const grid = box.querySelector('.invGrid'), cards = [];
+        for (const e of LIST) {
+          const own = window.PPFX.owns(e.id);
+          const card = document.createElement('button'); card.type = 'button'; card.className = 'invCard' + (own ? '' : ' locked');
+          card.innerHTML = `<canvas></canvas><span class="invName">${e.name}</span><span class="invLock">${own ? 'Есть' : '🔒 Закрыто'}</span>`;
+          card.addEventListener('click', () => toast(own ? e.name : 'Пока закрыто — скоро можно будет получить'));
+          grid.appendChild(card); cards.push({ e, cv: card.querySelector('canvas'), T: [] });
+        }
+        // превью: мяч летает восьмёркой и оставляет след
+        let raf = 0;
+        const frame = now => {
+          raf = 0; if (box.hidden || !box.isConnected || box.offsetParent === null) return;
+          for (const P of cards) {
+            const cv = P.cv, dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w) continue;
+            if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+            const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+            c.fillStyle = '#5fc46a'; c.fillRect(0, 0, w, h);
+            c.fillStyle = 'rgba(255,255,255,0.06)'; for (let x = 0; x < w; x += 20) c.fillRect(x, 0, 10, h);
+            const R = Math.max(5, Math.min(8, h / 11)), s = now / 900, x = w / 2 + Math.sin(s) * (w / 2 - R * 2.5), y = h / 2 + Math.sin(s * 2) * (h / 2 - R * 2.2);
+            P.T.push([x, y, now]); P.T = P.T.filter(p => now - p[2] < LIFE);
+            P.e.draw(c, P.T, now, R);
+            dot(c, x + 1.2, y + 2, R, 'rgba(0,0,0,0.3)');
+            const g = c.createRadialGradient(x - R * 0.35, y - R * 0.4, R * 0.1, x, y, R);
+            g.addColorStop(0, '#8fc0ff'); g.addColorStop(0.55, '#3f7fe0'); g.addColorStop(1, '#22498f'); dot(c, x, y, R, g);
+            dot(c, x - R * 0.45, y - R * 0.5, R * 0.18, 'rgba(255,255,255,0.7)');
+          }
+          raf = requestAnimationFrame(frame);
+        };
+        const start = () => { if (!raf && !box.hidden) raf = requestAnimationFrame(frame); };
+        new MutationObserver(start).observe(box, { attributes: true, attributeFilter: ['hidden'] });
+        const home = document.getElementById('homeScreen');
+        if (home) new MutationObserver(start).observe(home, { attributes: true, attributeFilter: ['hidden'] });
+        start();
+      }
+    };
+  })();
+
   // ======================= ГЛАВНЫЙ ЭКРАН: РЕЖИМЫ =======================
   // Сверху выбор «Вдвоём / С ботом / По сети», колба — лаборатория (бывшая вкладка «Тестирование»).
   // Старые вкладки остаются внутри (спрятаны) — новый экран просто переключает их, сетевой код не трогаем.
@@ -18469,6 +18866,7 @@
       golf: '<path d="M12 18V3l7 4-7 4"/><path d="M9 17.7c-.6.4-1 .8-1 1.3 0 1.1 1.8 2 4 2s4-.9 4-2c0-.5-.4-1-1-1.3"/>',
       ball: '<circle cx="12" cy="12" r="9"/><path d="M12 7l4.8 3.5-1.8 5.5H9l-1.8-5.5z"/>',
       plane: '<path d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7H9l2-7H7l-2 2H2l2-4-2-4h3l2 2h4L9 3h3z"/>',
+      box: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
       disc: '<circle cx="12" cy="12" r="9"/><path d="M12 15a3 3 0 1 0 0-6"/><path d="M7 12a5 5 0 0 1 5-5"/>',
       sword: '<path d="M20 4v5l-9 7-4 4-3-3 4-4 7-9z"/><path d="M6.5 11.5l6 6"/>',
       tower: '<path d="M4 20h16M6 20v-4h12v4M8 16v-4h8v4M10 12V8h4v4M12 8V5"/>',
@@ -18501,7 +18899,7 @@
 
     // --- режимы ---
     const bar = el('div', 'modeBar');
-    bar.innerHTML = `<button data-m="two">${svg('users')}Вдвоём</button><button data-m="bot">${svg('robot')}С ботом</button><span class="modeSep"></span><button data-m="net" data-s="net">${svg('world')}Сеть</button><button data-m="net" data-s="elite">${svg('server')}<span>Сеть<b class="plus">++</b></span></button><span class="modeSep"></span><button data-m="friends">${svg('heart')}<span>Друзья</span><b class="fBadge" hidden></b></button><span class="modeSep"></span><button data-m="lab">${svg('flask')}<span>Лабо&shy;ратория</span></button>`;
+    bar.innerHTML = `<button data-m="two">${svg('users')}Вдвоём</button><button data-m="bot">${svg('robot')}С ботом</button><span class="modeSep"></span><button data-m="net" data-s="net">${svg('world')}Сеть</button><button data-m="net" data-s="elite">${svg('server')}<span>Сеть<b class="plus">++</b></span></button><span class="modeSep"></span><button data-m="friends">${svg('heart')}<span>Друзья</span><b class="fBadge" hidden></b></button><button data-m="inv">${svg('box')}<span>Инвен&shy;тарь</span></button><span class="modeSep"></span><button data-m="lab">${svg('flask')}<span>Лабо&shy;ратория</span></button>`;
     tabs.parentNode.insertBefore(bar, tabs);
     tabs.classList.add('oldTabs');
 
@@ -18511,7 +18909,8 @@
     const netSw = el('div', 'segmented netSw', '<button data-s="net">Обычная</button><button data-s="elite">Элит · сервер</button>');
     const botGrid = el('div', 'tiles'), botOffT = el('div', 'tilesDivider', '<span>Только вдвоём</span>'), botOff = el('div', 'tiles');
     const friendsBox = el('div', 'friendsBox'); friendsBox.hidden = true;
-    tabs.after(labHead, cont, botBar, netSw, botGrid, botOffT, botOff, friendsBox);
+    const invBox = el('div', 'invBox'); invBox.hidden = true;
+    tabs.after(labHead, cont, botBar, netSw, botGrid, botOffT, botOff, friendsBox, invBox);
     // эти игры — только в Лаборатории (не во «Вдвоём» и не в «С ботом»)
     const LAB_IDS = ['pgTile-blocks', 'pgTile-band', 'pgTile-flag', 'pgTile-laser'];
     (() => { const lab = document.getElementById('tilesTanks'); LAB_IDS.forEach(id => { const t = document.getElementById(id); if (t && lab) lab.appendChild(t); }); })();
@@ -18593,6 +18992,7 @@
       botGrid.hidden = botOffT.hidden = botOff.hidden = mode !== 'bot';
       if (mode === 'bot') buildBot();
       friendsBox.hidden = mode !== 'friends';
+      invBox.hidden = mode !== 'inv';
       botBar.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.i === botLv())));
       netSw.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === netSub)));
       syncing = true;
@@ -18601,6 +19001,7 @@
       else if (mode === 'net') oldTab(netSub);
       else if (mode === 'lab') oldTab('tanks');
       else if (mode === 'friends') { oldTab('mini'); document.getElementById('tilesMini').hidden = true; if (window.PPACC) PPACC.shown(); }
+      else if (mode === 'inv') { oldTab('mini'); document.getElementById('tilesMini').hidden = true; }
       syncing = false;
       renderCont();
     }
@@ -18654,6 +19055,7 @@
       const badge = bar.querySelector('.fBadge');
       PPACC.onChange(() => { const n = PPACC.badge(); badge.hidden = !n; badge.textContent = n; });
     }
+    if (window.PPINV) PPINV.mount(invBox);
     window.pgHome = { setMode, render };
   })();
 
