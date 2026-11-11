@@ -1702,16 +1702,78 @@
   /* инвентарь */
   .invBox { display: flex; flex-direction: column; gap: 12px; }
   .invBox[hidden] { display: none; }
-  .invHead { display: flex; flex-direction: column; gap: 4px; padding: 2px 2px 0; }
-  .invHead b { font-size: 18px; font-weight: 800; }
-  .invHead span { font-size: 13px; opacity: .6; line-height: 1.35; }
-  .invGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .invCard { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 8px 10px; border: 0; border-radius: 18px; background: rgba(255,255,255,.06); color: inherit; font: inherit; text-align: left; cursor: pointer; }
-  .invCard canvas { width: 100%; aspect-ratio: 5 / 3; border-radius: 12px; display: block; }
-  .invCard.locked canvas { filter: saturate(.75) brightness(.8); }
-  .invName { font-size: 14px; font-weight: 800; padding: 0 2px; }
-  .invLock { font-size: 12px; opacity: .55; padding: 0 2px; }
-  .invCard.locked::after { content: '🔒'; position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,.55); display: grid; place-items: center; font-size: 13px; }
+  .invTop { display: flex; flex-direction: column; gap: 7px; padding: 0 2px; }
+  .invTitle { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .invTitle b { font-size: 20px; font-weight: 900; letter-spacing: -.2px; }
+  .invCount { font-size: 12.5px; opacity: .55; font-weight: 700; white-space: nowrap; }
+  .invBar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .invBar i { display: block; height: 100%; min-width: 6px; border-radius: 99px; background: linear-gradient(90deg, #4fa3ff, #b56bff, #ffc53d); transition: width .4s; }
+  .invTabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; border-radius: 16px; background: rgba(255,255,255,.05); }
+  .invTabs button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 4px 6px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; font-size: 13px; font-weight: 800; opacity: .55; cursor: pointer; transition: background .2s, opacity .2s; }
+  .invTabs button small { font-size: 10.5px; font-weight: 700; opacity: .7; }
+  .invTabs button.on { background: rgba(255,255,255,.1); opacity: 1; }
+  .invShow { display: flex; flex-direction: column; gap: 10px; padding: 10px; border-radius: 22px; background: rgba(255,255,255,.05); }
+  .invStage { position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 2px var(--rc), 0 6px 24px -6px var(--rc); transition: box-shadow .3s; cursor: pointer; }
+  .invStage canvas { display: block; width: 100%; aspect-ratio: 16 / 10; }
+  .invStage.locked canvas { filter: saturate(.8) brightness(.88); }
+  .invStage.legend::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 35%, rgba(255,230,150,.22) 50%, transparent 65%); background-size: 250% 100%; animation: invShine 3.2s linear infinite; }
+  @keyframes invShine { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+  .invStageLock { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,.55); display: none; place-items: center; font-size: 15px; z-index: 1; }
+  .invStage.locked .invStageLock { display: grid; }
+  .invInfo { display: flex; flex-direction: column; gap: 4px; padding: 0 4px 2px; }
+  .invRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .invBig { font-size: 18px; font-weight: 900; }
+  .invRar { font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 99px; color: var(--rc); background: color-mix(in srgb, var(--rc) 16%, transparent); white-space: nowrap; }
+  .invDesc { font-size: 13.5px; opacity: .75; line-height: 1.35; }
+  .invState { font-size: 12.5px; opacity: .55; }
+  .invState .invNo { font-weight: 800; }
+  .invState .invOk { font-weight: 800; color: #6fdc8c; opacity: 1; }
+  .invEq { align-self: flex-start; margin-top: 6px; padding: 9px 18px; border: 0; border-radius: 12px; background: var(--tank1, #4fa3ff); color: #fff; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+  .invEq.off { background: rgba(255,255,255,.1); }
+  .invEq[hidden] { display: none; }
+  .invWorn { position: absolute; top: 9px; right: 9px; width: 20px; height: 20px; border-radius: 50%; background: #3fbf6a; color: #fff; font-size: 12px; font-weight: 900; display: none; place-items: center; }
+  .invItem.worn .invWorn { display: grid; }
+  /* эмоции в игре: облачко над героем рисуется на холсте .pinCv; здесь — только кнопка 😊 и выбор эмоции */
+  #pinLayer { position: fixed; inset: 0; pointer-events: none; z-index: 160; }
+  #pinLayer[hidden] { display: none; }
+  .pinB { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform; contain: layout paint; }
+  .pinB[hidden] { display: none; }
+  .pinBody { display: block; }
+  .pinEmo { position: absolute; }
+  .pinCorner { position: absolute; width: 0; height: 0; }
+  .pinCorner[hidden] { display: none; }
+  /* у средней линии: ты — слева под паузой; красный (вдвоём) — справа, повёрнут к нему */
+  .pinCorner.s0 { left: max(8px, env(safe-area-inset-left, 0px)); top: calc(50% + 46px); }
+  .pinCorner.s1 { right: max(8px, env(safe-area-inset-right, 0px)); top: calc(50% - 46px); transform: rotate(180deg); transform-origin: 0 0; }
+  .pinBtn { position: absolute; left: 0; top: 0; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; background: rgba(20,22,30,.6); box-shadow: 0 0 0 2px rgba(255,255,255,.18); font-size: 21px; line-height: 42px; cursor: pointer; pointer-events: auto; transition: opacity .2s, transform .15s; }
+  .pinBtn:active { transform: scale(.9); }
+  .pinBtn.cd { opacity: .4; }
+  .pinPanel { position: absolute; left: 0; top: 50px; pointer-events: auto; display: flex; flex-wrap: wrap; gap: 6px; width: max-content; max-width: 210px; padding: 7px; border-radius: 18px; background: rgba(20,22,30,.94); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .pinPanel[hidden] { display: none; }
+  .pinPanel button { width: 42px; height: 42px; border: 0; border-radius: 12px; background: rgba(255,255,255,.08); color: #fff; font: 900 22px system-ui, sans-serif; cursor: pointer; }
+  .pinPanel button[data-id="gg"] { font-size: 15px; }
+  .pinPanel button.gift { position: relative; opacity: .45; filter: grayscale(.6); }
+  .pinPanel button.gift i { position: absolute; right: -3px; top: -4px; font-size: 13px; font-style: normal; filter: none; }
+  .pinMore.hey { animation: pinHey .5s; }
+  @keyframes pinHey { 30% { transform: translateX(-3px); color: #2fe0c8; opacity: 1; } 60% { transform: translateX(3px); } }
+  .pinMore { flex-basis: 100%; font-size: 11px; opacity: .55; padding: 0 2px; color: #fff; }
+  .invSec { font-size: 12.5px; font-weight: 800; opacity: .5; padding: 2px 4px 0; text-transform: none; }
+  .invGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .invItem { position: relative; display: flex; flex-direction: column; gap: 5px; padding: 6px 6px 8px; border: 0; border-radius: 16px; background: rgba(255,255,255,.05); color: inherit; font: inherit; cursor: pointer; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow .2s, transform .15s, background .2s; }
+  .invItem:active { transform: scale(.96); }
+  .invItem.on { background: rgba(255,255,255,.09); box-shadow: inset 0 0 0 2px var(--rc); }
+  .invItem canvas { display: block; width: 100%; aspect-ratio: 1; border-radius: 11px; }
+  .invItem.locked canvas { filter: saturate(.55) brightness(.75); }
+  .invName { font-size: 12px; font-weight: 800; line-height: 1.15; text-align: center; min-height: 2.3em; display: grid; place-items: center; }
+  .invDot { position: absolute; top: 11px; left: 11px; width: 8px; height: 8px; border-radius: 50%; background: var(--rc); box-shadow: 0 0 6px var(--rc); }
+  .invMiniLock { position: absolute; top: 9px; right: 9px; font-size: 11px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,0,0,.5); display: none; place-items: center; }
+  .invItem.locked .invMiniLock { display: grid; }
+  .invMiniLock.gift { background: rgba(47,224,200,.25); }
+  .invItem.locked:has(.invMiniLock.gift) canvas { filter: saturate(.8) brightness(.9); }
+  .invGift { font-weight: 800; color: #2fe0c8; }
+  .invEq.gift { background: #2fe0c8; color: #0d2b27; }
+  .shake { animation: invShake .45s; }
+  @keyframes invShake { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-16deg); } 40% { transform: rotate(13deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(4deg); } }
   .invToast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); background: rgba(20,22,30,.95); color: #fff; padding: 10px 16px; border-radius: 14px; font-size: 14px; opacity: 0; pointer-events: none; transition: .2s; z-index: 9999; max-width: calc(100% - 32px); text-align: center; }
   .invToast.on { opacity: 1; transform: translate(-50%, 0); }
   .accCard { gap: 10px; padding: 12px; }
@@ -1811,6 +1873,11 @@
   .accLogin > .hkPlay { padding: 11px; }
   .accForm { margin: 0; }
   .accLinkBtn { background: none !important; border: 0 !important; color: #8fb4ff !important; text-decoration: underline; padding: 4px !important; font-size: 0.88rem; align-self: center !important; }
+  .accGift { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 6px; border-radius: 14px; background: rgba(47,224,200,.08); box-shadow: inset 0 0 0 1.5px rgba(47,224,200,.35); }
+  .accGiftCv { flex: none; width: 54px; height: 48px; border-radius: 12px; background: #fff; }
+  .accGift span { flex: 1; display: flex; flex-direction: column; gap: 1px; font-size: 0.82rem; opacity: .85; line-height: 1.25; }
+  .accGift span b { font-size: 0.92rem; opacity: 1; color: #2fe0c8; }
+  .accGiftLine { display: block; margin-top: 6px; font-size: 0.82rem; color: #2fe0c8; }
   .accHint { display: flex; align-items: center; gap: 8px; background: #2a2618; border: 1px solid #4a4020; border-radius: 12px; padding: 8px 10px; font-size: 0.85rem; color: #f0d98a; line-height: 1.3; }
   .accHint span { flex: 1; }
   .accHint .backBtn { flex: none; padding: 8px 10px; }
@@ -1833,6 +1900,44 @@
   .accWay .backBtn { flex: none; padding: 7px 10px; font-size: 0.85rem; }
   .accOk { color: #4fd17a; font-size: 0.85rem; flex: none; }
   .accCard > .accOut { align-self: stretch; text-align: center; }
+
+  /* сундучок после матча */
+  #chestLayer { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; background: rgba(8,10,16,.55); animation: chIn .2s; }
+  #chestLayer.out { opacity: 0; transition: opacity .2s; }
+  @keyframes chIn { from { opacity: 0; } }
+  .chBox { position: relative; width: min(300px, 86vw); padding: 18px 16px 16px; border-radius: 22px; background: #1d2130; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.45); text-align: center; }
+  .chTitle { font-size: 1.15rem; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .chRar { font-style: normal; font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 99px; color: var(--rc); background: color-mix(in srgb, var(--rc) 18%, transparent); }
+  .chCv { width: 180px; height: 150px; cursor: pointer; touch-action: manipulation; }
+  .chStage { position: relative; }
+  .chPrize { position: absolute; left: 50%; top: 4px; width: 120px; height: 104px; margin-left: -60px; border-radius: 30px; background: #fff; box-shadow: 0 0 0 3.5px #1b1b22, 0 6px 0 rgba(0,0,0,.25); transform: translateY(40px) scale(.2); opacity: 0; transition: transform .45s cubic-bezier(.3,1.6,.5,1), opacity .2s; pointer-events: none; }
+  .chPrize.on { transform: translateY(-6px) scale(1); opacity: 1; }
+  .chPrize[hidden] { display: none; }
+  .chPin { width: 100%; height: 100%; display: block; }
+  .chHint { font-size: .85rem; opacity: .7; min-height: 1.2em; }
+  .chOk { min-width: 140px; }
+  .chOk[hidden] { display: none; }
+  .chRow { display: flex; gap: 8px; justify-content: center; }
+  .chLater[hidden] { display: none; }
+  .chPrize.dup { filter: saturate(.7); }
+  .chPrize.myth { box-shadow: 0 0 0 3.5px #1b1b22, 0 0 0 8px rgba(255,79,120,.55), 0 0 30px rgba(255,79,120,.7); }
+  .invChest { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,.05); }
+  .invChest[hidden] { display: none; }
+  .icRow { display: flex; align-items: center; gap: 10px; }
+  .icT { flex: 1; font-weight: 800; font-size: .95rem; }
+  .icOpen { padding: 8px 14px; font-size: .9rem; animation: icPulse 1.4s infinite; }
+  @keyframes icPulse { 50% { transform: scale(1.05); } }
+  .icSteps { display: flex; align-items: center; }
+  .icSteps span { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .7rem; opacity: .6; }
+  .icSteps span b { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.08); font-size: .85rem; }
+  .icSteps span.ok { opacity: 1; color: #2fe0c8; }
+  .icSteps span.ok b { background: rgba(47,224,200,.2); }
+  .icSteps i { flex: 1; height: 2px; background: rgba(255,255,255,.1); margin: 0 6px 14px; }
+  .icSub { font-size: .78rem; opacity: .6; }
+  .icDups { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .78rem; }
+  .icDups span { flex-basis: 100%; opacity: .7; }
+  .icDups i { font-style: normal; display: flex; align-items: center; gap: 3px; padding: 4px 8px; border-radius: 10px; background: rgba(255,255,255,.07); font-size: 1rem; }
+  .icDups i b { font-size: .75rem; opacity: .8; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -4741,6 +4846,7 @@
   const victoryEl = document.getElementById('victory');
   function showVictory(winner) {
     gameOver = true;
+    if (window.PPCHEST) PPCHEST.end(winner === (NET.on ? (NET.role === 'host' ? p1 : p2) : p1)); // победа того, кто держит телефон — к сундучку
     [p1, p2].forEach(p => { p.moving = false; p.rotating = false; });
     const blue = winner === p1;
     const color = blue ? 'var(--tank1)' : 'var(--tank2)';
@@ -5378,6 +5484,7 @@
 
   function hkVictory(who) {
     hkRunning = false;
+    if (window.PPCHEST) PPCHEST.end(who === 0); // победа того, кто держит телефон — к сундучку
     const vsBot = hkOpts.opp !== 'human';
     const color = who === 0 ? 'var(--tank1)' : 'var(--tank2)';
     const t = document.getElementById('hkWinTitle');
@@ -5608,6 +5715,7 @@
     // биты
     for (const b of bats) {
       const r = br(b), k = r / MR;
+      if (window.PPFX && PPFX.anchor) PPFX.anchor(ctx, bats.indexOf(b), b.x, b.y, r); // эмоции: облачко над битой
       ctx.fillStyle = 'rgba(0,0,0,0.2)';
       ctx.beginPath(); ctx.arc(b.x + 2, b.y + 4, r, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = b.color;
@@ -6098,6 +6206,7 @@
 
   function trVictory(w) {
     trState = 'over';
+    if (window.PPCHEST) PPCHEST.end(w === (NET.on && NET.role === 'guest' ? 1 : 0)); // победа того, кто держит телефон — к сундучку
     if (NET.on && NET.role === 'host') { NET.nEv(['V', w]); NET.nCapture = false; }
     document.getElementById('trRematch').textContent = 'Реванш';
     const vsBot = trOpts.opp !== 'human' && !NET.on;
@@ -6217,6 +6326,7 @@
       if (!r.alive) continue;
       const f = frac(r);
       const X = (r.x + 0.5 + DIRV[r.dir][0] * f) * C, Y = (r.y + 0.5 + DIRV[r.dir][1] * f) * C;
+      if (window.PPFX && PPFX.anchor) PPFX.anchor(c, riders.indexOf(r), X, Y, C * 0.9); // эмоции: облачко над головой
       const ghost = now < r.ghostUntil, boost = now < r.boostUntil;
       c.globalAlpha = ghost ? 0.5 + Math.sin(now / 60) * 0.2 : 1;
       c.fillStyle = r.glow + (boost ? '0.55)' : '0.35)');
@@ -6944,6 +7054,7 @@
 
   function gvVictory(w) {
     gvState = 'over';
+    if (window.PPCHEST) PPCHEST.end(w === 0); // победа того, кто держит телефон — к сундучку
     const vsBot = gvOpts.opp !== 'human' && !NET.on;
     const color = guns[w].color;
     const t = document.getElementById('gvWinTitle');
@@ -7135,6 +7246,7 @@
     // станции
     guns.forEach((g, i) => {
       const [px, py] = stationXY(i);
+      if (window.PPFX && PPFX.anchor) PPFX.anchor(c, i, px, py, ST_R); // эмоции: облачко над станцией
       const [dx, dy] = gunDir(i, g.angle);
       const up = i === 0 ? -1 : 1;
       // ствол
@@ -8270,7 +8382,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '2.92';
+  const NET_BUILD = '3.10';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -8945,6 +9057,7 @@
     if (m.t === '_lobby') { if (NET.role === 'guest') guestToLobby(); return; }
     if (m.t === '_who') { if (window.PPACC && m.u) PPACC.p2pOpp(m.u); return; }
     if (m.t === '_chat') { if (window.PPACC) PPACC.matchMsg(m.text, NT.via === 'elite' ? 'elite' : 'p2p'); return; }
+    if (m.t === '_pin') { if (window.PPFX) PPFX.pinNet(String(m.id || '')); return; }
     if (m.t[0] === 'g') gravMsg(m);
     else if (m.t[0] === 'q') partyMsg(m);
     else if (m.t[0] === 'n') neonMsg(m);
@@ -9891,7 +10004,7 @@
   }
   function tankMsg(m) {
     if (NET.role === 'host') {
-      if (m.t === 'p' && m.seq === NET.seq2 && playing) { p2.nx = m.x; p2.ny = m.y; p2.na = m.a; p2.charge = m.ch || 0; if (m.a2 != null) p2.ammoS = m.a2; }
+      if (m.t === 'p' && m.seq === NET.seq2 && playing) { p2.nx = fin(m.x); p2.ny = fin(m.y); p2.na = fin(m.a); p2.charge = Math.max(0, Math.min(1, fin(m.ch))); if (m.a2 != null && !NET.elite) p2.ammoS = Math.max(0, Math.min(5, fin(m.a2))); }
       // выстрел из прошлой «жизни» (гость стрелял в момент взрыва) — не переносим танк назад и не стреляем
       else if (m.t === 'fire' && playing && !gameOver && menu.hidden && (m.seq === undefined || m.seq === NET.seq2)) {
         // выстрел гостя — из того места, где был его танк
@@ -10017,14 +10130,16 @@
     if (m.t === 'gshot') {
       // выстрел соперника: его пушка — у нас сверху (номер 1); догоняем задержку сети
       const g = guns[1];
-      g.angle = m.a; g.readyAt = 0;
-      if (!gvFire(1, m.p)) return;
+      g.angle = fin(m.a);
+      if (now < g.readyAt - 250) return; // перезарядка: прощаем только задержку сети
+      g.readyAt = Math.min(g.readyAt, now);
+      if (!gvFire(1, Math.max(0, Math.min(1, fin(m.p))))) return;
       const s = shots[shots.length - 1];
       const steps = Math.round(oneWay() / 1000 / GV_STEP);
       for (let k = 0; k < steps && !s.dead; k++) { stepShot(s, GV_STEP); if (shotEvent(s)) break; }
     } else if (m.t === 'gaim') {
       const g = guns[1];
-      if (!g.holding) { g.angle = m.a; g.charge = m.c; g.botAim = !!m.on; }
+      if (!g.holding) { g.angle = fin(m.a); g.charge = Math.max(0, Math.min(1, fin(m.c))); g.botAim = !!m.on; }
     } else if (m.t === 'grematch' && NET.role === 'host') {
       if (gvState === 'over') gvStartMatch();
     } else if (NET.role === 'guest') {
@@ -10186,14 +10301,17 @@
     }
     arr[1] = Object.assign({}, arr[1], { x: P.x, y: P.y });
   }
+  // ЧЕСТНОСТЬ: всё, что прислал соперник, — в разумных пределах (иначе можно «разогнать» шарик или стрелять без перезарядки)
+  const fin = v => { v = +v; return Number.isFinite(v) ? v : 0; };
+  const joyOf = m => { let x = fin(m.x), y = fin(m.y); const d = Math.hypot(x, y); if (d > 1) { x /= d; y /= d; } return { x, y, on: !!m.on, mag: Math.max(0, Math.min(1, fin(m.mag))) }; };
   function partyMsg(m) {
     if (NET.role === 'host') {
       const g = pgByKey(NET.game);
       if (!g || !g.G.active) return;
       const G = g.G;
-      if (m.t === 'qi') { if (!(G.remoteAt > performance.now() - 120)) G.remote = { x: m.x, y: m.y, on: !!m.on, mag: m.mag || 0 }; }
+      if (m.t === 'qi') { if (!(G.remoteAt > performance.now() - 120)) G.remote = joyOf(m); }
       else if (m.t === 'qb') {
-        if (m.d && m.x !== undefined) { G.remote = { x: +m.x || 0, y: +m.y || 0, on: !!m.on, mag: +m.mag || 0 }; G.remoteAt = performance.now(); }
+        if (m.d && m.x !== undefined) { G.remote = joyOf(m); G.remoteAt = performance.now(); }
         if (G.state === 'play' || G.state === 'countdown') G.remotePress(m.s, !!m.d);
       }
       else if (m.t === 'qp') G.remoteRaw(m.k, m.x, m.y, m.id);
@@ -10719,6 +10837,7 @@
     };
     function victory(w) {
       G.state = 'over';
+      if (window.PPCHEST) PPCHEST.end(w === (G.netMode() ? G.me() : 0)); // победа (вдвоём — синий, с ботом — ты) — к сундучку
       if (G.netMode() === 'host') G.netEv.push(['V', w]);
       $('.pgRe').textContent = 'Реванш';
       const color = PG_COL[w];
@@ -10960,7 +11079,10 @@
       const sx = G.shake ? (Math.random() * 2 - 1) * G.shake : 0, sy = G.shake ? (Math.random() * 2 - 1) * G.shake : 0;
       G.shake = Math.max(0, G.shake - dt * 40);
       c.setTransform(G.dpr * G.k, 0, 0, G.dpr * G.k, G.dpr * (G.ox + sx), G.dpr * (G.oy + sy));
+      // инвентарь: начало раунда — сбросить следы, конец — анимация победы
+      if (window.PPFX && G._fxSt !== G.state) { if (G.state === 'countdown') PPFX.reset(G); if (G.state === 'roundEnd' && G.result) PPFX.round(G, G.result.winner); G._fxSt = G.state; }
       cfg.draw(G, now, dt);
+      if (window.PPFX) PPFX.overlay(G, now); // след и образ в играх со своим шариком, анимация победы
       drawFx(dt);
       drawControls(now);
       drawOverlay(now);
@@ -14926,7 +15048,7 @@
         const order = D.turn === 0 ? [1, 0] : [0, 1];
         for (const i of order) {
           const b = D.balls[i];
-          if (!(window.PPFX && PPFX.draw(c, b.trail, i, now, C.BR))) for (const [x, y, t] of b.trail || []) { if (now - t >= 350) continue; c.globalAlpha = (1 - (now - t) / 350) * 0.55; G.circle(x, y, C.BR * (0.4 + 0.5 * (1 - (now - t) / 350)), PG_COL[i]); }
+          if (!(window.PPFX && PPFX.draw(c, b.trail, i, now, C.BR, G))) for (const [x, y, t] of b.trail || []) { if (now - t >= 350) continue; c.globalAlpha = (1 - (now - t) / 350) * 0.55; G.circle(x, y, C.BR * (0.4 + 0.5 * (1 - (now - t) / 350)), PG_COL[i]); }
           c.globalAlpha = 1;
           if (b.in) {
             const k = Math.max(0, 1 - (now - b.sinkAt) / 300);
@@ -16434,6 +16556,7 @@
     // шарик с глазками: смотрят туда, куда едет (или куда направлен джойстик)
     BK.ball = (G, P, r, alpha = 1, dy = 0, col) => {
       const c = G.c, x = P.x, y = P.y + dy, fill = col ? col[0] : PG_COL[P.i], dark = col ? col[1] : PG_DARK[P.i];
+      if (window.PPFX && alpha > 0.05) { c.globalAlpha = alpha; PPFX.ball(G, P, x, y, r, 'under'); } // след (инвентарь)
       c.globalAlpha = alpha;
       G.circle(x, y + 3, r, 'rgba(0,0,0,0.28)');
       G.circle(x, y, r, dark); G.circle(x, y - 1, r * 0.82, fill);
@@ -16451,6 +16574,7 @@
         G.circle(cx, cy, er, '#ffffff');
         G.circle(cx + ex * er * 0.45, cy + ey * er * 0.45, er * 0.52, '#1b1b22');
       }
+      if (window.PPFX && alpha > 0.05) PPFX.ball(G, P, x, y, r, 'over'); // образ (инвентарь)
       c.globalAlpha = 1;
     };
     // джойстик, кнопка и подписи — в половине игрока
@@ -16889,8 +17013,8 @@
           const D = G.d = { t: 0, scale: 1, spin: 0 };
           D.cx = G.W / 2; D.cy = G.H / 2; D.R = Math.min(G.W * 0.46, G.H * 0.34);
           D.P = [0, 1].map(i => ({ i, x: D.cx, y: D.cy + (i === 0 ? 1 : -1) * D.R * 0.45, vx: 0, vy: 0, fx: 0, fy: i === 0 ? -1 : 1, charge: 0, dead: false, joy: null }));
-          const n = 12;
-          D.I = []; for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2 + 0.3, r = D.R * (k % 2 ? 0.25 : 0.45); D.I.push({ x: D.cx + Math.cos(a) * r, y: D.cy + Math.sin(a) * r, vx: 0, vy: 0, own: -1, fly: 0, from: -1, safe: 0, out: false, back: 0 }); }
+          const n = 20; // железок; углы без сдвига — ни одна не лежит на месте старта игроков, поле симметрично для обоих
+          D.I = []; for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2, r = D.R * (k % 2 ? 0.25 : 0.45); D.I.push({ x: D.cx + Math.cos(a) * r, y: D.cy + Math.sin(a) * r, vx: 0, vy: 0, own: -1, fly: 0, from: -1, safe: 0, out: false, back: 0 }); }
         },
         ...BK.input(true, press),
         update(G, dt, now) {
@@ -18181,6 +18305,7 @@
     const changed = () => {
       if (A.msg && A.msg !== lastMsg) { clearTimeout(msgT); msgT = setTimeout(() => { A.msg = ''; lastMsg = ''; changed(); }, 4000); }
       lastMsg = A.msg;
+      if (window.PPFX) PPFX.setMine(A.me ? (A.me.items || []) : [], A.me ? (A.me.eq || {}) : {}); // предметы из аккаунта
       listeners.forEach(f => { try { f(); } catch (e) {} });
     };
 
@@ -18394,7 +18519,7 @@
       // без входа сразу форма: новичку — регистрация, тому, кто тут уже входил, — вход
       if (out && !A.pwMode) A.pwMode = ls.get('pp-had') ? 'login' : 'reg';
       const via = [me.login && 'логин ' + me.login, me.tg && 'Telegram', me.vk && 'VK', me.ya && 'Яндекс'].filter(Boolean).join(', ');
-      let h = out ? `<div class="panel accCard"><div class="accOutHead"><b>${A.pwMode === 'reg' ? 'Регистрация' : A.pwMode === 'login' ? 'Вход' : 'Восстановление пароля'}</b><span class="accSmall">Аккаунт нужен, чтобы получить ID, добавлять друзей и звать их в игру. Аккаунт один — на сайте и в Telegram.</span></div>` : `<div class="panel accCard">
+      let h = out ? `<div class="panel accCard"><div class="accOutHead"><b>${A.pwMode === 'reg' ? 'Регистрация' : A.pwMode === 'login' ? 'Вход' : 'Восстановление пароля'}</b><span class="accSmall">Аккаунт нужен, чтобы получить ID, добавлять друзей и звать их в игру. Аккаунт один — на сайте и в Telegram.</span><span class="accGiftLine">🎁 За регистрацию — эмоция «Портал»${c.tg ? ', за Telegram — «Лайк» и «Дизлайк»' : ''}</span></div>` : `<div class="panel accCard">
         <div class="accMe">${av(me)}
           ${A.edit ? `<input class="netCode accName" maxlength="12" value="${esc(me.name)}" autocomplete="off"><button class="hkPlay accSave">OK</button>`
             : `<div class="accWho"><b>${esc(me.name)}</b>${idLine(me)}</div><button class="backBtn accEdit" aria-label="Изменить имя">✎</button><button class="backBtn accCopy" aria-label="Скопировать ID"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>`}
@@ -18442,7 +18567,7 @@
         h += `<div class="accHead accHeadIn">Способы входа</div>
           <div class="accWay"><span>Логин <b>${esc(me.login || '')}</b></span><button class="backBtn accPwChange">Сменить пароль</button></div>
           ${c.tg ? way('Telegram', me.tg, 'accTg') : ''}${c.vk ? way('VK', me.vk, 'accVk') : ''}${c.ya ? way('Яндекс', me.ya, 'accYa') : ''}`;
-        if (!me.tg && c.tg) h += `<div class="accHint"><span>Привяжи Telegram — будешь входить в один клик и сможешь восстановить пароль, если забудешь</span></div>`;
+        if (!me.tg && c.tg) h += `<div class="accGift"><canvas class="accGiftCv" data-pin="like"></canvas><span><b>🎁 Подарок за Telegram</b>эмоции «Лайк» и «Дизлайк». А ещё вход в один клик и восстановление пароля</span></div>`;
         h += `<button class="backBtn accOut">Выйти</button>`;
       }
       h += `</div>`;
@@ -18472,7 +18597,8 @@
       on('.accCopy', () => copy(String(me.num), 'ID скопирован'));
       on('.accVk', () => oauthGo('vk'));
       on('.accYa', () => oauthGo('ya'));
-      on('.accTg', () => tgStart());
+      $$('.accTg').forEach(b => b.onclick = () => tgStart());
+      $$('.accGiftCv').forEach(cv => window.PPFX && PPFX.pinPreview && PPFX.pinPreview(cv, cv.dataset.pin));
       on('.accTgCancel', () => { A.tgWait = null; ls.set('pp-tgwait', null); render(true); });
       const pwOpen = m => { A.pwMode = m; A.pwShow = false; A.err = ''; render(true); const i = box.querySelector('.accPwIn'); if (i) i.focus(); };
       on('.accToReg', () => { const l = box.querySelector('.accPwLogin'); A.pwLogin = l ? l.value : ''; pwOpen('reg'); });
@@ -18689,6 +18815,30 @@
       p2pOpp(u) { setOpp(u, false); if (A.token && u && u.id) api('recent', { id: u.id }).catch(() => {}); },
       // сервер «Сеть++» сказал, кто соперник
       eliteOpp(u, fr) { setOpp(u, fr); },
+      // подарок: открыть «Друзья». За регистрацию — форма регистрации; за Telegram — привязка (без аккаунта — сначала регистрация)
+      gift(kind) {
+        openFriends();
+        if (!A.me) { A.msg = kind === 'tg' ? 'Зарегистрируйся и привяжи Telegram — подарок придёт сам' : 'Зарегистрируйся — подарок придёт сразу'; changed(); render(true); return; }
+        if (kind === 'tg' && !A.me.tg) tgStart();
+      },
+      tgGift() { window.PPACC.gift('tg'); },
+      // победа: сервер считает победы за 12 ч и на 1-й, 3-й и 10-й даёт сундучок. Без аккаунта — ничего
+      win() {
+        if (!A.token || !A.me) return Promise.resolve(null);
+        return api('win', {}).then(j => { apply(j); changed(); return { got: !!j.got, next: j.next || 0, cw: (j.me && j.me.cw) || 0 }; }).catch(() => null);
+      },
+      openChest() {
+        if (!A.token || !A.me) return Promise.resolve({ err: 'Войди в аккаунт' });
+        return api('chest/open', {}).then(j => { apply(j); changed(); const d = j.drop; return { drop: d, dup: !!j.dup, n: (j.me && j.me.dups && j.me.dups[d]) || 0 }; }).catch(e => ({ err: e.message || 'Нет связи' }));
+      },
+      chestInfo: () => (A.me ? { chests: A.me.chests || 0, cw: A.me.cw || 0, cycEnd: A.me.cycEnd || 0, dups: A.me.dups || {} } : null),
+
+      // инвентарь: надеть (id) или снять (null) предмет вида cat
+      equip(cat, id) {
+        if (!A.me) return Promise.reject(new Error('Войди в аккаунт во вкладке «Друзья»'));
+        const old = Object.assign({}, A.me.eq || {}); A.me.eq = Object.assign({}, old, { [cat]: id }); changed();
+        return api('eq', { [cat]: id }).then(j => { apply(j); }).catch(e => { if (A.me) { A.me.eq = old; changed(); } throw e; });
+      },
       matchOn(ctx) { if (A.mc.ctx !== ctx || !A.mc.on) { A.mc = { ctx, on: true, msgs: A.mc.ctx === ctx && A.mc.on ? A.mc.msgs : [] }; } oppChips(); },
       matchOff(ctx) { if (A.mc.ctx === ctx) { A.mc.on = false; oppChips(); } },
       matchMsg(text, ctx) {
@@ -18737,7 +18887,8 @@
       for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, rr = k % 2 ? r * 0.38 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
       c.closePath(); c.fill();
     }
-    const age = (now, t) => Math.min(1, (now - t) / LIFE);
+    let LK = 1; // во сколько раз длиннее след (в витрине инвентаря — длиннее, в игре — 1)
+    const age = (now, t) => Math.min(1, (now - t) / (LIFE * LK));
 
     const LIST = [
       { id: 'comet', name: 'Комета', draw(c, T, now, R) {
@@ -18785,47 +18936,935 @@
         }
       } }
     ];
-    const BY = Object.fromEntries(LIST.map(e => [e.id, e]));
-    // что есть у игрока и что надето: пока пусто — всё закрыто
-    const S = { owned: [], eq: [null, null] };
+    // ================= ОБРАЗЫ: что надето на шарик =================
+    // рисуются в своей системе: центр шарика (0,0), радиус r, «верх» — к −y (верх с точки зрения хозяина шарика)
+    const SKINS = [
+      { id: 'beanie', name: 'Шапка', draw(c, r, now) {
+        c.save(); c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(0, -r * 0.55, r * 0.78, Math.PI, 0); c.closePath(); c.fill(); c.clip();
+        c.fillStyle = 'rgba(255,138,61,0.85)'; for (let k = -2; k <= 2; k++) c.fillRect(k * r * 0.3 - r * 0.07, -r * 1.4, r * 0.14, r * 0.8);
+        c.restore();
+        c.fillStyle = '#ff8a3d'; c.beginPath(); c.roundRect ? c.roundRect(-r * 0.86, -r * 0.72, r * 1.72, r * 0.3, r * 0.15) : c.rect(-r * 0.86, -r * 0.72, r * 1.72, r * 0.3); c.fill();
+        dot(c, 0, -r * 1.42, r * 0.3, '#ffffff'); dot(c, -r * 0.08, -r * 1.5, r * 0.11, 'rgba(255,255,255,0.9)'); dot(c, r * 0.1, -r * 1.36, r * 0.12, 'rgba(0,0,0,0.08)');
+      } },
+      { id: 'bow', name: 'Бантик', draw(c, r, now) {
+        const x = r * 0.5, y = -r * 0.82, s = r * 0.42, w = Math.sin(now / 260) * 0.08;
+        c.save(); c.translate(x, y); c.rotate(-0.35 + w);
+        c.fillStyle = '#ff6fae'; c.beginPath(); c.moveTo(0, 0); c.lineTo(-s * 1.3, -s * 0.75); c.lineTo(-s * 1.3, s * 0.75); c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(0, 0); c.lineTo(s * 1.3, -s * 0.75); c.lineTo(s * 1.3, s * 0.75); c.closePath(); c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.35)'; c.beginPath(); c.moveTo(-s * 0.2, -s * 0.1); c.lineTo(-s * 1.1, -s * 0.55); c.lineTo(-s * 1.1, -s * 0.2); c.closePath(); c.fill();
+        dot(c, 0, 0, s * 0.36, '#e0458c'); c.restore();
+      } },
+      { id: 'horns', name: 'Рожки', draw(c, r, now) {
+        for (const sd of [-1, 1]) {
+          c.fillStyle = '#c21f3a'; c.beginPath();
+          c.moveTo(sd * r * 0.25, -r * 0.82); c.quadraticCurveTo(sd * r * 0.55, -r * 1.25, sd * r * 0.82, -r * 1.42);
+          c.quadraticCurveTo(sd * r * 0.72, -r * 1.0, sd * r * 0.72, -r * 0.6); c.closePath(); c.fill();
+          c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 1; c.beginPath(); c.moveTo(sd * r * 0.4, -r * 0.9); c.quadraticCurveTo(sd * r * 0.58, -r * 1.15, sd * r * 0.74, -r * 1.3); c.stroke();
+        }
+      } },
+      { id: 'ninja', name: 'Ниндзя', draw(c, r, now, back) {
+        c.save(); c.beginPath(); c.arc(0, 0, r * 1.02, 0, Math.PI * 2); c.clip();
+        c.fillStyle = '#20232c'; c.fillRect(-r * 1.1, -r * 0.78, r * 2.2, r * 0.34);
+        c.fillStyle = '#ff3b3b'; c.fillRect(-r * 0.16, -r * 0.74, r * 0.32, r * 0.26);
+        c.restore();
+        // хвостики повязки развеваются назад (против движения)
+        const bx = back ? back[0] : 1, by = back ? back[1] : 0.35, l = Math.hypot(bx, by) || 1, ux = bx / l, uy = by / l, px = -uy, py = ux;
+        const ax = ux * r * 0.95, ay = -r * 0.6 + uy * r * 0.25;
+        c.strokeStyle = '#20232c'; c.lineCap = 'round';
+        for (const [k, w] of [[0, 3], [1, 2.4]]) {
+          const wob = Math.sin(now / 90 + k * 1.7) * r * 0.25;
+          c.lineWidth = w; c.beginPath(); c.moveTo(ax, ay);
+          c.quadraticCurveTo(ax + ux * r * 0.7 + px * wob, ay + uy * r * 0.7 + py * wob + (k ? r * 0.2 : -r * 0.1), ax + ux * r * (1.4 - k * 0.2) + px * wob * 1.6, ay + uy * r * (1.4 - k * 0.2) + py * wob * 1.6 + (k ? r * 0.35 : 0));
+          c.stroke();
+        }
+        c.lineCap = 'butt';
+      } },
+      { id: 'halo', name: 'Нимб', draw(c, r, now) {
+        const y = -r * 1.42 + Math.sin(now / 380) * r * 0.08;
+        c.save(); c.shadowColor = 'rgba(255,226,122,0.9)'; c.shadowBlur = 8;
+        c.strokeStyle = '#ffe27a'; c.lineWidth = Math.max(2, r * 0.2); c.beginPath(); c.ellipse(0, y, r * 0.72, r * 0.24, 0, 0, Math.PI * 2); c.stroke();
+        c.restore();
+        c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 1; c.beginPath(); c.ellipse(0, y, r * 0.72, r * 0.24, 0, Math.PI * 1.1, Math.PI * 1.6); c.stroke();
+      } },
+      { id: 'crown', name: 'Корона', draw(c, r, now) {
+        const b = -r * 0.72, t = -r * 1.48, w = r * 0.82;
+        const g = c.createLinearGradient(0, t, 0, b); g.addColorStop(0, '#fff1a8'); g.addColorStop(0.5, '#ffc53d'); g.addColorStop(1, '#d9901a');
+        c.fillStyle = g; c.beginPath();
+        c.moveTo(-w, b); c.lineTo(-w, t + r * 0.2); c.lineTo(-w * 0.5, b - r * 0.38); c.lineTo(0, t); c.lineTo(w * 0.5, b - r * 0.38); c.lineTo(w, t + r * 0.2); c.lineTo(w, b); c.closePath(); c.fill();
+        c.strokeStyle = 'rgba(140,80,0,0.5)'; c.lineWidth = 1; c.stroke();
+        dot(c, 0, b - r * 0.2, r * 0.13, '#ff4f6d'); dot(c, -w * 0.55, b - r * 0.14, r * 0.09, '#4fa3ff'); dot(c, w * 0.55, b - r * 0.14, r * 0.09, '#4fdc8c');
+        const tw = 0.5 + 0.5 * Math.sin(now / 160);
+        c.globalAlpha = tw; star(c, w * 0.85, t + r * 0.05, r * 0.28, '#ffffff'); c.globalAlpha = 1;
+      } }
+    ];
+
+    // ================= ПОБЕДА: анимация, когда выиграл раунд =================
+    // draw(c, x, y, k, S): (x, y) — где победитель, k — 0..1 за WIN_T, S — масштаб
+    const WIN_T = 1800;
+    const WINS = [
+      { id: 'confetti', name: 'Конфетти', draw(c, x, y, k, S) {
+        const cols = ['#ff5a4f', '#4fa3ff', '#ffd23f', '#4fdc8c', '#b56bff', '#ff8ad0'];
+        for (let n = 0; n < 46; n++) {
+          const a = -Math.PI / 2 + (hash(n, 11) - 0.5) * 2.4, v = (160 + hash(n, 12) * 220) * S, t = k * 1.8;
+          const px = x + Math.cos(a) * v * t * 0.55 + Math.sin(t * 6 + n) * 6 * S, py = y + Math.sin(a) * v * t + 260 * S * t * t;
+          c.save(); c.translate(px, py); c.rotate(t * 8 * (hash(n, 13) - 0.5) * 2 + n);
+          c.globalAlpha = Math.max(0, 1 - Math.max(0, k - 0.6) / 0.4); c.fillStyle = cols[n % cols.length];
+          c.fillRect(-3 * S, -1.6 * S, 6 * S, 3.2 * S * Math.abs(Math.cos(t * 9 + n))); c.restore();
+        }
+        c.globalAlpha = 1;
+      } },
+      { id: 'hearts', name: 'Сердечки', draw(c, x, y, k, S) {
+        for (let n = 0; n < 14; n++) {
+          const d = hash(n, 21) * 0.35, t = Math.max(0, (k - d) / (1 - d)); if (t <= 0) continue;
+          const px = x + (hash(n, 22) - 0.5) * 90 * S + Math.sin(t * 7 + n) * 8 * S, py = y - t * 110 * S, s = (5 + hash(n, 23) * 5) * S * (0.6 + t * 0.6);
+          c.globalAlpha = Math.min(1, t * 4) * (1 - t); c.fillStyle = n % 3 ? '#ff4f78' : '#ff8ab0';
+          c.beginPath(); c.moveTo(px, py + s * 0.9); c.bezierCurveTo(px - s * 1.6, py - s * 0.1, px - s * 0.7, py - s * 1.3, px, py - s * 0.45);
+          c.bezierCurveTo(px + s * 0.7, py - s * 1.3, px + s * 1.6, py - s * 0.1, px, py + s * 0.9); c.fill();
+        }
+        c.globalAlpha = 1;
+      } },
+      { id: 'fireworks', name: 'Салют', draw(c, x, y, k, S) {
+        const cols = ['#ffd23f', '#4fa3ff', '#ff5a4f', '#4fdc8c'];
+        for (let b = 0; b < 3; b++) {
+          const t0 = b * 0.22, t = (k - t0) / 0.6; if (t <= 0 || t >= 1) continue;
+          const bx = x + (b - 1) * 60 * S, by = y - (70 + (b % 2) * 30) * S, col = cols[b % cols.length];
+          if (t < 0.15) { const u = t / 0.15; c.globalAlpha = 1; dot(c, bx, y - (y - by) * u, 2.5 * S, '#fff6c0'); continue; }
+          const u = (t - 0.15) / 0.85;
+          for (let n = 0; n < 18; n++) {
+            const a = n / 18 * Math.PI * 2 + b, d = (10 + 48 * Math.sqrt(u)) * S;
+            c.globalAlpha = 1 - u; dot(c, bx + Math.cos(a) * d, by + Math.sin(a) * d + 18 * S * u * u, (2.6 - 1.4 * u) * S, n % 3 ? col : '#ffffff');
+          }
+          if (u < 0.2) { c.globalAlpha = (0.2 - u) * 3; dot(c, bx, by, 26 * S, '#ffffff'); }
+        }
+        c.globalAlpha = 1;
+      } },
+      { id: 'bolt', name: 'Молния', draw(c, x, y, k, S) {
+        if (k < 0.3) {
+          const top = y - 260 * S, seg = 9; c.strokeStyle = '#e6f4ff'; c.lineWidth = 3 * S; c.lineJoin = 'round';
+          c.save(); c.shadowColor = '#7fc4ff'; c.shadowBlur = 14; c.globalAlpha = k < 0.12 || (k > 0.17 && k < 0.24) ? 1 : 0.4;
+          c.beginPath(); c.moveTo(x + (hash(1, 31) - 0.5) * 40 * S, top);
+          for (let n = 1; n <= seg; n++) c.lineTo(x + (n < seg ? (hash(n, 32) - 0.5) * 34 * S : 0), top + (y - top) * n / seg);
+          c.stroke(); c.restore();
+          c.globalAlpha = (0.3 - k) * 1.2; dot(c, x, y, 70 * S, 'rgba(200,230,255,0.6)');
+        }
+        const u = Math.max(0, (k - 0.1) / 0.9);
+        if (u > 0) {
+          c.globalAlpha = 1 - u; c.strokeStyle = '#9fd3ff'; c.lineWidth = 3 * S * (1 - u) + 0.5; c.beginPath(); c.arc(x, y, (14 + 70 * u) * S, 0, Math.PI * 2); c.stroke();
+          for (let n = 0; n < 10; n++) { const a = hash(n, 33) * 6.28, d = (12 + 60 * u * (0.5 + hash(n, 34))) * S; dot(c, x + Math.cos(a) * d, y + Math.sin(a) * d, 1.8 * S, '#e6f4ff'); }
+        }
+        c.globalAlpha = 1;
+      } },
+      { id: 'gold', name: 'Золотой дождь', draw(c, x, y, k, S) {
+        for (let n = 0; n < 26; n++) {
+          const d = hash(n, 41) * 0.45, t = (k - d) / 0.55; if (t <= 0 || t >= 1.2) continue;
+          const px = x + (hash(n, 42) - 0.5) * 170 * S, py = y - 150 * S + t * 190 * S, sp = Math.abs(Math.cos(t * 10 + n)), s = (4 + hash(n, 43) * 2.5) * S;
+          c.globalAlpha = Math.min(1, t * 5) * Math.min(1, (1.2 - t) * 3);
+          c.fillStyle = '#d9901a'; c.beginPath(); c.ellipse(px, py + 0.8 * S, s * sp + 0.6, s, 0, 0, Math.PI * 2); c.fill();
+          c.fillStyle = '#ffd23f'; c.beginPath(); c.ellipse(px, py, s * sp + 0.6, s, 0, 0, Math.PI * 2); c.fill();
+          if (sp > 0.6) { c.fillStyle = '#fff6c0'; c.beginPath(); c.ellipse(px - s * 0.3 * sp, py - s * 0.3, s * 0.25 * sp + 0.3, s * 0.35, 0, 0, Math.PI * 2); c.fill(); }
+        }
+        c.globalAlpha = Math.max(0, 0.5 - Math.abs(k - 0.5)) * 0.5; dot(c, x, y, 60 * S, 'rgba(255,215,90,0.5)');
+        c.globalAlpha = Math.min(1, k * 3) * (1 - k); for (let n = 0; n < 6; n++) { const a = n / 6 * 6.28 + k * 2; star(c, x + Math.cos(a) * 34 * S, y + Math.sin(a) * 34 * S, 5 * S, '#fff6c0'); }
+        c.globalAlpha = 1;
+      } }
+    ];
+
+    // ================= ЭМОЦИИ (пины): кидаешь во время игры =================
+    // рисуются в своей системе: центр значка (0,0), «верх» — к −y; k — 0..1 за PIN_T; col/dark — цвета игрока
+    const PIN_T = 2200;
+    const ease = t => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
+    const back = t => { t = Math.max(0, Math.min(1, t)); const s = 1.7; return 1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2); };
+    function face(c, x, y, r, col, dark, o = {}) {
+      dot(c, x, y + r * 0.2, r, 'rgba(0,0,0,0.25)'); dot(c, x, y, r, dark); dot(c, x, y - r * 0.08, r * 0.82, o.tint || col);
+      dot(c, x - r * 0.42, y - r * 0.45, r * 0.16, 'rgba(255,255,255,0.4)');
+      const lx = o.lx || 0, ly = o.ly == null ? 0.15 : o.ly, er = r * 0.27, sep = r * 0.36, ey = y - r * 0.12 + ly * r * 0.2;
+      for (const s of [-1, 1]) {
+        const ex = x + s * sep + lx * r * 0.2;
+        if (o.closed || o.sleep || (o.wink && s === 1)) { c.strokeStyle = '#1b1b22'; c.lineWidth = Math.max(1.4, r * 0.11); c.lineCap = 'round'; c.beginPath(); if (o.sleep) c.arc(ex, ey - er * 0.2, er * 0.75, Math.PI * 0.15, Math.PI * 0.85); else if (o.closed) c.arc(ex, ey + er * 0.3, er * 0.75, Math.PI * 1.15, Math.PI * 1.85); else { c.moveTo(ex - er * 0.8, ey); c.lineTo(ex + er * 0.8, ey); } c.stroke(); c.lineCap = 'butt'; continue; }
+        dot(c, ex, ey, er, '#ffffff'); dot(c, ex + lx * er * 0.45, ey + ly * er * 0.45, er * 0.52, '#1b1b22');
+        if (o.lid) { c.fillStyle = dark; c.beginPath(); c.arc(ex, ey, er * 1.06, Math.PI, 0); c.lineTo(ex + er * 1.06, ey - er * 0.1 + er * o.lid); c.lineTo(ex - er * 1.06, ey - er * 0.1 + er * o.lid); c.fill(); }
+      }
+      if (o.brow) { c.strokeStyle = '#1b1b22'; c.lineWidth = Math.max(1.6, r * 0.12); c.lineCap = 'round'; for (const s of [-1, 1]) { const bx = x + s * sep, by = ey - er * 1.5, d = o.brow === 'angry' ? 1 : -1; c.beginPath(); c.moveTo(bx - s * er, by - d * er * 0.45); c.lineTo(bx + s * er * 0.6, by + d * er * 0.45); c.stroke(); } c.lineCap = 'butt'; }
+      if (o.mouth === 'flat') { c.strokeStyle = '#1b1b22'; c.lineWidth = Math.max(1.4, r * 0.1); c.lineCap = 'round'; c.beginPath(); c.moveTo(x - r * 0.2, y + r * 0.45); c.lineTo(x + r * 0.22, y + r * 0.4); c.stroke(); c.lineCap = 'butt'; }
+      else if (o.mouth === 'grin') { c.fillStyle = '#5a1020'; c.beginPath(); c.arc(x, y + r * 0.22, r * 0.34, 0.1 * Math.PI, 0.9 * Math.PI); c.closePath(); c.fill(); }
+      else if (o.mouth === 'open') { c.fillStyle = '#5a1020'; c.beginPath(); c.ellipse(x, y + r * 0.38, r * 0.3, r * 0.22 * (o.mo || 1), 0, 0, Math.PI * 2); c.fill(); dot(c, x, y + r * 0.46, r * 0.12, '#ff7a8a'); }
+      else if (o.mouth === 'frown') { c.strokeStyle = '#1b1b22'; c.lineWidth = Math.max(1.4, r * 0.1); c.beginPath(); c.arc(x, y + r * 0.62, r * 0.24, Math.PI * 1.2, Math.PI * 1.8); c.stroke(); }
+      else if (o.mouth === 'smile') { c.strokeStyle = '#1b1b22'; c.lineWidth = Math.max(1.4, r * 0.1); c.beginPath(); c.arc(x, y + r * 0.22, r * 0.24, Math.PI * 0.2, Math.PI * 0.8); c.stroke(); }
+    }
+    function thumb(c, fill, rim, hi) {
+      const rr = (x, y, w, h, r) => { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, r) : c.rect(x, y, w, h); };
+      rr(-13, 1, 12, 24, 6); c.fillStyle = rim; c.fill(); rr(-11.5, 2, 9, 20, 4.5); c.fillStyle = fill; c.fill();
+      rr(-15, -18, 32, 22, 9); c.fillStyle = rim; c.fill(); rr(-13, -17, 28, 18, 7.5); c.fillStyle = fill; c.fill();
+      c.strokeStyle = rim; c.lineWidth = 2; c.lineCap = 'round'; for (const x of [-2, 5, 11]) { c.beginPath(); c.moveTo(x, -6); c.lineTo(x, 2); c.stroke(); } c.lineCap = 'butt';
+      dot(c, -8, -12, 2.6, hi);
+    }
+    function heart(c, x, y, s, col) { c.fillStyle = col; c.beginPath(); c.moveTo(x, y + s * 0.9); c.bezierCurveTo(x - s * 1.6, y - s * 0.1, x - s * 0.7, y - s * 1.3, x, y - s * 0.45); c.bezierCurveTo(x + s * 0.7, y - s * 1.3, x + s * 1.6, y - s * 0.1, x, y + s * 0.9); c.fill(); }
+    function label(c, t, x, y, size, fill, stroke) { c.font = `900 ${size}px system-ui, -apple-system, Segoe UI, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round'; c.lineWidth = size * 0.22; c.strokeStyle = stroke; c.strokeText(t, x, y); c.fillStyle = fill; c.fillText(t, x, y); }
+    // «Взрыв мозга» с шариком (наброски Ж и К): толстая чёрная обводка, тень вниз, рваная макушка, облако-гриб, осколки
+    const MB = (() => {
+      const K = '#16161c', R = 50, cy = 30, Z = [[-R, -6], [-34, -22], [-22, -6], [-8, -24], [6, -6], [22, -22], [34, -6], [R, -6]];
+      const blobs = (c, P, off, col, grow) => { c.fillStyle = col; c.beginPath(); for (const [x, y, r] of P) { c.moveTo(x + r + grow, y + off); c.arc(x, y + off, r + grow, 0, Math.PI * 2); } c.fill(); };
+      function cloud(c, smoke) {
+        const P = [[-30, -58, 22], [30, -58, 22], [-14, -76, 25], [16, -78, 25], [0, -52, 22], [-36, -44, 14], [36, -44, 14]];
+        blobs(c, P, 6, K, 6); blobs(c, P, 0, K, 6); blobs(c, P, 0, smoke ? '#b9c0cc' : '#ff9a1f', 0);
+        blobs(c, [[-18, -58, 15], [14, -60, 16], [-2, -50, 15], [0, -68, 14]], 0, smoke ? '#dfe4ec' : '#ffc21a', 0);
+        c.fillStyle = smoke ? '#ffffff' : '#ffe066'; c.beginPath(); c.arc(-26, -74, 5, 0, 7); c.arc(28, -66, 3.4, 0, 7); c.fill();
+        c.strokeStyle = smoke ? '#6b7280' : '#a8460a'; c.lineWidth = 4; c.lineCap = 'round';
+        for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 13, -62, 8, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke(); }
+        if (!smoke) {
+          c.fillStyle = '#ffc21a'; c.strokeStyle = K; c.lineWidth = 6; c.lineJoin = 'round'; c.beginPath(); c.moveTo(-14, -40); c.lineTo(14, -40); c.lineTo(17, -8); c.lineTo(-17, -8); c.closePath(); c.stroke(); c.fill();
+          c.strokeStyle = '#e8a10c'; c.lineWidth = 4; for (const x of [-6, 6]) { c.beginPath(); c.moveTo(x, -34); c.lineTo(x, -12); c.stroke(); }
+        } else { blobs(c, [[0, -30, 12], [-4, -16, 9]], 0, K, 5); blobs(c, [[0, -30, 12], [-4, -16, 9]], 0, '#cfd5de', 0); }
+        c.lineCap = 'butt';
+      }
+      function shards(c, col, list) {
+        for (const [x, y, a, s] of list) {
+          c.save(); c.translate(x, y); c.rotate(a); c.scale(s, s);
+          const sh = () => { c.beginPath(); c.moveTo(-9, -7); c.lineTo(9, -9); c.lineTo(7, 8); c.lineTo(-8, 7); c.closePath(); };
+          c.translate(0, 4); sh(); c.fillStyle = K; c.fill(); c.translate(0, -4); sh(); c.lineWidth = 5; c.strokeStyle = K; c.lineJoin = 'round'; c.stroke(); c.fillStyle = col; c.fill(); c.restore();
+        }
+      }
+      function ball(c, col, dark, face, lt) { // lt — светлый вариант: тоньше и мягче контур, светлее тень
+        const path = () => { c.beginPath(); c.moveTo(-R, cy - 6); Z.forEach(([x, y]) => c.lineTo(x, cy + y)); c.arc(0, cy, R, -0.12, Math.PI + 0.12); c.closePath(); };
+        c.save(); c.translate(0, 7); path(); c.fillStyle = lt ? 'rgba(27,27,34,0.45)' : K; c.fill(); c.restore();
+        path(); c.lineWidth = lt ? 6.5 : 8; c.strokeStyle = lt ? '#2b2e3b' : K; c.lineJoin = 'round'; c.stroke(); c.fillStyle = lt ? col : dark; c.fill();
+        c.save(); path(); c.clip(); c.fillStyle = col; c.beginPath(); c.arc(-3, cy - 4, R * 0.86, 0, 7); c.fill();
+        if (lt) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.arc(-10, cy + 8, R * 0.62, 0, 7); c.fill(); }
+        c.fillStyle = 'rgba(255,255,255,' + (lt ? 0.55 : 0.35) + ')'; c.beginPath(); c.ellipse(-26, cy + 2, lt ? 10 : 8, lt ? 6 : 5, -0.6, 0, 7); c.fill();
+        c.fillStyle = 'rgba(0,0,0,' + (lt ? 0.14 : 0.28) + ')'; c.beginPath(); c.moveTo(-R, cy - 6); Z.forEach(([x, y]) => c.lineTo(x, cy + y)); c.lineTo(R, cy + 4); Z.slice().reverse().forEach(([x, y]) => c.lineTo(x, cy + y + 9)); c.closePath(); c.fill();
+        c.restore(); face(c);
+      }
+      function lid(c, col, lt) {
+        c.save(); c.translate(6, -92); c.rotate(0.35);
+        const p = () => { c.beginPath(); c.arc(0, 0, R, Math.PI + 0.12, -0.12); Z.slice().reverse().forEach(([x, y]) => c.lineTo(x, y + 12)); c.closePath(); };
+        c.save(); c.translate(0, 7); p(); c.fillStyle = lt ? 'rgba(27,27,34,0.45)' : K; c.fill(); c.restore();
+        p(); c.lineWidth = lt ? 6.5 : 8; c.strokeStyle = lt ? '#2b2e3b' : K; c.lineJoin = 'round'; c.stroke(); c.fillStyle = col; c.fill();
+        c.fillStyle = 'rgba(255,255,255,' + (lt ? 0.55 : 0.35) + ')'; c.beginPath(); c.ellipse(-22, -24, lt ? 10 : 8, lt ? 6 : 5, -0.6, 0, 7); c.fill(); c.restore();
+      }
+      const eye = (c, x, y, r, px, py) => { c.fillStyle = '#ffffff'; c.strokeStyle = K; c.lineWidth = 4; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke(); c.fillStyle = K; c.beginPath(); c.arc(x + px, y + py, r * 0.38, 0, 7); c.fill(); };
+      // череп (вариант Б): белый, треснувшая макушка, большие глазницы с бликами, румянец, отдельная челюсть
+      function skull(c) {
+        const W = 50, top = -6, z = [[-W, top], [-36, top - 14], [-24, top + 2], [-10, top - 16], [4, top + 2], [18, top - 14], [32, top + 2], [W, top]];
+        const head = () => { c.beginPath(); c.moveTo(-W, top); z.forEach(([x, y]) => c.lineTo(x, y)); c.bezierCurveTo(W + 4, 24, 40, 52, 24, 56); c.lineTo(-24, 56); c.bezierCurveTo(-40, 52, -W - 4, 24, -W, top); c.closePath(); };
+        c.save(); c.translate(0, 7); head(); c.fillStyle = K; c.fill(); c.restore();
+        head(); c.lineWidth = 8; c.strokeStyle = K; c.lineJoin = 'round'; c.stroke(); c.fillStyle = '#ffffff'; c.fill();
+        c.save(); head(); c.clip(); c.fillStyle = '#dfe3ea'; c.beginPath(); c.moveTo(-W, top); z.forEach(([x, y]) => c.lineTo(x, y)); c.lineTo(W, top + 12); z.slice().reverse().forEach(([x, y]) => c.lineTo(x, y + 10)); c.closePath(); c.fill(); c.restore();
+        for (const sd of [-1, 1]) { const x = sd * 19, y = 22; c.fillStyle = K; c.beginPath(); c.arc(x, y, 14, 0, 7); c.fill(); c.fillStyle = '#ffffff'; c.beginPath(); c.arc(x - 5, y - 5, 4, 0, 7); c.arc(x + 4, y + 4, 2, 0, 7); c.fill(); }
+        c.fillStyle = K; c.beginPath(); c.moveTo(0, 34); c.lineTo(-5, 44); c.lineTo(5, 44); c.closePath(); c.fill();
+        c.fillStyle = 'rgba(255,120,140,0.55)'; for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * 34, 40, 7, 4, 0, 0, 7); c.fill(); }
+        c.strokeStyle = K; c.lineWidth = 4; c.lineCap = 'round'; for (const x of [-10, 0, 10]) { c.beginPath(); c.moveTo(x, 50); c.lineTo(x, 56); c.stroke(); } c.lineCap = 'butt';
+        c.fillStyle = '#ffffff'; c.strokeStyle = K; c.lineWidth = 6; c.beginPath(); c.roundRect ? c.roundRect(-18, 66, 36, 10, 5) : c.rect(-18, 66, 36, 10); c.stroke(); c.fill();
+      }
+      return {
+        // взрыв мозга: милый череп, над ним гриб, вокруг белые осколки
+        skull(c) {
+          c.save(); c.translate(0, 1); c.scale(0.37, 0.37);
+          skull(c); c.save(); c.scale(0.9, 0.9); c.translate(0, -2); cloud(c, false); c.restore();
+          shards(c, '#ffffff', [[-58, -62, 0.5, 1], [54, -80, -0.3, 1.1], [-60, -4, -0.4, 0.9], [60, -12, 0.6, 1]]);
+          c.restore();
+        },
+        // Ж: макушку сорвало — она летит вверх, шарик смотрит ей вслед
+        lid(c, col, dark) {
+          c.save(); c.translate(0, 9); c.scale(0.335, 0.335);
+          ball(c, col, dark, c => { eye(c, -18, cy + 8, 12, 0, -4); eye(c, 18, cy + 8, 12, 0, -4); c.fillStyle = '#7a1a2c'; c.strokeStyle = '#2b2e3b'; c.lineWidth = 3.5; c.beginPath(); c.ellipse(0, cy + 32, 8, 10, 0, 0, 7); c.fill(); c.stroke(); }, true);
+          c.save(); c.scale(0.85, 0.85); c.translate(0, -6); cloud(c, false); c.restore();
+          lid(c, col, true); shards(c, col, [[-62, -30, 0.5, 0.9], [62, -6, -0.3, 0.9]]);
+          c.restore();
+        },
+        // К: из головы валит дым, пустые глаза и полоска-зубы
+        smoke(c, col, dark) {
+          c.save(); c.translate(0, 3); c.scale(0.38, 0.38);
+          ball(c, col, dark, c => { c.fillStyle = K; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 19, cy + 12, 12, 0, 7); c.fill(); } c.fillStyle = '#ffffff'; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 19 - 4, cy + 8, 3, 0, 7); c.fill(); }
+            c.strokeStyle = K; c.lineWidth = 5; c.beginPath(); c.roundRect ? c.roundRect(-20, cy + 34, 40, 9, 4.5) : c.rect(-20, cy + 34, 40, 9); c.stroke(); c.fill(); });
+          cloud(c, true); shards(c, col, [[-58, -62, 0.5, 1], [54, -80, -0.3, 1.1], [-62, -6, -0.4, 0.9], [62, -12, 0.6, 1]]);
+          c.restore();
+        }
+      };
+    })();
+    const PINS = [
+      { id: 'portal', name: 'Портал', draw(c, k, col, dark, now) {
+        // портал открывается, из него выглядывает шарик: смотрит по сторонам, подмигивает, пускает сердечко — и ныряет обратно
+        const open = k < 0.12 ? ease(k / 0.12) : k > 0.86 ? ease((1 - k) / 0.14) : 1, py = 14;
+        for (let n = 3; n >= 0; n--) {
+          const rx = (26 - n * 4) * open, ry = (8.5 - n * 1.3) * open, hue = (190 + n * 40 + now / 8) % 360;
+          c.strokeStyle = `hsla(${hue},95%,${60 + n * 6}%,${0.9 - n * 0.12})`; c.lineWidth = 2.6;
+          c.beginPath(); c.ellipse(0, py, rx, ry, 0, now / 300 + n, now / 300 + n + Math.PI * 1.7); c.stroke();
+        }
+        c.fillStyle = 'rgba(20,6,40,0.9)'; c.beginPath(); c.ellipse(0, py, 17 * open, 5.2 * open, 0, 0, Math.PI * 2); c.fill();
+        for (let n = 0; n < 8; n++) { const a = now / 500 + n * 0.785, d = 30 * open + Math.sin(now / 200 + n) * 3; c.globalAlpha = open * (0.5 + 0.5 * Math.sin(now / 120 + n)); star(c, Math.cos(a) * d, py + Math.sin(a) * d * 0.35, 2.4, n % 2 ? '#7ff5ff' : '#d79bff'); }
+        c.globalAlpha = 1;
+        const up = k < 0.16 ? 0 : k < 0.32 ? ease((k - 0.16) / 0.16) : k < 0.74 ? 1 : k < 0.86 ? 1 - ease((k - 0.74) / 0.12) : 0;
+        if (up > 0) {
+          c.save(); c.beginPath(); c.rect(-40, -60, 80, 60 + py); c.clip();
+          const by = py + 14 - up * 24, lx = k < 0.42 ? -1 : k < 0.54 ? 1 : 0, wink = k > 0.58 && k < 0.7;
+          face(c, 0, by, 13, col, dark, { lx, ly: lx ? 0 : 0.2, wink, mouth: k > 0.56 ? 'smile' : null });
+          c.restore();
+          if (k > 0.6 && k < 0.95) { const t = (k - 0.6) / 0.35; c.globalAlpha = 1 - t; heart(c, 14 + t * 6, -14 - t * 26, 5 + t * 2, '#ff4f78'); c.globalAlpha = 1; }
+        }
+        if (k > 0.84 && k < 0.95) { const t = (k - 0.84) / 0.11; c.globalAlpha = 1 - t; for (let n = 0; n < 8; n++) { const a = n * 0.785; dot(c, Math.cos(a) * 30 * t, py + Math.sin(a) * 12 * t, 1.8, '#ffffff'); } c.globalAlpha = 1; }
+      } },
+      { id: 'like', name: 'Лайк', draw(c, k, col, dark, now) {
+        // шарик радуется: прищурился от удовольствия, рядом выскакивает палец вверх и пару раз «качает», вокруг искорки
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), hop = k > 0.15 && k < 0.6 ? Math.abs(Math.sin((k - 0.15) * Math.PI * 4.4)) * 3 : 0;
+        c.save(); c.scale(s, s);
+        face(c, -7, 3 - hop, 19, col, dark, { closed: k > 0.2 && k < 0.7, mouth: 'grin' });
+        const p = back((k - 0.22) / 0.15), pump = k > 0.4 && k < 0.8 ? Math.max(0, Math.sin((k - 0.4) * Math.PI * 5)) * 3 : 0;
+        if (k > 0.22) { c.save(); c.translate(21, 2 - pump); c.rotate(Math.PI); c.scale(-0.68 * p, 0.68 * p); thumb(c, '#ffc94d', '#b07a10', 'rgba(255,255,255,0.6)'); c.restore(); }
+        if (k > 0.35) for (let n = 0; n < 3; n++) { const t = ((now / 700 + n / 3) % 1); c.globalAlpha = Math.min(1, (k - 0.35) * 5) * (1 - t); star(c, 30 + Math.cos(n * 2.1) * 6, -20 - t * 10 + n * 4, 2.6 + (1 - t) * 1.6, n % 2 ? '#ffd23f' : '#4fdc8c'); }
+        c.globalAlpha = 1; c.restore();
+      } },
+      { id: 'dislike', name: 'Дизлайк', draw(c, k, col, dark, now) {
+        // шарик недоволен: веки опущены, закатывает глаза, потом тычет пальцем вниз
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), roll = k > 0.15 && k < 0.55 ? Math.sin((k - 0.15) / 0.4 * Math.PI) : 0;
+        c.save(); c.scale(s, s);
+        face(c, -7, 3, 19, col, dark, { lx: roll * 0.6, ly: -roll * 0.9 + 0.1, lid: 0.55, mouth: 'flat' });
+        const p = back((k - 0.3) / 0.15), jab = k > 0.45 && k < 0.8 ? Math.max(0, Math.sin((k - 0.45) * Math.PI * 6)) * 3 : 0;
+        if (k > 0.3) { c.save(); c.translate(20, 9 + jab); c.scale(0.68 * p, 0.68 * p); thumb(c, '#ffc94d', '#b07a10', 'rgba(255,255,255,0.6)'); c.restore(); }
+        c.restore();
+      } },
+      { id: 'gg', name: 'GG', draw(c, k, col, dark, now) {
+        const s = back(k / 0.18) * (k > 0.85 ? 1 - ease((k - 0.85) / 0.15) : 1);
+        c.save(); c.scale(s, s); c.rotate(Math.sin(now / 160) * 0.08);
+        label(c, 'GG', 0, 0, 34, '#ffffff', dark); c.restore();
+        for (let n = 0; n < 5; n++) { const a = n * 1.256 + now / 600; c.globalAlpha = s * (0.5 + 0.5 * Math.sin(now / 90 + n * 2)); star(c, Math.cos(a) * 34, Math.sin(a) * 22, 4, '#ffd23f'); }
+        c.globalAlpha = 1;
+      } },
+      { id: 'lol', name: 'Ха-ха', draw(c, k, col, dark, now) {
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), sh = Math.sin(now / 45) * 2.5;
+        c.save(); c.scale(s, s);
+        face(c, sh, 4, 16, col, dark, { closed: true, mouth: 'open', mo: 1 + Math.sin(now / 70) * 0.3 });
+        for (const sd of [-1, 1]) for (let n = 0; n < 3; n++) { const t = ((now / 500 + n / 3) % 1); c.globalAlpha = 1 - t; dot(c, sd * (16 + t * 16) + sh, -2 + t * t * 22, 2.4, '#7fd0ff'); }
+        c.globalAlpha = 1; label(c, 'ХА-ХА', sh * 0.5, -26 + Math.sin(now / 90) * 2, 13, '#ffd23f', '#5a3a00'); c.restore();
+      } },
+      { id: 'angry', name: 'Злость', draw(c, k, col, dark, now) {
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), sh = Math.sin(now / 30) * 1.8, heat = Math.min(1, k * 3);
+        c.save(); c.scale(s, s);
+        face(c, sh, 4, 16, col, dark, { brow: 'angry', mouth: 'frown', tint: `rgb(${200 + 55 * heat},${90 - 30 * heat},${80 - 30 * heat})` });
+        for (const sd of [-1, 1]) for (let n = 0; n < 3; n++) { const t = ((now / 600 + n / 3 + (sd > 0 ? 0.5 : 0)) % 1); c.globalAlpha = (1 - t) * 0.8; dot(c, sd * (14 + t * 10) + sh, -12 - t * 22, 3 + t * 5, '#e8e8e8'); }
+        c.globalAlpha = 1; c.restore();
+      } },
+      { id: 'cry', name: 'Слёзы', draw(c, k, col, dark, now) {
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1);
+        c.save(); c.scale(s, s);
+        face(c, 0, 2, 16, col, dark, { brow: 'sad', mouth: 'frown', ly: 0.4 });
+        for (const sd of [-1, 1]) {
+          c.strokeStyle = 'rgba(120,200,255,0.85)'; c.lineWidth = 3; c.lineCap = 'round';
+          const len = 6 + 10 * Math.min(1, k * 4); c.beginPath(); c.moveTo(sd * 6, 2); c.quadraticCurveTo(sd * 9, 2 + len * 0.6, sd * 8, 2 + len); c.stroke();
+          for (let n = 0; n < 2; n++) { const t = ((now / 450 + n / 2 + (sd > 0 ? 0.25 : 0)) % 1); c.globalAlpha = 1 - t; dot(c, sd * (8 + t * 4), 2 + len + t * 14, 2.2, '#7fd0ff'); }
+          c.globalAlpha = 1; c.lineCap = 'butt';
+        }
+        c.restore();
+      } },
+      { id: 'cool', name: 'Крутой', draw(c, k, col, dark, now) {
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1);
+        c.save(); c.scale(s, s);
+        face(c, 0, 4, 16, col, dark, { mouth: k > 0.4 ? 'smile' : null });
+        const drop = k < 0.15 ? -40 : k < 0.35 ? -40 + 40 * back((k - 0.15) / 0.2) : 0, gy = 1 + drop;
+        c.fillStyle = '#14141a';
+        for (const sd of [-1, 1]) { c.beginPath(); c.roundRect ? c.roundRect(sd * 6.2 - 5.5, gy - 3.6, 11, 7.2, 3) : c.rect(sd * 6.2 - 5.5, gy - 3.6, 11, 7.2); c.fill(); }
+        c.fillRect(-2, gy - 2.6, 4, 1.8); c.fillRect(-16, gy - 3, 4.5, 1.6); c.fillRect(11.5, gy - 3, 4.5, 1.6);
+        if (k > 0.4) { const t = ((k - 0.4) / 0.25) % 1; c.save(); c.beginPath(); c.rect(-12, gy - 4, 24, 8); c.clip(); c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(-14 + t * 30, gy + 4); c.lineTo(-8 + t * 30, gy - 4); c.stroke(); c.restore(); }
+        if (k > 0.45) { c.globalAlpha = Math.min(1, (k - 0.45) * 6) * (0.5 + 0.5 * Math.sin(now / 100)); star(c, 18, -12, 5, '#ffffff'); c.globalAlpha = 1; }
+        c.restore();
+      } },
+      { id: 'burn', name: 'Горю!', draw(c, k, col, dark, now) {
+        // серия побед: над шариком разгорается огонь, сверху падают тёмные очки
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), fire = ease((k - 0.08) / 0.3);
+        c.save(); c.scale(s, s);
+        const fl = (x, y, sz, a, b) => { c.save(); c.translate(x, y); c.scale(sz, sz); c.fillStyle = a; c.beginPath(); c.moveTo(0, -22); c.bezierCurveTo(12, -8, 14, 4, 0, 10); c.bezierCurveTo(-14, 4, -12, -8, 0, -22); c.fill(); c.fillStyle = b; c.beginPath(); c.moveTo(0, -10); c.bezierCurveTo(6, -2, 7, 4, 0, 8); c.bezierCurveTo(-7, 4, -6, -2, 0, -10); c.fill(); c.restore(); };
+        if (fire > 0) for (const [x, sz, ph] of [[-15, 0.85, 0], [0, 1.1, 1], [15, 0.85, 2]]) fl(x, -12 + Math.sin(now / 90 + ph) * 1.5, sz * fire * (1 + Math.sin(now / 70 + ph) * 0.08), '#ff7a1a', '#ffd23f');
+        face(c, 0, 8, 19, col, dark, { mouth: k > 0.45 ? 'grin' : null });
+        const gy = 4 + (k < 0.35 ? -40 : k < 0.5 ? -40 + 40 * back((k - 0.35) / 0.15) : 0);
+        c.fillStyle = '#14141a'; for (const sd of [-1, 1]) { c.beginPath(); c.roundRect ? c.roundRect(sd * 7.5 - 6.5, gy - 4, 13, 8, 3) : c.rect(sd * 7.5 - 6.5, gy - 4, 13, 8); c.fill(); }
+        c.fillRect(-2, gy - 3, 4, 2); c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillRect(-11, gy - 2.5, 3, 1.6); c.fillRect(4, gy - 2.5, 3, 1.6);
+        c.restore();
+      } },
+      { id: 'hug', name: 'Обнимашки', draw(c, k, col, dark, now) {
+        // шарик тает от удовольствия: жмурится, румянец, вверх летят сердечки
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), sq = k > 0.15 && k < 0.45 ? Math.sin((k - 0.15) / 0.3 * Math.PI) * 0.08 : 0;
+        c.save(); c.scale(s, s); c.save(); c.translate(0, 6); c.scale(1 + sq, 1 - sq);
+        face(c, 0, 0, 20, col, dark, { closed: true, mouth: 'grin' });
+        c.fillStyle = 'rgba(255,120,140,0.55)'; for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * 12, 4, 4.5, 2.8, 0, 0, Math.PI * 2); c.fill(); }
+        c.restore();
+        for (let n = 0; n < 3; n++) { const t = Math.max(0, Math.min(1, (k - 0.2 - n * 0.1) / 0.45)); if (t <= 0) continue; c.globalAlpha = 1 - t * 0.6; heart(c, (n - 1) * 17 + Math.sin(t * 6 + n) * 3, -10 - t * 24, 4.5 + t * 2.5, '#ff4f78'); }
+        c.globalAlpha = 1; c.restore();
+      } },
+      { id: 'zzz', name: 'Zzz…', draw(c, k, col, dark, now) {
+        // скучно ждать: шарик засыпает, пузырь из носа, улетают «z»
+        const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), br = Math.sin(now / 320);
+        c.save(); c.scale(s, s);
+        face(c, -6, 8 + br, 19, col, dark, k < 0.2 ? { ly: 0.5 } : { sleep: true });
+        if (k > 0.25) { const b = ease((k - 0.25) / 0.25) * (5 + br * 1.4); c.fillStyle = 'rgba(143,211,255,0.85)'; c.beginPath(); c.ellipse(4, 21 + br, b, b * 1.1, 0, 0, Math.PI * 2); c.fill(); dot(c, 4 - b * 0.35, 21 + br - b * 0.4, b * 0.25, 'rgba(255,255,255,0.8)'); }
+        for (let n = 0; n < 3; n++) { const t = Math.max(0, Math.min(1, (k - 0.3 - n * 0.1) / 0.4)); if (t <= 0) continue; c.globalAlpha = Math.min(1, (1 - t) * 1.6 + 0.4); label(c, 'z', 14 + n * 9, -6 - n * 10 - t * 4, 9 + n * 3, '#4fa3ff', '#ffffff'); }
+        c.globalAlpha = 1; c.restore();
+      } },
+      { id: 'boom', name: 'Взрыв мозга', draw(c, k, col, dark) { MB.skull(c); } },   // без анимации
+      { id: 'lidoff', name: 'Крышку сорвало', draw(c, k, col, dark) { MB.lid(c, col, dark); } },   // без анимации
+      { id: 'smoke', name: 'Дымится', draw(c, k, col, dark) { MB.smoke(c, col, dark); } },          // без анимации
+      { id: 'rocket', name: 'Ракета', draw(c, k, col, dark, now) {
+        // ракета взлетает с огоньком и взрывается салютом с надписью
+        if (k < 0.48) {
+          const t = ease(k / 0.48), y = 26 - t * 64, x = Math.sin(t * 6) * 6;
+          for (let n = 0; n < 6; n++) { c.globalAlpha = 0.7 - n * 0.1; dot(c, x - Math.sin(t * 6 - n * 0.3) * 2, y + 12 + n * 4, 3.4 - n * 0.4, n < 2 ? '#fff3b0' : '#ff8a3d'); }
+          c.globalAlpha = 1; c.save(); c.translate(x, y); c.rotate(Math.cos(t * 6) * 0.15);
+          c.fillStyle = '#e9edf5'; c.beginPath(); c.moveTo(0, -12); c.quadraticCurveTo(6, -4, 5, 8); c.lineTo(-5, 8); c.quadraticCurveTo(-6, -4, 0, -12); c.fill();
+          dot(c, 0, -2, 2.6, col); c.fillStyle = '#ff5a4f'; c.beginPath(); c.moveTo(-5, 3); c.lineTo(-9, 10); c.lineTo(-4.5, 8); c.closePath(); c.fill(); c.beginPath(); c.moveTo(5, 3); c.lineTo(9, 10); c.lineTo(4.5, 8); c.closePath(); c.fill();
+          c.restore();
+        } else {
+          const t = (k - 0.48) / 0.52, cy = -38, cols = ['#ffd23f', '#ff5a4f', '#4fa3ff', '#4fdc8c', '#b56bff'];
+          if (t < 0.12) { c.globalAlpha = 1 - t / 0.12; dot(c, 0, cy, 30, '#ffffff'); }
+          for (let n = 0; n < 22; n++) { const a = n / 22 * Math.PI * 2, d = 6 + 40 * ease(t); c.globalAlpha = 1 - t; dot(c, Math.cos(a) * d, cy + Math.sin(a) * d + 14 * t * t, 2.6 - t * 1.4, cols[n % cols.length]); }
+          c.globalAlpha = Math.min(1, t * 5) * (1 - Math.max(0, t - 0.7) / 0.3);
+          const s = back(t / 0.3); c.save(); c.translate(0, cy); c.scale(s, s); label(c, 'БУМ!', 0, 0, 20, '#ffd23f', '#7a2a00'); c.restore();
+          c.globalAlpha = 1;
+        }
+      } }
+    ];
+    const FREE = []; // открыто всем, даже без аккаунта (сейчас ничего — всё подарками)
+    const GIFT = { portal: 'reg', like: 'tg', dislike: 'tg' }; // подарки (выдаёт сервер): portal — за регистрацию, like и dislike — за привязку Telegram
+    const DROP = { lol: 1, angry: 1, cry: 1, gg: 1, hug: 1, zzz: 1, cool: 1, burn: 1, rocket: 1, smoke: 1, lidoff: 1, boom: 1 }; // выпадают из сундучков за победы (решает сервер)
+    const GIFT_FOR = { tg: 'за Telegram', reg: 'за регистрацию' };
+    const GIFT_HOW = { tg: 'привяжи Telegram во вкладке «Друзья»', reg: 'зарегистрируйся во вкладке «Друзья»' };
+    // в игре эмоция играет один раз и замирает на лучшем кадре (доля анимации); boom — картинка без анимации
+    const FREEZE = { portal: 0.64, like: 0.6, dislike: 0.62, burn: 0.62, hug: 0.62, zzz: 0.75, gg: 0.5, lol: 0.5, angry: 0.6, cry: 0.6, cool: 0.72, rocket: 0.62, boom: 0, lidoff: 0, smoke: 0 };
+
+    // ================= кто что носит =================
+    // все предметы: id → [вид, редкость, описание]
+    const CAT = {
+      trail: { name: 'След', items: LIST, sub: 'Тянется за твоим шариком в играх и за мячом в мини-гольфе' },
+      skin: { name: 'Образ', items: SKINS, sub: 'Надето на твой шарик в играх с шариками' },
+      win: { name: 'Победа', items: WINS, sub: 'Играет, когда ты выигрываешь раунд' },
+      pin: { name: 'Эмоции', items: PINS, sub: 'Кидай во время игры — кнопка 😊 в углу твоей половины' }
+    };
+    const INFO = {
+      comet: ['c', 'Яркий хвост, как у падающей звезды'], bubbles: ['c', 'Шарик будто летит под водой'], rainbow: ['r', 'Переливается всеми цветами'],
+      fire: ['e', 'Горит и сыплет искрами'], stars: ['l', 'Оставляет мерцающую звёздную пыль'],
+      beanie: ['c', 'Тёплая шапка с помпоном'], bow: ['c', 'Розовый бантик набок'], horns: ['r', 'Маленькие хитрые рожки'], ninja: ['r', 'Повязка, хвостики развеваются на ходу'],
+      halo: ['e', 'Светящийся нимб над головой'], crown: ['l', 'Золотая корона с камнями'],
+      confetti: ['c', 'Взрыв разноцветного конфетти'], hearts: ['c', 'Сердечки поднимаются вверх'], fireworks: ['r', 'Три залпа салюта'],
+      bolt: ['e', 'Удар молнии прямо в тебя'], gold: ['l', 'С неба сыплются золотые монеты'],
+      portal: ['s', 'Шарик выглядывает из портала, осматривается, подмигивает и ныряет обратно. Подарок за регистрацию'],
+      like: ['s', 'Шарик довольно жмурится и показывает палец вверх. Подарок за Telegram'],
+      dislike: ['s', 'Шарик закатывает глаза и тычет пальцем вниз. Подарок за Telegram'],
+      burn: ['e', 'Огонь над головой и тёмные очки — серия побед'],
+      hug: ['sr', 'Тает от удовольствия, летят сердечки'],
+      zzz: ['sr', 'Засыпает с пузырём из носа — когда соперник долго думает'],
+      boom: ['m', 'Голову снесло — так удивился! Картинка без анимации'],
+      lidoff: ['m', 'Макушку сорвало и унесло вверх, шарик смотрит ей вслед. Картинка без анимации'],
+      smoke: ['e', 'Мозг перегрелся — из головы валит дым. Картинка без анимации'],
+      gg: ['sr', 'Хорошая игра!'], lol: ['c', 'Трясётся от смеха'], angry: ['r', 'Кипит и пускает пар'], cry: ['r', 'Ручьи слёз'],
+      cool: ['e', 'Очки падают сверху — и блик'], rocket: ['e', 'Ракета взлетает и взрывается салютом']
+    };
+    const BY = {}; for (const k in CAT) for (const e of CAT[k].items) BY[e.id] = Object.assign(e, { cat: k });
+    const RORD = { s: -1, c: 0, r: 1, sr: 1.5, e: 2, l: 3, m: 4 }; // в инвентаре — от обычных к мифическим
+    for (const k in CAT) CAT[k].items = CAT[k].items.slice().sort((a, b) => RORD[INFO[a.id][0]] - RORD[INFO[b.id][0]]);
+    // что есть (из аккаунта) и что надето на тебя. test — только для проверок: [{trail, skin, win}, {…}] на обоих игроков
+    const S = { owned: FREE.slice(), mine: {}, test: null, subs: [] };
+    // ты — синий (вдвоём и с ботом) или твоя сторона по сети. Надетое соперника по сети пока не приходит
+    const meIdx = G => (G && G.netMode && G.netMode() ? G.me() : 0);
+    const worn = (G, i, cat) => {
+      const e = S.test ? (S.test[i] || {})[cat] : (i === meIdx(G) ? S.mine[cat] : null);
+      return e && BY[e] && (S.test || S.owned.includes(e)) ? BY[e] : null;
+    };
+    // «верх» образа: вдвоём за одним телефоном — у каждого к сопернику (красный сидит напротив);
+    // с ботом и по сети — как видит смотрящий (у гостя поле повёрнуто)
+    const upOf = (G, i) => { const nm = G && G.netMode && G.netMode(); if (nm) return G.me() === 1 ? [0, 1] : [0, -1]; if (G && G.bot) return [0, -1]; return i === 1 ? [0, 1] : [0, -1]; };
+    function skinAt(G, c, e, x, y, r, i, now, vx, vy) {
+      const [ux, uy] = upOf(G, i), a = Math.atan2(ux, -uy);
+      c.save(); c.translate(x, y); c.rotate(a);
+      let back = null; const sp = Math.hypot(vx || 0, vy || 0);
+      if (sp > 15) { const bx = -vx / sp, by = -vy / sp; back = [bx * Math.cos(-a) - by * Math.sin(-a), bx * Math.sin(-a) + by * Math.cos(-a)]; }
+      e.draw(c, r, now, back); c.restore();
+    }
+    // след за игроком: точки копятся по кадрам (не передаются по сети)
+    function trailStep(G, i, x, y, now) {
+      const T = (G._ftr = G._ftr || [[], []])[i], last = T[T.length - 1];
+      if (!last || Math.hypot(x - last[0], y - last[1]) > 1.2) T.push([x, y, now]);
+      while (T.length && now - T[0][2] > LIFE) T.shift();
+      return T;
+    }
+    // где игрок в играх, которые рисуют его сами (не через BK.ball): поле массива и радиус
+    const OWN = { sumo: ['f', 21], lava: ['p', 12], arrows: ['P', 11] };
+
     window.PPFX = {
-      list: LIST, state: S,
+      cats: CAT, state: S, by: BY,
       owns: id => S.owned.includes(id),
-      // нарисовать след мяча игрока i; false — эффекта нет, рисуй обычный след
-      draw(c, T, i, now, R) { const id = S.eq[i]; if (!id || !BY[id] || !S.owned.includes(id) || !T || !T.length) return false; BY[id].draw(c, T, now, R); return true; }
+      worn: cat => S.mine[cat] || null,
+      // из аккаунта: что есть и что надето
+      setMine(items, eq) {
+        const o = [...new Set(FREE.concat(items || []))].filter(id => BY[id]), m = {}; for (const k in CAT) m[k] = eq && BY[eq[k]] && o.includes(eq[k]) ? eq[k] : null;
+        if (o.join() === S.owned.join() && JSON.stringify(m) === JSON.stringify(S.mine)) return;
+        const was = S.owned; S.owned = o; S.mine = m; S.subs.forEach(f => { try { f(); } catch (e) {} });
+        const got = {}; for (const g in GIFT) if (o.includes(g) && !was.includes(g) && !lsGet('pp-gift-' + g)) { lsSet('pp-gift-' + g, '1'); (got[GIFT[g]] = got[GIFT[g]] || []).push(`«${BY[g].name}»`); }
+        Object.keys(got).forEach((kd, n) => setTimeout(() => toast(`🎁 Подарок ${GIFT_FOR[kd]}: ${got[kd].length > 1 ? 'эмоции ' + got[kd].join(' и ') : 'эмоция ' + got[kd][0]} — уже в «Инвентаре»`, 3500), 600 + n * 3800));
+      },
+      // мини-гольф: след мяча; false — эффекта нет, рисуй обычный
+      draw(c, T, i, now, R, G) { const e = worn(G, i, 'trail'); if (!e || !T || !T.length) return false; e.draw(c, T, now, R); return true; },
+      // BK.ball: 'under' — след до шарика, 'over' — образ поверх
+      ball(G, P, x, y, r, phase) {
+        if (P.i !== 0 && P.i !== 1) return;
+        if (phase === 'over') anchor(G.c, P.i, x, y, r);
+        if (!S.owned.length && !S.test) return;
+        const now = performance.now();
+        if (phase === 'under') { const e = worn(G, P.i, 'trail'); if (e) e.draw(G.c, trailStep(G, P.i, x, y, now), now, r * 0.9); (G._fball = G._fball || [0, 0])[P.i] = now; }
+        else { const e = worn(G, P.i, 'skin'); if (e) skinAt(G, G.c, e, x, y, r, P.i, now, P.vx, P.vy); }
+      },
+      // поверх кадра (оболочка): игры без BK.ball + анимация победы
+      overlay(G, now) {
+        partyAnchor(G);
+        if (!S.owned.length && !S.test) return;
+        const D = G.d || {}, t = performance.now(), own = OWN[G.cfg.key];
+        if (own) for (const i of [0, 1]) {
+          const P = D[own[0]] && D[own[0]][i]; if (!P || typeof P.x !== 'number' || P.dead || P.out || P.alive === false) continue;
+          const tr = worn(G, i, 'trail'), sk = worn(G, i, 'skin'), r = own[1];
+          if (tr) { const T = trailStep(G, i, P.x, P.y, t).filter(p => Math.hypot(p[0] - P.x, p[1] - P.y) > r * 1.05); tr.draw(G.c, T, t, r * 0.9); }
+          if (sk) skinAt(G, G.c, sk, P.x, P.y, r, i, t, P.vx, P.vy);
+        }
+        const W = G._fwin;
+        if (W) {
+          const k = (t - W.t0) / WIN_T; if (k >= 1) { G._fwin = null; return; }
+          let x = G.W / 2, y = W.i === 0 ? G.H * 0.7 : G.H * 0.3;
+          for (const f of ['P', 'p', 'f', 'balls']) { const P = D[f] && D[f][W.i]; if (P && typeof P.x === 'number' && P.x > 0 && P.x < G.W && P.y > 0 && P.y < G.H) { x = P.x; y = P.y; break; } }
+          const c = G.c; c.save();
+          if (upOf(G, W.i)[1] > 0) { c.translate(x, y); c.rotate(Math.PI); c.translate(-x, -y); } // «вверх» — как у образа
+          W.e.draw(c, x, y, k, 1); c.restore();
+        }
+      },
+      // конец раунда (у хоста и у гостя): запустить анимацию победителя
+      round(G, w) { if (w !== 0 && w !== 1) return; const e = worn(G, w, 'win'); if (e) G._fwin = { e, i: w, t0: performance.now() }; },
+      reset(G) { G._ftr = null; G._fwin = null; }
+    };
+
+    // ---------- эмоции в игре: белое облачко над героем, как в Brawl Stars ----------
+    // Облачко (вариант А): белое, цельный контур с изогнутым хвостиком к голове, тонкая серая полоска снизу, лёгкая тень.
+    // Рисуется на прозрачном холсте поверх всего экрана, у ТЕКУЩЕГО места героя на экране; размер — от размера героя на экране.
+    // Пропорции — с референса: облачко ≈ 1,1 ширины героя (но не меньше 52 px, чтобы эмоцию было видно), 117 × 101.
+    const SHOW_T = 4500, LOOP_T = 2200, PIN_CD = 3000;
+    const L = { el: null, B: null, btn: [], pins: [null, null], cd: [0, 0], live: null, raf: 0, sig: '', A: [null, null] };
+    // где герой на экране: игры сообщают своё место каждый кадр (PPFX.anchor)
+    const FLIP = new WeakMap(); // холст повёрнут на 180° (у гостя по сети) — проверять не чаще раза в секунду
+    function flipped(cv) { const t = performance.now(), o = FLIP.get(cv); if (o && t - o.t < 1000) return o.v; let v = false; try { const m = getComputedStyle(cv).transform; v = !!m && m !== 'none' && new DOMMatrix(m).a < 0; } catch (e) {} FLIP.set(cv, { t, v }); return v; }
+    // прямоугольник холста на экране: читаем не чаще раза в 0,5 с (чтение каждый кадр заставляет браузер пересчитывать страницу)
+    const RECT = new WeakMap();
+    function rectOf(cv) { const t = performance.now(), o = RECT.get(cv); if (o && t - o.t < 500) return o.r; const r = cv.getBoundingClientRect(); RECT.set(cv, { t, r }); return r; }
+    function anchor(ctx, i, x, y, r, src) {
+      if (!L.pins[0] && !L.pins[1] || i !== 0 && i !== 1 || !ctx || !ctx.getTransform) return; // считаем, только когда облачко висит
+      const m = ctx.getTransform(), cv = ctx.canvas, rc = rectOf(cv);
+      if (!rc.width) return;
+      const k = rc.width / cv.width, f = flipped(cv), px = (m.a * x + m.c * y + m.e) * k, py = (m.b * x + m.d * y + m.f) * k;
+      L.A[i] = { x: f ? rc.right - px : rc.left + px, y: f ? rc.bottom - py : rc.top + py, r: r * Math.hypot(m.a, m.b) * k, t: performance.now(), src: src || 'game' };
+      if (L.pins[i]) place(i, L.A[i].t); // облачко едет вместе с героем, без отставания на кадр
+    }
+    // игры площадки, где герой не нашёлся сам: ищем его в состоянии игры, иначе — середина своей половины
+    const SPOTS = ['P', 'p', 'f', 'balls', 'pl', 'planes', 't', 'sm'];
+    function partyAnchor(G) {
+      if (!L.pins[0] && !L.pins[1]) return;
+      const D = G.d || {}, t = performance.now();
+      for (const i of [0, 1]) {
+        if (!L.pins[i] || L.A[i] && L.A[i].src !== 'guess' && t - L.A[i].t < 80) continue; // герой уже сам сообщил, где он
+        let x = G.W / 2, y = i === 0 ? G.H * 0.78 : G.H * 0.22, r = 16;
+        for (const f of SPOTS) { let P = D[f] && D[f][i]; if (!P || P.B) continue; // P.B — доска тетриса: героя нет
+          if (f === 'pl' && D.cs) P = { x: D.ox + P.x * D.cs, y: D.oy + P.y * D.cs, r: D.cs * 0.45 }; // бомбер: клетки → точки
+          if (P && typeof P.x === 'number' && typeof P.y === 'number' && P.x > -20 && P.x < G.W + 20 && P.y > -20 && P.y < G.H + 20) { x = P.x; y = P.y; r = P.r || P.R || 14; break; } }
+        anchor(G.c, i, x, y, r, 'guess');
+      }
+    }
+    // танки — это элементы страницы
+    function tankAnchors() { ['tank1', 'tank2'].forEach((id, i) => { const el = document.getElementById(id); if (!el) return; const b = el.getBoundingClientRect(); if (b.width) L.A[i] = { x: b.left + b.width / 2, y: b.top + b.height / 2, r: Math.max(b.width, b.height) / 2, t: performance.now() }; }); }
+    const PIN_ICO = { portal: '🌀', like: '👍', dislike: '👎', burn: '🔥', hug: '🥰', zzz: '😴', boom: '🤯', lidoff: '💥', smoke: '💨', gg: 'GG', lol: '😂', angry: '😡', cry: '😭', cool: '😎', rocket: '🚀' };
+    // какая игра идёт: { net, me, bot, kind } или null
+    function liveGame() {
+      const NETon = typeof NET !== 'undefined' && NET.on, role = NETon && NET.role === 'host' ? 0 : 1;
+      if (typeof pgGames !== 'undefined') {
+        const g = pgGames.find(x => x.G.active);
+        if (g) { const G = g.G, st = G.state; if (st !== 'play' && st !== 'countdown' && st !== 'roundEnd') return null; const nm = !!(G.netMode && G.netMode()); return { net: nm, me: nm ? G.me() : 0, bot: !!G.bot, kind: 'party' }; }
+      }
+      const base = (game, opp, kind) => ({ net: NETon && NET.game === game, me: NETon && NET.game === game ? role : 0, bot: !(NETon && NET.game === game) && opp !== 'human', kind });
+      try { if (hkActive && hkRunning) return base('hockey', hkOpts.opp, 'hk'); } catch (e) {}
+      try { if (trActive && trState !== 'menu' && trState !== 'over') return base('neon', trOpts.opp, 'tr'); } catch (e) {}
+      try { if (gvActive && gvState !== 'menu' && gvState !== 'over') return base('grav', gvOpts.opp, 'gv'); } catch (e) {}
+      try { const m = document.getElementById('menu'); if (playing && m && m.hidden) return { net: !!NETon, me: NETon ? role : 0, bot: !NETon && !!botP(), kind: 'tank' }; } catch (e) {}
+      return null;
+    }
+    function pinSound() { try { if (typeof sound === 'function') { sound(880, 0.05, 'triangle', 0.04); setTimeout(() => sound(1320, 0.06, 'triangle', 0.035), 60); } } catch (e) {} }
+    function pinShow(i, id) {
+      const e = BY[id]; if (!e || e.cat !== 'pin' || (i !== 0 && i !== 1)) return;
+      L.pins[i] = { e, i, t0: performance.now() }; if (L.B) { L.B[i].key = ''; L.B[i].still = false; }
+      pinSound(); loop();
+    }
+    function pinSend(i, id) {
+      if (!S.owned.includes(id) && !S.test) return false;
+      const t = performance.now(); if (t < L.cd[i]) return false;
+      L.cd[i] = t + PIN_CD; pinShow(i, id);
+      if (L.live && L.live.net && typeof NET !== 'undefined') NET.send({ t: '_pin', id });
+      return true;
+    }
+    // контур облачка с хвостиком, в своих координатах: прямоугольник 0..w × 0..h, хвост снизу слева к точке (tx, ty)
+    function bubblePath(c, w, h, tx, ty) {
+      const r = Math.min(w, h) * 0.3, b0 = w * 0.17, b1 = w * 0.36;
+      c.beginPath();
+      c.moveTo(r, 0); c.lineTo(w - r, 0); c.arcTo(w, 0, w, r, r); c.lineTo(w, h - r); c.arcTo(w, h, w - r, h, r);
+      c.lineTo(b1, h); c.quadraticCurveTo(b1 - w * 0.06, h + (ty - h) * 0.45, tx, ty);
+      c.quadraticCurveTo(b0 + w * 0.02, h + (ty - h) * 0.4, b0, h);
+      c.lineTo(r, h); c.arcTo(0, h, 0, h - r, r); c.lineTo(0, r); c.arcTo(0, 0, r, 0, r); c.closePath();
+    }
+    const DPR = () => Math.min(2, window.devicePixelRatio || 1);
+    let VW = innerWidth, VH = innerHeight; addEventListener('resize', () => { VW = innerWidth; VH = innerHeight; });
+    // само облачко (без эмоции) рисуется заново, только когда меняется размер или длина хвостика
+    function drawBody(B, w, h, tx, ty) {
+      const pad = B.pad, W = Math.ceil(w + pad * 2), H = Math.ceil(Math.max(h, ty) + pad * 2 + 3), d = DPR(), cv = B.body;
+      if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
+      const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, W, H); c.translate(pad, pad);
+      const lw = Math.max(2.4, w * 0.034);
+      c.save(); c.translate(0, 3); bubblePath(c, w, h, tx, ty); c.fillStyle = 'rgba(0,0,0,0.22)'; c.fill(); c.restore();
+      bubblePath(c, w, h, tx, ty); c.fillStyle = '#ffffff'; c.fill();
+      c.save(); bubblePath(c, w, h, tx, ty); c.clip(); c.fillStyle = '#e6eaf2'; c.fillRect(0, h - h * 0.13, w, h * 0.13 + 2); c.restore();
+      bubblePath(c, w, h, tx, ty); c.lineWidth = lw; c.strokeStyle = '#1b1b22'; c.lineJoin = 'round'; c.stroke();
+      const e = B.emo, ew = Math.round(w * d), eh = Math.round(h * d);
+      if (e.width !== ew || e.height !== eh) { e.width = ew; e.height = eh; e.style.width = w + 'px'; e.style.height = h + 'px'; B.still = false; }
+      e.style.left = pad + 'px'; e.style.top = pad + 'px';
+    }
+    // где и как стоит облачко игрока i в момент t: только математика и одна запись transform
+    function place(i, t) {
+      const p = L.pins[i], B = L.B[i]; if (!p || !B || !L.live) return;
+      const a = L.A[i] || { x: VW / 2, y: i === L.live.me ? VH * 0.75 : VH * 0.25, r: 14 };
+      const age = (t - p.t0) / 1000, total = SHOW_T / 1000;
+      // появление: пружина из кончика хвоста (быстро вырос, чуть перелетел, качнулся); уход — втягивается обратно
+      let sc = 1 - Math.exp(-9 * age) * Math.cos(13 * age), rot = -0.16 * Math.exp(-6 * age) * Math.cos(11 * age);
+      const out = (age - (total - 0.28)) / 0.28; if (out > 0) { const u = Math.min(1, out); sc *= 1 - u * u * (2.2 * u - 1.2) * 0.999; rot -= u * 0.12; }
+      sc = Math.max(0.001, sc);
+      // размер — от героя на экране; округляем, чтобы не перерисовывать облачко из-за мелочей
+      const w = Math.round(Math.max(52, Math.min(132, a.r * 2.2)) / 4) * 4, h = Math.round(w * 101 / 117);
+      const seat = !L.live.net && !L.live.bot && i === 1, s = seat ? -1 : 1;
+      const hx = a.r * 0.55, hy = -a.r * 0.85, tx = 0.13 * w;
+      let ty = 1.24 * h;
+      // у боковых краёв — облачко на другую сторону
+      const tipX = m => a.x + s * m * hx, fits = m => { const L0 = tipX(m) - s * m * tx, L1 = tipX(m) + s * m * (w - tx); return Math.min(L0, L1) > 6 && Math.max(L0, L1) < VW - 6; };
+      const mx = !fits(1) && fits(-1) ? -1 : 1;
+      const TX = tipX(mx), TY = a.y + s * hy;
+      // у верхнего края — хвостик короче, облачко ниже
+      const far = TY - s * ty; if (far < 6) ty -= 6 - far; else if (far > VH - 6) ty -= far - (VH - 6);
+      ty = Math.max(h * 0.75, Math.round(ty));
+      const key = w + '|' + ty;
+      if (B.key !== key) { B.key = key; drawBody(B, w, h, tx, ty); }
+      const ox = B.pad + tx, oy = B.pad + ty, ang = (seat ? Math.PI : 0) + rot * mx;
+      B.el.style.transformOrigin = ox + 'px ' + oy + 'px';
+      B.el.style.transform = `translate3d(${(TX - ox).toFixed(1)}px,${(TY - oy).toFixed(1)}px,0) rotate(${ang.toFixed(4)}rad) scale(${(sc * mx).toFixed(4)},${sc.toFixed(4)})`;
+      if (B.mx !== mx) { B.mx = mx; B.emo.style.transform = mx < 0 ? 'scaleX(-1)' : ''; } // эмоция не зеркалится
+      B.w = w; B.h = h;
+    }
+    // эмоция внутри облачка — маленький холст, крутится по кругу, пока облачко висит
+    function drawEmo(i, t) {
+      const p = L.pins[i], B = L.B[i]; if (!p || !B || !B.w) return;
+      const w = B.w, h = B.h, d = DPR(), c = B.emo.getContext('2d');
+      // один раз проигрывается и замирает на лучшем кадре: стоп и для k, и для «часов» эмоции
+      const fz = FREEZE[p.e.id] == null ? 0.6 : FREEZE[p.e.id], k = Math.max(0, Math.min(fz, (t - p.t0 - 120) / LOOP_T)), cs = h / 96 * 1.2;
+      if (B.still && k >= fz) return; B.still = k >= fz && (!p.e.ready || p.e.ready()); // кадр уже стоит — холст не трогаем (картинка ещё грузится — ждём)
+      c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, w, h);
+      c.translate(w / 2, h * 0.53); c.scale(cs, cs);
+      p.e.draw(c, k, PG_COL[p.i], PG_DARK[p.i], p.t0 + 120 + k * LOOP_T);
+    }
+    function build() {
+      const el = L.el = document.createElement('div'); el.id = 'pinLayer'; el.hidden = true;
+      el.innerHTML = [0, 1].map(() => '<div class="pinB" hidden><canvas class="pinBody"></canvas><canvas class="pinEmo"></canvas></div>').join('') +
+        [0, 1].map(s => `<div class="pinCorner s${s}"><div class="pinPanel" hidden></div><button type="button" class="pinBtn" aria-label="Эмоции">😊</button></div>`).join('');
+      document.body.appendChild(el);
+      L.B = [...el.querySelectorAll('.pinB')].map(b => ({ el: b, body: b.querySelector('.pinBody'), emo: b.querySelector('.pinEmo'), pad: 9, key: '', mx: 1, w: 0, h: 0 }));
+      L.btn = [...el.querySelectorAll('.pinCorner')].map(k => ({ k, b: k.querySelector('.pinBtn'), panel: k.querySelector('.pinPanel') }));
+      L.btn.forEach(o => {
+        o.b.addEventListener('click', e => {
+          e.stopPropagation();
+          if (!o.panel.hidden) { o.panel.hidden = true; return; }
+          const has = x => S.owned.includes(x.id) || S.test, mine = PINS.filter(has), gifts = PINS.filter(x => !has(x) && GIFT[x.id]);
+          // подарки, которые ещё не забрал, — в том же ряду, только бледные и с 🎁: видно, что их можно получить
+          o.panel.innerHTML = mine.map(x => `<button type="button" data-id="${x.id}" title="${x.name}">${PIN_ICO[x.id] || '★'}</button>`).join('') +
+            gifts.map(x => `<button type="button" class="gift" data-g="${x.id}" title="${x.name} — подарок">${PIN_ICO[x.id] || '★'}<i>🎁</i></button>`).join('') +
+            `<span class="pinMore">${gifts.length ? '🎁 — подарки ' + [...new Set(gifts.map(x => GIFT_FOR[GIFT[x.id]]))].join(' и ') : mine.length < PINS.length ? 'ещё — в «Инвентаре»' : ''}</span>`;
+          o.panel.querySelectorAll('button[data-id]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); o.panel.hidden = true; pinSend(+o.k.dataset.i, b.dataset.id); }));
+          o.panel.querySelectorAll('button[data-g]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); const m = o.panel.querySelector('.pinMore'); const g = b.dataset.g; m.textContent = `«${BY[g].name}» — подарок ${GIFT_FOR[GIFT[g]]}: ${GIFT_HOW[GIFT[g]]}`; m.classList.remove('hey'); void m.offsetWidth; m.classList.add('hey'); }));
+          o.panel.hidden = false;
+        });
+      });
+      document.addEventListener('pointerdown', e => { if (!e.target.closest || !e.target.closest('.pinCorner')) L.btn.forEach(o => o.panel.hidden = true); }, true);
+    }
+    function loop() {
+      if (L.raf) return;
+      const step = () => {
+        L.raf = 0; const t = performance.now(); if (!L.B) return;
+        if (L.live && L.live.kind === 'tank' && (L.pins[0] || L.pins[1])) tankAnchors();
+        let any = false;
+        [0, 1].forEach(i => {
+          const p = L.pins[i], B = L.B[i];
+          if (p && (t - p.t0 > SHOW_T || !L.live)) L.pins[i] = null;
+          if (!L.pins[i]) { if (!B.el.hidden) B.el.hidden = true; return; }
+          any = true;
+          place(i, t); if (B.el.hidden) B.el.hidden = false;
+          drawEmo(i, t);
+        });
+        L.btn.forEach(o => { const cd = t < L.cd[+o.k.dataset.i]; if (o.b.classList.contains('cd') !== cd) o.b.classList.toggle('cd', cd); });
+        if (any || L.cd.some(v => t < v)) L.raf = requestAnimationFrame(step);
+      };
+      L.raf = requestAnimationFrame(step);
+    }
+    // раз в 200 мс: показать/спрятать кнопки и понять, кто где
+    setInterval(() => {
+      if (!L.el) { if (!document.body) return; build(); }
+      const g = L.live = liveGame();
+      L.el.hidden = !g;
+      if (!g) { L.btn.forEach(o => o.panel.hidden = true); L.pins = [null, null]; L.A = [null, null]; L.B.forEach(B => B.el.hidden = true); return; }
+      const sig = [g.me, g.net, g.bot, g.kind].join();
+      if (sig !== L.sig) {
+        L.sig = sig; L.pins = [null, null]; L.A = [null, null];
+        L.btn[0].k.dataset.i = g.me; L.btn[1].k.dataset.i = 1 - g.me;
+        L.btn[1].k.hidden = g.net || g.bot; // вдвоём — у красного своя кнопка
+      }
+    }, 200);
+    window.PPFX.pinNet = id => { if (!BY[id] || BY[id].cat !== 'pin' || !L.live) return; pinShow(1 - L.live.me, id); };
+    window.PPFX.pinSend = (i, id) => pinSend(i, id);
+    window.PPFX.anchor = anchor;
+    // живой значок эмоции на холсте (для подсказки о подарке): крутится, пока холст на экране
+    window.PPFX.pinPreview = (cv, id, once) => {
+      const e = BY[id]; if (!e || !cv || cv._pv) return; cv._pv = 1;
+      const t0 = performance.now(), fz = FREEZE[id] == null ? 0.6 : FREEZE[id]; // once — сыграть один раз и замереть на лучшем кадре
+      const f = now => { if (!cv.isConnected) { cv._pv = 0; return; } const r = cv.getBoundingClientRect(); if (r.width) { const d = DPR(); if (cv.width !== Math.round(r.width * d)) { cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); } const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, r.width, r.height); c.translate(r.width / 2, r.height * 0.52); const sc = r.height / (once ? 80 : 64); c.scale(sc, sc); const k = once ? Math.min(fz, (now - t0) / LOOP_T) : (now % LOOP_T) / LOOP_T; e.draw(c, k, PG_COL[0], PG_DARK[0], once ? t0 + k * LOOP_T : now); } requestAnimationFrame(f); };
+      requestAnimationFrame(f);
+    };
+
+    // ---------- сундучок после матча ----------
+    // Матч закончился → через секунду спрашиваем сервер (шанс 1 из 8, не чаще раза в 40 с). Выпало — сундучок поверх экрана победы:
+    // тапнул — трясётся три раза, открывается со вспышкой, внутри облачко с новой эмоцией.
+    function drawChest(c, w, h, open, glow) {
+      const K = '#1b1b22', s = Math.min(w, h) / 120; c.save(); c.translate(w / 2, h * 0.62); c.scale(s, s);
+      if (glow > 0) { c.save(); c.globalAlpha = glow; c.rotate(performance.now() / 1600); for (let i = 0; i < 12; i++) { c.rotate(Math.PI / 6); c.fillStyle = i % 2 ? 'rgba(255,214,90,0.55)' : 'rgba(255,245,200,0.35)'; c.beginPath(); c.moveTo(0, 0); c.lineTo(-9, -80); c.lineTo(9, -80); c.closePath(); c.fill(); } c.restore(); }
+      c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(0, 36, 40, 7, 0, 0, Math.PI * 2); c.fill();
+      const rr = (x, y, ww, hh, r) => { c.beginPath(); c.roundRect ? c.roundRect(x, y, ww, hh, r) : c.rect(x, y, ww, hh); };
+      c.lineWidth = 4; c.strokeStyle = K; c.lineJoin = 'round';
+      rr(-36, -8, 72, 42, 8); c.fillStyle = '#8a4b1f'; c.fill(); c.stroke();                               // короб
+      c.fillStyle = '#ffd23f'; for (const sd of [-1, 1]) { rr(sd * 24 - 5, -8, 10, 42, 2); c.fill(); c.stroke(); }
+      if (open > 0) { c.fillStyle = 'rgba(255,240,170,' + (0.6 * open) + ')'; c.beginPath(); c.ellipse(0, -8, 33, 6, 0, 0, Math.PI * 2); c.fill(); }
+      c.save(); c.translate(0, -8 - open * 16); c.rotate(-open * 0.18); c.scale(1, 1 - open * 0.5); c.translate(0, 8);   // крышка откидывается назад
+      rr(-38, -30, 76, 24, 11); c.fillStyle = '#b8692d'; c.fill(); c.stroke();
+      c.fillStyle = '#ffd23f'; for (const sd of [-1, 1]) { rr(sd * 24 - 5, -30, 10, 24, 2); c.fill(); c.stroke(); }
+      c.restore();
+      if (open < 0.3) { rr(-8, -16, 16, 20, 4); c.fillStyle = '#ffd23f'; c.fill(); c.stroke(); dot(c, 0, -7, 2.6, K); }   // замок
+      c.restore();
+    }
+    const CH = { el: null, busy: false, last: 0 };
+    // окно сундучка: тап — трясётся, в это время спрашиваем сервер, что внутри; открылся — эмоция или повторка
+    function chestShow() {
+      if (CH.busy || !window.PPACC || !window.PPACC.openChest) return; CH.busy = true;
+      const el = CH.el = document.createElement('div'); el.id = 'chestLayer';
+      el.innerHTML = `<div class="chBox"><b class="chTitle">Сундучок!</b><div class="chStage"><canvas class="chCv"></canvas><div class="chPrize" hidden><canvas class="chPin"></canvas></div></div><span class="chHint">Нажми, чтобы открыть</span><div class="chRow"><button type="button" class="hkPlay chOk" hidden>Круто!</button><button type="button" class="backBtn chLater">Потом</button></div></div>`;
+      document.body.appendChild(el);
+      const cv = el.querySelector('.chCv'), hint = el.querySelector('.chHint'), title = el.querySelector('.chTitle');
+      let st = 'shut', t0 = performance.now(), raf = 0, res = null, shook = false;
+      const fit = () => { const r = cv.getBoundingClientRect(), d = DPR(); if (cv.width !== Math.round(r.width * d)) { cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); } return [r.width, r.height, d]; };
+      const snd = (f, d) => { try { if (typeof sound === 'function') sound(f, d, 'triangle', 0.05); } catch (er) {} };
+      const close = () => { cancelAnimationFrame(raf); el.classList.add('out'); setTimeout(() => { el.remove(); CH.busy = false; }, 220); };
+      const frame = now => {
+        if (!el.isConnected) return;
+        const [w, h, d] = fit(), c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, w, h);
+        const a = (now - t0) / 1000; let rot = 0, open = 0, glow = 0, sc = 1;
+        if (st === 'shut') { sc = Math.min(1, 1 - Math.exp(-8 * a) * Math.cos(12 * a)); rot = Math.sin(now / 90) * 0.04 * (Math.sin(now / 700) > 0.6 ? 1 : 0); }
+        else if (st === 'shake') { const n = Math.floor(a / 0.32), f = a % 0.32; rot = f < 0.2 ? Math.sin(f / 0.2 * Math.PI * 3) * 0.16 * (1 + Math.min(n, 3) * 0.4) : 0; sc = 1 + (f < 0.2 ? 0.04 : 0); if (a > 0.96) { shook = true; if (res) { st = 'open'; t0 = now; reveal(); } } }
+        else { open = Math.min(1, ease(a / 0.35)); glow = res && res.dup ? 0.35 : Math.min(1, a / 0.3); }
+        c.save(); c.translate(w / 2, h * 0.75); c.rotate(rot); c.scale(sc, sc); c.translate(-w / 2, -h * 0.75); drawChest(c, w, h, open, glow); c.restore();
+        raf = requestAnimationFrame(frame);
+      };
+      raf = requestAnimationFrame(frame);
+      const reveal = () => {
+        if (res.err) { title.textContent = 'Не открылся'; hint.textContent = res.err; el.querySelector('.chOk').hidden = false; el.querySelector('.chOk').textContent = 'Закрыть'; return; }
+        const id = res.drop, e = BY[id], [rk] = INFO[id], [rn, rc] = RAR[rk];
+        if (res.dup) { snd(440, 0.12); title.innerHTML = `Повторка: «${e.name}»<i class="chRar" style="--rc:${rc}">${rn}</i>`; hint.textContent = `Уже была — ушла в ящик повторок (там ×${res.n})`; }
+        else { snd(660, 0.1); setTimeout(() => snd(990, 0.12), 90); setTimeout(() => snd(1320, 0.18), 180); if (rk === 'm') setTimeout(() => snd(1760, 0.3), 300);
+          title.innerHTML = `${rk === 'm' ? 'НЕВЕРОЯТНО! ' : ''}Новая эмоция: «${e.name}»<i class="chRar" style="--rc:${rc}">${rn}</i>`; hint.textContent = 'Уже в «Инвентаре» — кидай в игре кнопкой 😊'; }
+        const pr = el.querySelector('.chPrize'); pr.hidden = false; pr.classList.toggle('dup', !!res.dup); pr.classList.toggle('myth', rk === 'm'); requestAnimationFrame(() => pr.classList.add('on'));
+        PPFX.pinPreview(pr.querySelector('.chPin'), id, true);
+        el.querySelector('.chOk').hidden = false; el.querySelector('.chLater').hidden = true;
+      };
+      cv.addEventListener('click', () => {
+        if (st !== 'shut') return; st = 'shake'; t0 = performance.now(); hint.textContent = '…'; el.querySelector('.chLater').hidden = true;
+        [0, 320, 640].forEach(ms => setTimeout(() => snd(220 + ms / 4, 0.06), ms));
+        window.PPACC.openChest().then(j => { res = j; if (shook && st === 'shake') { st = 'open'; t0 = performance.now(); reveal(); } });
+      });
+      el.querySelector('.chOk').addEventListener('click', close);
+      el.querySelector('.chLater').addEventListener('click', () => { close(); toast('Сундучок ждёт тебя в «Инвентаре»', 2500); });
+      snd(520, 0.08);
+    }
+    window.PPCHEST = {
+      // конец матча в любой игре; won — победил ли тот, кто держит этот телефон (вдвоём — синий)
+      end(won) {
+        if (!won) return;
+        const t = performance.now(); if (t - CH.last < 3000) return; CH.last = t;
+        if (!window.PPACC || !window.PPACC.win) return;
+        setTimeout(() => window.PPACC.win().then(j => {
+          if (!j) return;
+          if (j.got) chestShow();
+          else if (j.next) toast(`Победа! До сундучка: ещё ${j.next - j.cw} ${j.next - j.cw === 1 ? 'победа' : j.next - j.cw < 5 ? 'победы' : 'побед'}`, 2600);
+        }).catch(() => {}), 1300);
+      },
+      show: chestShow
     };
 
     // ---------- вкладка «Инвентарь» ----------
-    const toast = msg => { let t = document.querySelector('.invToast'); if (!t) { t = document.createElement('div'); t.className = 'invToast'; document.body.appendChild(t); } t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1800); };
+    const RAR = { s: ['Особый', '#2fe0c8'], c: ['Обычный', '#9fb3c8'], r: ['Редкий', '#4fa3ff'], sr: ['Сверхредкий', '#4fdc8c'], e: ['Эпический', '#b56bff'], l: ['Легендарный', '#ffc53d'], m: ['Мифический', '#ff4f78'] };
+    const ALL = Object.keys(BY);
+    const toast = (msg, ms) => { let t = document.querySelector('.invToast'); if (!t) { t = document.createElement('div'); t.className = 'invToast'; document.body.appendChild(t); } t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), ms || 1800); };
+    const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+    function green(c, w, h, hole) {
+      c.fillStyle = '#5fc46a'; c.fillRect(0, 0, w, h);
+      c.fillStyle = 'rgba(255,255,255,0.055)'; for (let x = -h; x < w; x += 26) { c.beginPath(); c.moveTo(x, h); c.lineTo(x + h, 0); c.lineTo(x + h + 13, 0); c.lineTo(x + 13, h); c.fill(); }
+      const g = c.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.2, w / 2, h / 2, Math.max(w, h) * 0.75);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,30,10,0.35)'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+      if (hole) {
+        const [hx, hy] = hole;
+        dot(c, hx, hy + 1, 7.5, 'rgba(0,0,0,0.2)'); dot(c, hx, hy, 7, '#1d3a22');
+        c.strokeStyle = '#e8e8e8'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx, hy - 26); c.stroke();
+        c.fillStyle = '#ff5a4f'; c.beginPath(); c.moveTo(hx, hy - 26); c.lineTo(hx + 13, hy - 21.5); c.lineTo(hx, hy - 17); c.fill();
+      }
+    }
+    // арена как в играх с шариками: тёмный круг
+    function arena(c, w, h) {
+      c.fillStyle = '#1b1e27'; c.fillRect(0, 0, w, h);
+      const R = Math.max(w, h) * 0.62, g = c.createRadialGradient(w / 2, h * 0.55, 10, w / 2, h * 0.55, R);
+      g.addColorStop(0, '#3a4152'); g.addColorStop(1, '#232733'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.strokeStyle = 'rgba(255,255,255,0.05)'; c.lineWidth = 1;
+      for (let k = 1; k < 4; k++) { c.beginPath(); c.arc(w / 2, h * 0.55, Math.min(w, h) * 0.18 * k, 0, Math.PI * 2); c.stroke(); }
+    }
+    function golfBall(c, x, y, R) {
+      dot(c, x + R * 0.18, y + R * 0.3, R, 'rgba(0,0,0,0.28)');
+      const g = c.createRadialGradient(x - R * 0.35, y - R * 0.4, R * 0.1, x, y, R);
+      g.addColorStop(0, '#9cc8ff'); g.addColorStop(0.55, '#3f7fe0'); g.addColorStop(1, '#22498f'); dot(c, x, y, R, g);
+      dot(c, x - R * 0.42, y - R * 0.48, R * 0.2, 'rgba(255,255,255,0.75)');
+    }
+    // шарик с глазками — как в играх (синий)
+    function eyeBall(c, x, y, r, lx, ly) {
+      dot(c, x, y + 3, r, 'rgba(0,0,0,0.28)'); dot(c, x, y, r, '#1f5fb8'); dot(c, x, y - 1, r * 0.82, '#4fa3ff');
+      dot(c, x - r * 0.42, y - r * 0.45, r * 0.16, 'rgba(255,255,255,0.35)');
+      const l = Math.hypot(lx, ly) || 1, ex = lx / l, ey = ly / l, px = -ey, py = ex, er = Math.max(2, r * 0.27), off = r * 0.3, sep = r * 0.36;
+      for (const s of [-1, 1]) { const cx = x + ex * off + px * sep * s, cy = y - 1 + ey * off + py * sep * s; dot(c, cx, cy, er, '#ffffff'); dot(c, cx + ex * er * 0.45, cy + ey * er * 0.45, er * 0.52, '#1b1b22'); }
+    }
+    const path = (t, w, h, R) => [w / 2 + Math.sin(t) * (w / 2 - R * 3), h / 2 + Math.sin(t * 2) * (h / 2 - R * 2.6)];
+    function fitCanvas(cv) {
+      const dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h) return null;
+      if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+      const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); return [c, w, h];
+    }
+    // одна картинка-превью предмета (big — витрина)
+    function preview(e, c, w, h, now, st, big, n) {
+      if (e.cat === 'trail') {
+        const R = big ? Math.max(7, Math.min(11, h / 13)) : Math.max(4, Math.min(6.5, h / 9)), [x, y] = path(now / (big ? 1100 : 950) + n * 1.3, w, h, R), K = big ? 2.2 : 1.7;
+        green(c, w, h, big ? [w * 0.86, h * 0.76] : null);
+        st.T.push([x, y, now]); st.T = st.T.filter(p => now - p[2] < LIFE * K);
+        LK = K; e.draw(c, st.T, now, R); LK = 1; golfBall(c, x, y, R);
+      } else if (e.cat === 'skin') {
+        arena(c, w, h);
+        const r = big ? Math.min(h * 0.2, 26) : Math.min(h * 0.23, 15), t = now / 1000 + n, x = w / 2 + Math.sin(t * 0.9) * w * (big ? 0.22 : 0.12), y = h * 0.58 + Math.sin(t * 2.6) * r * 0.12;
+        const vx = Math.cos(t * 0.9) * 60;
+        eyeBall(c, x, y, r, Math.sign(vx) * 0.6, -1);
+        const s0 = e.draw; c.save(); c.translate(x, y); s0.call(e, c, r, now, [vx > 0 ? -1 : 1, 0.25]); c.restore();
+      } else if (e.cat === 'pin') {
+        arena(c, w, h);
+        const s = big ? Math.min(1.5, h / 105) : Math.min(0.95, h / 80), k = ((now + n * 400) % (PIN_T + 500)) / PIN_T;
+        if (k < 1) { c.save(); c.translate(w / 2, h * 0.55); c.scale(s, s); e.draw(c, k, '#4fa3ff', '#1f5fb8', now); c.restore(); }
+      } else {
+        arena(c, w, h);
+        const r = big ? Math.min(h * 0.11, 15) : Math.min(h * 0.14, 9), x = w / 2, y = h * (big ? 0.7 : 0.66), cyc = big ? 2600 : 2400, k = ((now + n * 500) % cyc) / WIN_T;
+        eyeBall(c, x, y, r, 0, -1);
+        if (k < 1) e.draw(c, x, y, k, big ? Math.min(1, h / 190) : Math.min(0.55, h / 180));
+      }
+    }
+
     window.PPINV = {
       mount(box) {
-        box.innerHTML = `<div class="invHead"><b>Инвентарь</b><span>Эффекты полёта мяча в мини-гольфе. Пока все закрыты.</span></div><div class="invGrid"></div>`;
-        const grid = box.querySelector('.invGrid'), cards = [];
-        for (const e of LIST) {
-          const own = window.PPFX.owns(e.id);
-          const card = document.createElement('button'); card.type = 'button'; card.className = 'invCard' + (own ? '' : ' locked');
-          card.innerHTML = `<canvas></canvas><span class="invName">${e.name}</span><span class="invLock">${own ? 'Есть' : '🔒 Закрыто'}</span>`;
-          card.addEventListener('click', () => toast(own ? e.name : 'Пока закрыто — скоро можно будет получить'));
-          grid.appendChild(card); cards.push({ e, cv: card.querySelector('canvas'), T: [] });
+        let tab = lsGet('pp-invtab'); if (!CAT[tab]) tab = 'trail';
+        const selOf = {}; for (const k in CAT) { const v = lsGet('pp-invsel-' + k); selOf[k] = BY[v] && BY[v].cat === k ? v : (CAT[k].items.find(x => S.owned.includes(x.id)) || CAT[k].items[CAT[k].items.length - 1]).id; }
+        box.innerHTML = `
+          <div class="invTop">
+            <div class="invTitle"><b>Инвентарь</b><span class="invCount"></span></div>
+            <div class="invBar"><i></i></div>
+          </div>
+          <div class="invChest" hidden></div>
+          <div class="invTabs">${Object.keys(CAT).map(k => `<button type="button" data-t="${k}">${CAT[k].name}<small></small></button>`).join('')}</div>
+          <div class="invShow">
+            <div class="invStage"><canvas></canvas><span class="invStageLock">🔒</span></div>
+            <div class="invInfo">
+              <div class="invRow"><b class="invBig"></b><span class="invRar"></span></div>
+              <div class="invDesc"></div>
+              <div class="invState"></div>
+              <button type="button" class="invEq" hidden></button>
+            </div>
+          </div>
+          <div class="invSec"></div>
+          <div class="invGrid"></div>`;
+        const stage = box.querySelector('.invStage'), stageCv = stage.querySelector('canvas'), grid = box.querySelector('.invGrid');
+        let cards = [], stageSt = { T: [] };
+        function build() {
+          grid.innerHTML = '';
+          cards = CAT[tab].items.map(e => {
+            const [rk] = INFO[e.id], [, col] = RAR[rk];
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'invItem'; b.style.setProperty('--rc', col);
+            b.innerHTML = `<canvas></canvas><span class="invName">${e.name}</span><i class="invDot"></i><span class="invMiniLock${GIFT[e.id] ? ' gift' : ''}">${GIFT[e.id] ? '🎁' : '🔒'}</span><span class="invWorn">✓</span>`;
+            b.addEventListener('click', () => {
+              if (selOf[tab] === e.id) { if (!window.PPFX.owns(e.id)) { const L = b.querySelector('.invMiniLock'); L.classList.remove('shake'); void L.offsetWidth; L.classList.add('shake'); toast(GIFT[e.id] ? `Подарок ${GIFT_FOR[GIFT[e.id]]} — нажми «Получить»` : DROP[e.id] ? 'Выпадает из сундучка за победы — играй!' : 'Пока закрыто — скоро можно будет получить'); } return; }
+              selOf[tab] = e.id; lsSet('pp-invsel-' + tab, e.id); stageSt = { T: [] }; show();
+            });
+            grid.appendChild(b);
+            return { e, b, cv: b.querySelector('canvas'), st: { T: [] } };
+          });
+          box.querySelector('.invSec').textContent = CAT[tab].sub;
+          box.querySelectorAll('.invTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
         }
-        // превью: мяч летает восьмёркой и оставляет след
+        function show() {
+          const id = selOf[tab], e = BY[id], [rk, desc] = INFO[id], [rn, col] = RAR[rk], own = window.PPFX.owns(id);
+          box.querySelector('.invBig').textContent = e.name;
+          const r = box.querySelector('.invRar'); r.textContent = rn; r.style.setProperty('--rc', col);
+          box.querySelector('.invDesc').textContent = desc;
+          const on = window.PPFX.worn(tab) === id, eqB = box.querySelector('.invEq');
+          const gift = !own && GIFT[id];
+          box.querySelector('.invState').innerHTML = gift ? `<span class="invGift">🎁 Подарок ${GIFT_FOR[gift]}</span> · ${GIFT_HOW[gift].replace(' во вкладке «Друзья»', '')}` : !own && DROP[id] ? '<span class="invNo">📦 Из сундучка</span> · сундучки дают за победы' : !own ? '<span class="invNo">🔒 Закрыто</span> · скоро можно будет получить' : tab === 'pin' ? '<span class="invOk">✓ Есть у тебя</span> · кидай в игре кнопкой 😊' : on ? '<span class="invOk">✓ Надето</span> · видно в играх' : '<span class="invOk">✓ Есть у тебя</span>';
+          eqB.hidden = gift ? false : !own || tab === 'pin'; eqB.textContent = gift ? 'Получить' : on ? 'Снять' : 'Надеть'; eqB.classList.toggle('off', !gift && on); eqB.classList.toggle('gift', !!gift);
+          box.querySelector('.invStageLock').textContent = gift ? '🎁' : '🔒';
+          stage.style.setProperty('--rc', col); stage.classList.toggle('locked', !own); stage.classList.toggle('legend', rk === 'l');
+          cards.forEach(k => { k.b.classList.toggle('on', k.e.id === id); k.b.classList.toggle('locked', !window.PPFX.owns(k.e.id)); k.b.classList.toggle('worn', window.PPFX.worn(tab) === k.e.id); });
+          const n = ALL.filter(x => window.PPFX.owns(x)).length; box.querySelector('.invCount').textContent = `Собрано ${n} из ${ALL.length}`;
+          box.querySelector('.invBar i').style.width = (n / ALL.length * 100) + '%';
+          box.querySelectorAll('.invTabs button').forEach(b => { const its = CAT[b.dataset.t].items; b.querySelector('small').textContent = `${its.filter(x => window.PPFX.owns(x.id)).length}/${its.length}`; });
+        }
+        box.querySelectorAll('.invTabs button').forEach(b => b.addEventListener('click', () => { if (tab === b.dataset.t) return; tab = b.dataset.t; lsSet('pp-invtab', tab); stageSt = { T: [] }; build(); show(); }));
+        stage.addEventListener('click', () => { if (!window.PPFX.owns(selOf[tab])) { const L = stage.querySelector('.invStageLock'); L.classList.remove('shake'); void L.offsetWidth; L.classList.add('shake'); } });
+        box.querySelector('.invEq').addEventListener('click', () => {
+          const id = selOf[tab], put = window.PPFX.worn(tab) === id ? null : id;
+          if (!window.PPFX.owns(id) && GIFT[id]) { if (window.PPACC && window.PPACC.gift) window.PPACC.gift(GIFT[id]); return; } // подарок: ведём регистрироваться / привязывать Telegram
+          if (!window.PPACC || !window.PPACC.equip) return;
+          window.PPACC.equip(tab, put).then(() => { if (put) toast(`Надето: ${BY[put].name}`); }).catch(e => toast(e.message || 'Не получилось — проверь интернет'));
+        });
+        S.subs.push(() => { if (box.isConnected) show(); }); // пришли предметы из аккаунта
+        // сундучки: победы за 12 ч (1, 3, 10), неоткрытые сундучки, ящик повторок
+        const chestBox = box.querySelector('.invChest');
+        function chestPanel() {
+          const ci = window.PPACC && window.PPACC.chestInfo && window.PPACC.chestInfo();
+          if (!ci) { chestBox.hidden = false; chestBox.innerHTML = '<div class="icRow"><span class="icT">📦 Сундучки за победы</span></div><span class="icSub">Войди в аккаунт во вкладке «Друзья» — и получай сундучки за 1-ю, 3-ю и 10-ю победу</span>'; return; }
+          chestBox.hidden = false;
+          const steps = [1, 3, 10], cw = ci.cw, left = ci.cycEnd ? Math.max(0, ci.cycEnd - Date.now()) : 0, hh = Math.floor(left / 3600e3), mm = Math.floor(left % 3600e3 / 60000);
+          const dups = Object.entries(ci.dups || {}).filter(([id, n]) => BY[id] && n > 0), dn = dups.reduce((a, [, n]) => a + n, 0);
+          chestBox.innerHTML = `<div class="icRow"><span class="icT">📦 Сундучки за победы</span>${ci.chests ? `<button type="button" class="hkPlay icOpen">Открыть${ci.chests > 1 ? ' (' + ci.chests + ')' : ''}</button>` : ''}</div>
+            <div class="icSteps">${steps.map(n => `<span class="${cw >= n ? 'ok' : ''}"><b>${cw >= n ? '✓' : n}</b>${{ 1: 'победа', 3: 'победы', 10: 'побед' }[n]}</span>`).join('<i></i>')}</div>
+            <span class="icSub">${cw ? `Побед: ${cw}. ` : ''}${left ? `Новый круг через ${hh ? hh + ' ч ' : ''}${mm} мин` : 'Круг из 12 часов начнётся с первой победы'}</span>
+            ${dn ? `<div class="icDups"><span>Ящик повторок · ${dn}</span>${dups.map(([id, n]) => `<i title="${BY[id].name}">${PIN_ICO[id] || '★'}<b>×${n}</b></i>`).join('')}</div>` : ''}`;
+          const ob = chestBox.querySelector('.icOpen'); if (ob) ob.onclick = () => chestShow();
+        }
+        if (window.PPACC && window.PPACC.onChange) window.PPACC.onChange(() => { if (box.isConnected) chestPanel(); });
+        chestPanel();
+        build(); show();
+
         let raf = 0;
         const frame = now => {
           raf = 0; if (box.hidden || !box.isConnected || box.offsetParent === null) return;
-          for (const P of cards) {
-            const cv = P.cv, dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w) continue;
-            if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-            const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-            c.fillStyle = '#5fc46a'; c.fillRect(0, 0, w, h);
-            c.fillStyle = 'rgba(255,255,255,0.06)'; for (let x = 0; x < w; x += 20) c.fillRect(x, 0, 10, h);
-            const R = Math.max(5, Math.min(8, h / 11)), s = now / 900, x = w / 2 + Math.sin(s) * (w / 2 - R * 2.5), y = h / 2 + Math.sin(s * 2) * (h / 2 - R * 2.2);
-            P.T.push([x, y, now]); P.T = P.T.filter(p => now - p[2] < LIFE);
-            P.e.draw(c, P.T, now, R);
-            dot(c, x + 1.2, y + 2, R, 'rgba(0,0,0,0.3)');
-            const g = c.createRadialGradient(x - R * 0.35, y - R * 0.4, R * 0.1, x, y, R);
-            g.addColorStop(0, '#8fc0ff'); g.addColorStop(0.55, '#3f7fe0'); g.addColorStop(1, '#22498f'); dot(c, x, y, R, g);
-            dot(c, x - R * 0.45, y - R * 0.5, R * 0.18, 'rgba(255,255,255,0.7)');
-          }
+          const f = fitCanvas(stageCv); if (f) preview(BY[selOf[tab]], f[0], f[1], f[2], now, stageSt, true, 0);
+          cards.forEach((k, n) => { const f = fitCanvas(k.cv); if (f) preview(k.e, f[0], f[1], f[2], now, k.st, false, n); });
           raf = requestAnimationFrame(frame);
         };
         const start = () => { if (!raf && !box.hidden) raf = requestAnimationFrame(frame); };
