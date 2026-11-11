@@ -1748,15 +1748,19 @@
   .pinBtn { position: absolute; left: 0; top: 0; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; background: rgba(20,22,30,.6); box-shadow: 0 0 0 2px rgba(255,255,255,.18); font-size: 21px; line-height: 42px; cursor: pointer; pointer-events: auto; transition: opacity .2s, transform .15s; }
   .pinBtn:active { transform: scale(.9); }
   .pinBtn.cd { opacity: .4; }
-  .pinPanel { position: absolute; left: 0; top: 50px; pointer-events: auto; display: flex; flex-wrap: wrap; gap: 6px; width: max-content; max-width: 210px; padding: 7px; border-radius: 18px; background: rgba(20,22,30,.94); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .pinPanel { position: absolute; left: 0; top: 50px; pointer-events: auto; display: grid; grid-template-columns: repeat(5, 48px); gap: 6px; width: max-content; padding: 8px; border-radius: 18px; background: rgba(20,22,30,.94); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
   .pinPanel[hidden] { display: none; }
-  .pinPanel button { width: 42px; height: 42px; border: 0; border-radius: 12px; background: rgba(255,255,255,.08); color: #fff; font: 900 22px system-ui, sans-serif; cursor: pointer; }
+  .pinPanel button { position: relative; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: #ffffff; box-shadow: inset 0 0 0 2.5px #1b1b22, inset 0 -6px 0 #e6eaf2; cursor: pointer; overflow: visible; }
+  .pinPanel button canvas { width: 48px; height: 48px; display: block; border-radius: 14px; pointer-events: none; }
   .pinPanel button[data-id="gg"] { font-size: 15px; }
+  .pinPanel button.hov { transform: scale(1.18); box-shadow: inset 0 0 0 2.5px #1b1b22, inset 0 -6px 0 #e6eaf2, 0 0 0 3px #2fe0c8; z-index: 1; }
+  .pinPanel button { transition: transform .08s, background .08s; }
+  .pinBtn { touch-action: none; }
   .pinPanel button.gift { position: relative; opacity: .45; filter: grayscale(.6); }
   .pinPanel button.gift i { position: absolute; right: -3px; top: -4px; font-size: 13px; font-style: normal; filter: none; }
   .pinMore.hey { animation: pinHey .5s; }
   @keyframes pinHey { 30% { transform: translateX(-3px); color: #2fe0c8; opacity: 1; } 60% { transform: translateX(3px); } }
-  .pinMore { flex-basis: 100%; font-size: 11px; opacity: .55; padding: 0 2px; color: #fff; }
+  .pinMore { grid-column: 1 / -1; font-size: 11px; opacity: .55; padding: 0 2px; color: #fff; }
   .invSec { font-size: 12.5px; font-weight: 800; opacity: .5; padding: 2px 4px 0; text-transform: none; }
   .invGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .invItem { position: relative; display: flex; flex-direction: column; gap: 5px; padding: 6px 6px 8px; border: 0; border-radius: 16px; background: rgba(255,255,255,.05); color: inherit; font: inherit; cursor: pointer; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow .2s, transform .15s, background .2s; }
@@ -8382,7 +8386,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '3.10';
+  const NET_BUILD = '3.12';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -19158,14 +19162,14 @@
       return {
         // взрыв мозга: милый череп, над ним гриб, вокруг белые осколки
         skull(c) {
-          c.save(); c.translate(0, 1); c.scale(0.37, 0.37);
+          c.save(); c.translate(0, 4); c.scale(0.32, 0.32);
           skull(c); c.save(); c.scale(0.9, 0.9); c.translate(0, -2); cloud(c, false); c.restore();
           shards(c, '#ffffff', [[-58, -62, 0.5, 1], [54, -80, -0.3, 1.1], [-60, -4, -0.4, 0.9], [60, -12, 0.6, 1]]);
           c.restore();
         },
         // Ж: макушку сорвало — она летит вверх, шарик смотрит ей вслед
         lid(c, col, dark) {
-          c.save(); c.translate(0, 9); c.scale(0.335, 0.335);
+          c.save(); c.translate(0, 10); c.scale(0.32, 0.32);
           ball(c, col, dark, c => { eye(c, -18, cy + 8, 12, 0, -4); eye(c, 18, cy + 8, 12, 0, -4); c.fillStyle = '#7a1a2c'; c.strokeStyle = '#2b2e3b'; c.lineWidth = 3.5; c.beginPath(); c.ellipse(0, cy + 32, 8, 10, 0, 0, 7); c.fill(); c.stroke(); }, true);
           c.save(); c.scale(0.85, 0.85); c.translate(0, -6); cloud(c, false); c.restore();
           lid(c, col, true); shards(c, col, [[-62, -30, 0.5, 0.9], [62, -6, -0.3, 0.9]]);
@@ -19173,7 +19177,7 @@
         },
         // К: из головы валит дым, пустые глаза и полоска-зубы
         smoke(c, col, dark) {
-          c.save(); c.translate(0, 3); c.scale(0.38, 0.38);
+          c.save(); c.translate(0, 5); c.scale(0.32, 0.32);
           ball(c, col, dark, c => { c.fillStyle = K; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 19, cy + 12, 12, 0, 7); c.fill(); } c.fillStyle = '#ffffff'; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 19 - 4, cy + 8, 3, 0, 7); c.fill(); }
             c.strokeStyle = K; c.lineWidth = 5; c.beginPath(); c.roundRect ? c.roundRect(-20, cy + 34, 40, 9, 4.5) : c.rect(-20, cy + 34, 40, 9); c.stroke(); c.fill(); });
           cloud(c, true); shards(c, col, [[-58, -62, 0.5, 1], [54, -80, -0.3, 1.1], [-62, -6, -0.4, 0.9], [62, -12, 0.6, 1]]);
@@ -19207,19 +19211,19 @@
         // шарик радуется: прищурился от удовольствия, рядом выскакивает палец вверх и пару раз «качает», вокруг искорки
         const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), hop = k > 0.15 && k < 0.6 ? Math.abs(Math.sin((k - 0.15) * Math.PI * 4.4)) * 3 : 0;
         c.save(); c.scale(s, s);
-        face(c, -7, 3 - hop, 19, col, dark, { closed: k > 0.2 && k < 0.7, mouth: 'grin' });
+        face(c, -6, 4 - hop, 16, col, dark, { closed: k > 0.2 && k < 0.7, mouth: 'grin' });
         const p = back((k - 0.22) / 0.15), pump = k > 0.4 && k < 0.8 ? Math.max(0, Math.sin((k - 0.4) * Math.PI * 5)) * 3 : 0;
-        if (k > 0.22) { c.save(); c.translate(21, 2 - pump); c.rotate(Math.PI); c.scale(-0.68 * p, 0.68 * p); thumb(c, '#ffc94d', '#b07a10', 'rgba(255,255,255,0.6)'); c.restore(); }
-        if (k > 0.35) for (let n = 0; n < 3; n++) { const t = ((now / 700 + n / 3) % 1); c.globalAlpha = Math.min(1, (k - 0.35) * 5) * (1 - t); star(c, 30 + Math.cos(n * 2.1) * 6, -20 - t * 10 + n * 4, 2.6 + (1 - t) * 1.6, n % 2 ? '#ffd23f' : '#4fdc8c'); }
+        if (k > 0.22) { c.save(); c.translate(18, 3 - pump); c.rotate(Math.PI); c.scale(-0.58 * p, 0.58 * p); thumb(c, '#ffc94d', '#b07a10', 'rgba(255,255,255,0.6)'); c.restore(); }
+        if (k > 0.35) for (let n = 0; n < 3; n++) { const t = ((now / 700 + n / 3) % 1); c.globalAlpha = Math.min(1, (k - 0.35) * 5) * (1 - t); star(c, 26 + Math.cos(n * 2.1) * 6, -16 - t * 10 + n * 4, 2.6 + (1 - t) * 1.6, n % 2 ? '#ffd23f' : '#4fdc8c'); }
         c.globalAlpha = 1; c.restore();
       } },
       { id: 'dislike', name: 'Дизлайк', draw(c, k, col, dark, now) {
         // шарик недоволен: веки опущены, закатывает глаза, потом тычет пальцем вниз
         const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), roll = k > 0.15 && k < 0.55 ? Math.sin((k - 0.15) / 0.4 * Math.PI) : 0;
         c.save(); c.scale(s, s);
-        face(c, -7, 3, 19, col, dark, { lx: roll * 0.6, ly: -roll * 0.9 + 0.1, lid: 0.55, mouth: 'flat' });
+        face(c, -6, 4, 16, col, dark, { lx: roll * 0.6, ly: -roll * 0.9 + 0.1, lid: 0.55, mouth: 'flat' });
         const p = back((k - 0.3) / 0.15), jab = k > 0.45 && k < 0.8 ? Math.max(0, Math.sin((k - 0.45) * Math.PI * 6)) * 3 : 0;
-        if (k > 0.3) { c.save(); c.translate(20, 9 + jab); c.scale(0.68 * p, 0.68 * p); thumb(c, '#ffc94d', '#b07a10', 'rgba(255,255,255,0.6)'); c.restore(); }
+        if (k > 0.3) { c.save(); c.translate(17, 9 + jab); c.scale(0.58 * p, 0.58 * p); thumb(c, '#ffc94d', '#b07a10', 'rgba(255,255,255,0.6)'); c.restore(); }
         c.restore();
       } },
       { id: 'gg', name: 'GG', draw(c, k, col, dark, now) {
@@ -19272,19 +19276,19 @@
         const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), fire = ease((k - 0.08) / 0.3);
         c.save(); c.scale(s, s);
         const fl = (x, y, sz, a, b) => { c.save(); c.translate(x, y); c.scale(sz, sz); c.fillStyle = a; c.beginPath(); c.moveTo(0, -22); c.bezierCurveTo(12, -8, 14, 4, 0, 10); c.bezierCurveTo(-14, 4, -12, -8, 0, -22); c.fill(); c.fillStyle = b; c.beginPath(); c.moveTo(0, -10); c.bezierCurveTo(6, -2, 7, 4, 0, 8); c.bezierCurveTo(-7, 4, -6, -2, 0, -10); c.fill(); c.restore(); };
-        if (fire > 0) for (const [x, sz, ph] of [[-15, 0.85, 0], [0, 1.1, 1], [15, 0.85, 2]]) fl(x, -12 + Math.sin(now / 90 + ph) * 1.5, sz * fire * (1 + Math.sin(now / 70 + ph) * 0.08), '#ff7a1a', '#ffd23f');
-        face(c, 0, 8, 19, col, dark, { mouth: k > 0.45 ? 'grin' : null });
-        const gy = 4 + (k < 0.35 ? -40 : k < 0.5 ? -40 + 40 * back((k - 0.35) / 0.15) : 0);
-        c.fillStyle = '#14141a'; for (const sd of [-1, 1]) { c.beginPath(); c.roundRect ? c.roundRect(sd * 7.5 - 6.5, gy - 4, 13, 8, 3) : c.rect(sd * 7.5 - 6.5, gy - 4, 13, 8); c.fill(); }
-        c.fillRect(-2, gy - 3, 4, 2); c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillRect(-11, gy - 2.5, 3, 1.6); c.fillRect(4, gy - 2.5, 3, 1.6);
+        if (fire > 0) for (const [x, sz, ph] of [[-15, 0.85, 0], [0, 1.1, 1], [15, 0.85, 2]]) fl(x * 0.75, -4 + Math.sin(now / 90 + ph) * 1.2, 0.72 * sz * fire * (1 + Math.sin(now / 70 + ph) * 0.08), '#ff7a1a', '#ffd23f');
+        face(c, 0, 9, 16, col, dark, { mouth: k > 0.45 ? 'grin' : null });
+        const gy = 6 + (k < 0.35 ? -40 : k < 0.5 ? -40 + 40 * back((k - 0.35) / 0.15) : 0);
+        c.fillStyle = '#14141a'; for (const sd of [-1, 1]) { c.beginPath(); c.roundRect ? c.roundRect(sd * 6.3 - 5.5, gy - 3.4, 11, 6.8, 2.6) : c.rect(sd * 6.3 - 5.5, gy - 3.4, 11, 6.8); c.fill(); }
+        c.fillRect(-1.7, gy - 2.5, 3.4, 1.7); c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillRect(-9.3, gy - 2.1, 2.5, 1.4); c.fillRect(3.4, gy - 2.1, 2.5, 1.4);
         c.restore();
       } },
       { id: 'hug', name: 'Обнимашки', draw(c, k, col, dark, now) {
         // шарик тает от удовольствия: жмурится, румянец, вверх летят сердечки
         const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), sq = k > 0.15 && k < 0.45 ? Math.sin((k - 0.15) / 0.3 * Math.PI) * 0.08 : 0;
         c.save(); c.scale(s, s); c.save(); c.translate(0, 6); c.scale(1 + sq, 1 - sq);
-        face(c, 0, 0, 20, col, dark, { closed: true, mouth: 'grin' });
-        c.fillStyle = 'rgba(255,120,140,0.55)'; for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * 12, 4, 4.5, 2.8, 0, 0, Math.PI * 2); c.fill(); }
+        face(c, 0, 0, 16, col, dark, { closed: true, mouth: 'grin' });
+        c.fillStyle = 'rgba(255,120,140,0.55)'; for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * 10, 3.5, 3.8, 2.4, 0, 0, Math.PI * 2); c.fill(); }
         c.restore();
         for (let n = 0; n < 3; n++) { const t = Math.max(0, Math.min(1, (k - 0.2 - n * 0.1) / 0.45)); if (t <= 0) continue; c.globalAlpha = 1 - t * 0.6; heart(c, (n - 1) * 17 + Math.sin(t * 6 + n) * 3, -10 - t * 24, 4.5 + t * 2.5, '#ff4f78'); }
         c.globalAlpha = 1; c.restore();
@@ -19293,15 +19297,15 @@
         // скучно ждать: шарик засыпает, пузырь из носа, улетают «z»
         const s = back(k / 0.15) * (k > 0.88 ? 1 - ease((k - 0.88) / 0.12) : 1), br = Math.sin(now / 320);
         c.save(); c.scale(s, s);
-        face(c, -6, 8 + br, 19, col, dark, k < 0.2 ? { ly: 0.5 } : { sleep: true });
-        if (k > 0.25) { const b = ease((k - 0.25) / 0.25) * (5 + br * 1.4); c.fillStyle = 'rgba(143,211,255,0.85)'; c.beginPath(); c.ellipse(4, 21 + br, b, b * 1.1, 0, 0, Math.PI * 2); c.fill(); dot(c, 4 - b * 0.35, 21 + br - b * 0.4, b * 0.25, 'rgba(255,255,255,0.8)'); }
+        face(c, -5, 8 + br, 16, col, dark, k < 0.2 ? { ly: 0.5 } : { sleep: true });
+        if (k > 0.25) { const b = ease((k - 0.25) / 0.25) * (5 + br * 1.4); c.fillStyle = 'rgba(143,211,255,0.85)'; c.beginPath(); c.ellipse(3, 19 + br, b, b * 1.1, 0, 0, Math.PI * 2); c.fill(); dot(c, 3 - b * 0.35, 19 + br - b * 0.4, b * 0.25, 'rgba(255,255,255,0.8)'); }
         for (let n = 0; n < 3; n++) { const t = Math.max(0, Math.min(1, (k - 0.3 - n * 0.1) / 0.4)); if (t <= 0) continue; c.globalAlpha = Math.min(1, (1 - t) * 1.6 + 0.4); label(c, 'z', 14 + n * 9, -6 - n * 10 - t * 4, 9 + n * 3, '#4fa3ff', '#ffffff'); }
         c.globalAlpha = 1; c.restore();
       } },
       { id: 'boom', name: 'Взрыв мозга', draw(c, k, col, dark) { MB.skull(c); } },   // без анимации
       { id: 'lidoff', name: 'Крышку сорвало', draw(c, k, col, dark) { MB.lid(c, col, dark); } },   // без анимации
       { id: 'smoke', name: 'Дымится', draw(c, k, col, dark) { MB.smoke(c, col, dark); } },          // без анимации
-      { id: 'rocket', name: 'Ракета', draw(c, k, col, dark, now) {
+      { id: 'rocket', name: 'Ракета', draw(c, k, col, dark, now) { c.save(); c.translate(0, 12); this.d2(c, k, col, dark, now); c.restore(); }, d2(c, k, col, dark, now) {
         // ракета взлетает с огоньком и взрывается салютом с надписью
         if (k < 0.48) {
           const t = ease(k / 0.48), y = 26 - t * 64, x = Math.sin(t * 6) * 6;
@@ -19571,19 +19575,60 @@
       document.body.appendChild(el);
       L.B = [...el.querySelectorAll('.pinB')].map(b => ({ el: b, body: b.querySelector('.pinBody'), emo: b.querySelector('.pinEmo'), pad: 9, key: '', mx: 1, w: 0, h: 0 }));
       L.btn = [...el.querySelectorAll('.pinCorner')].map(k => ({ k, b: k.querySelector('.pinBtn'), panel: k.querySelector('.pinPanel') }));
+      // панель эмоций: строим заново при каждом открытии (вдруг появились новые)
+      const fill = o => {
+        const has = x => S.owned.includes(x.id) || S.test, mine = PINS.filter(has), gifts = PINS.filter(x => !has(x) && GIFT[x.id]);
+        // подарки, которые ещё не забрал, — в том же ряду, только бледные и с 🎁: видно, что их можно получить
+        // в панели — сами эмоции (их лучший кадр), а не значки телефона
+        o.panel.innerHTML = mine.map(x => `<button type="button" data-id="${x.id}" title="${x.name}"><canvas data-p="${x.id}"></canvas></button>`).join('') +
+          gifts.map(x => `<button type="button" class="gift" data-g="${x.id}" title="${x.name} — подарок"><canvas data-p="${x.id}"></canvas><i>🎁</i></button>`).join('') +
+          `<span class="pinMore">${gifts.length ? '🎁 — подарки ' + [...new Set(gifts.map(x => GIFT_FOR[GIFT[x.id]]))].join(' и ') : mine.length < PINS.length ? 'ещё — в «Инвентаре»' : ''}</span>`;
+      };
+      // значок эмоции: один кадр (лучший), цветом своего игрока; рисуется один раз при открытии панели
+      const icon = (cv, id, i) => {
+        const e = BY[id]; if (!e) return; const d = DPR(), W = 48;
+        cv.width = cv.height = Math.round(W * d); const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0);
+        const fz = FREEZE[id] == null ? 0.6 : FREEZE[id], k = fz || 0, sc = W / 84;
+        c.translate(W / 2, W * 0.53); c.scale(sc, sc);
+        c.save(); c.beginPath(); c.rect(-W / sc / 2, -W / sc * 0.53, W / sc, W / sc); c.clip();
+        try { e.draw(c, k, PG_COL[i], PG_DARK[i], 1000 + k * LOOP_T); } catch (er) {}
+        c.restore();
+      };
+      const pick = (o, b) => {
+        if (!b) return;
+        if (b.dataset.id) { o.panel.hidden = true; pinSend(+o.k.dataset.i, b.dataset.id); return; }
+        const g = b.dataset.g, m = o.panel.querySelector('.pinMore'); m.textContent = `«${BY[g].name}» — подарок ${GIFT_FOR[GIFT[g]]}: ${GIFT_HOW[GIFT[g]]}`; m.classList.remove('hey'); void m.offsetWidth; m.classList.add('hey');
+      };
+      const under = (o, x, y) => { const el = document.elementFromPoint(x, y); const b = el && el.closest && el.closest('.pinPanel button'); return b && o.panel.contains(b) ? b : null; };
       L.btn.forEach(o => {
-        o.b.addEventListener('click', e => {
-          e.stopPropagation();
-          if (!o.panel.hidden) { o.panel.hidden = true; return; }
-          const has = x => S.owned.includes(x.id) || S.test, mine = PINS.filter(has), gifts = PINS.filter(x => !has(x) && GIFT[x.id]);
-          // подарки, которые ещё не забрал, — в том же ряду, только бледные и с 🎁: видно, что их можно получить
-          o.panel.innerHTML = mine.map(x => `<button type="button" data-id="${x.id}" title="${x.name}">${PIN_ICO[x.id] || '★'}</button>`).join('') +
-            gifts.map(x => `<button type="button" class="gift" data-g="${x.id}" title="${x.name} — подарок">${PIN_ICO[x.id] || '★'}<i>🎁</i></button>`).join('') +
-            `<span class="pinMore">${gifts.length ? '🎁 — подарки ' + [...new Set(gifts.map(x => GIFT_FOR[GIFT[x.id]]))].join(' и ') : mine.length < PINS.length ? 'ещё — в «Инвентаре»' : ''}</span>`;
-          o.panel.querySelectorAll('button[data-id]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); o.panel.hidden = true; pinSend(+o.k.dataset.i, b.dataset.id); }));
-          o.panel.querySelectorAll('button[data-g]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); const m = o.panel.querySelector('.pinMore'); const g = b.dataset.g; m.textContent = `«${BY[g].name}» — подарок ${GIFT_FOR[GIFT[g]]}: ${GIFT_HOW[GIFT[g]]}`; m.classList.remove('hey'); void m.offsetWidth; m.classList.add('hey'); }));
-          o.panel.hidden = false;
+        let drag = null; // { id, x, y, moved, opened }
+        o.b.addEventListener('pointerdown', e => {
+          e.preventDefault(); e.stopPropagation();
+          const wasOpen = !o.panel.hidden;
+          if (!wasOpen) { fill(o); o.panel.hidden = false; o.panel.querySelectorAll('canvas[data-p]').forEach(cv => icon(cv, cv.dataset.p, +o.k.dataset.i)); }
+          drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, wasOpen };
+          try { o.b.setPointerCapture(e.pointerId); } catch (er) {}
         });
+        o.b.addEventListener('pointermove', e => {
+          if (!drag || e.pointerId !== drag.id) return;
+          if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 8) drag.moved = true;
+          const b = under(o, e.clientX, e.clientY);
+          o.panel.querySelectorAll('button').forEach(x => x.classList.toggle('hov', x === b));
+        });
+        const up = e => {
+          if (!drag || e.pointerId !== drag.id) return;
+          const d = drag; drag = null;
+          const b = under(o, e.clientX, e.clientY);
+          o.panel.querySelectorAll('.hov').forEach(x => x.classList.remove('hov'));
+          if (b) { pick(o, b); return; }               // отпустил на эмоции — она и выбрана
+          if (!d.moved && d.wasOpen) o.panel.hidden = true; // просто нажал на 😊 ещё раз — закрыть
+          // просто нажал (без движения) — панель остаётся открытой, можно выбрать касанием
+        };
+        o.b.addEventListener('pointerup', up);
+        o.b.addEventListener('pointercancel', e => { drag = null; o.panel.querySelectorAll('.hov').forEach(x => x.classList.remove('hov')); });
+        o.b.addEventListener('click', e => e.stopPropagation());
+        // касание эмоции в открытой панели
+        o.panel.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest && e.target.closest('button'); if (b) pick(o, b); });
       });
       document.addEventListener('pointerdown', e => { if (!e.target.closest || !e.target.closest('.pinCorner')) L.btn.forEach(o => o.panel.hidden = true); }, true);
     }
