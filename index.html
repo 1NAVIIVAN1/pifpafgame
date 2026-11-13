@@ -2211,6 +2211,79 @@
   .ahHow > b { font-weight: 900; } .ahHow div { display: grid; grid-template-columns: 84px 1fr; gap: 8px; font-size: 0.83rem; line-height: 1.3; }
   .ahHow em { font-style: normal; font-weight: 900; color: #ffd76a; } .ahHow i { font-style: normal; font-weight: 900; color: #7ee08a; }
   @media (max-height: 640px) { .ahHero > b { font-size: 1.5rem; } .ahPlay { height: 56px; font-size: 1.5rem; } .ahSq { width: 60px; } .ahSq em { font-size: 1.2rem; } }
+
+  /* ===== 3.23: первый экран «Мини-игры / Арена танков» ===== */
+  .stHidden { display: none !important; }
+  .stScr { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .stScr[hidden], .stHead[hidden] { display: none !important; }
+  .stCard { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 12px; width: 100%; min-height: 200px; border: none; border-radius: 24px; padding: 18px 20px; text-align: left; color: #f2f4f8; font-family: inherit; overflow: hidden; }
+  .stCard:active, .stMore:active, .stBack:active { transform: scale(0.98); }
+  .stTxt { display: flex; flex-direction: column; gap: 3px; }
+  .stTxt b { font-size: 1.75rem; font-weight: 800; line-height: 1.1; }
+  .stTxt small { font-size: 0.95rem; color: #a7aebd; }
+  .stArr { position: absolute; right: 18px; bottom: 18px; font-size: 2rem; line-height: 1; color: #9aa3b6; }
+  .stMini { background: #23262e; }
+  .stIcons { display: flex; gap: 6px; }
+  .stMi { width: 54px; height: 54px; border-radius: 14px; background: #191b21; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .stMi .tileIcon { transform: scale(0.72); flex: none; }
+  .stArena { min-height: 230px; background: repeating-linear-gradient(115deg, rgba(255,255,255,0.05) 0 22px, transparent 22px 44px), radial-gradient(circle at 70% 30%, #3b6fe0 0%, #1f3f9a 55%, #101d4a 100%); box-shadow: 0 6px 0 #0a1230; }
+  .stArena .stTxt b { font-weight: 900; text-shadow: 0 2px 0 rgba(0,0,0,0.45); letter-spacing: 0.01em; }
+  .stArena .stTxt small { color: #bcd2ff; }
+  .stArena .stArr { color: #ffd84a; }
+  .stArIco { width: 84px; height: 84px; display: flex; align-items: center; justify-content: center; }
+  .stArIco .tileIcon { transform: scale(1.35); flex: none; }
+  .stCup { font-style: normal; color: #ffd84a; font-weight: 800; margin-right: 4px; }
+  .stMore { display: flex; align-items: center; gap: 12px; width: 100%; border: none; border-radius: 18px; padding: 14px 16px; background: #191b21; color: #c9ceda; font-family: inherit; text-align: left; position: relative; }
+  .stMore > svg { width: 24px; height: 24px; flex: none; color: #9aa3b6; }
+  .stMore > span:not(.stArr) { display: flex; flex-direction: column; font-size: 1.05rem; font-weight: 700; }
+  .stMore small { font-size: 0.8rem; font-weight: 500; color: #7d8392; }
+  .stMore .stArr { position: static; margin-left: auto; font-size: 1.5rem; color: #7d8392; }
+  .stHead { display: flex; align-items: center; gap: 10px; width: 100%; }
+  .stHead b { font-size: 1.35rem; font-weight: 800; }
+  .stBack { width: 44px; height: 44px; flex: none; border: none; border-radius: 14px; background: #23262e; color: #e8ebf2; font-size: 1.8rem; line-height: 1; font-family: inherit; }
+  .stSub .stCard { min-height: 150px; }
+  .stTwo { background: #16305c; }
+  .stTwo .stTxt small { color: #9fbbe8; }
+  .stBot { background: #23262e; }
+  svg.stBig { width: 40px; height: 40px; color: #8fb6ff; }
+  .stBot svg.stBig { color: #c9ceda; }
+  .stHome.stOn .homeHead .menuTitle { font-size: 2.2rem; }
+
+  /* ===== 3.25: «С другом» — рядом и далеко ===== */
+  .stOne { background: #23262e; }
+  .stNear { background: #16305c; }
+  .stNear .stTxt small, .stFar .stTxt small { color: #9fbbe8; }
+  .stFar { background: #1d2a4a; }
+  .stOne svg.stBig { color: #c9ceda; }
+  .stSub .stCard.stOne, .stSub .stCard.stNear, .stSub .stCard.stFar { min-height: 118px; }
+  .duoPanel { display: flex; flex-direction: column; gap: 10px; background: #191b21; border-radius: 20px; padding: 16px; }
+  .duoPanel[hidden] { display: none; }
+  .duoNear .duoPanel { background: none; padding: 4px 2px; }
+  .duoPanel p { margin: 0; }
+  .duoBig { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; border: none; border-radius: 18px; padding: 18px; background: #3f7fe0; color: #fff; text-align: left; font-family: inherit; }
+  .duoBig b { font-size: 1.35rem; font-weight: 800; }
+  .duoBig small { font-size: 0.88rem; color: #dbe7ff; }
+  .duoBig:active, .duoBtn:active { transform: scale(0.98); }
+  .duoLabel { font-size: 0.85rem; color: #9aa3b6; font-weight: 600; margin-top: 4px; }
+  .duoRow { display: flex; gap: 8px; }
+  .duoCode { flex: 1; min-width: 0; height: 48px; border-radius: 14px; border: 1px solid #3a3f4b; background: #0f1115; color: #f2f4f8; font-size: 1.3rem; font-weight: 700; text-align: center; letter-spacing: 0.15em; font-family: inherit; }
+  .duoCode::placeholder { letter-spacing: 0; font-size: 1rem; font-weight: 500; color: #6b7180; }
+  .duoCode.bad { border-color: #ff6b5b; }
+  .duoBtn { height: 48px; border: none; border-radius: 14px; padding: 0 18px; background: #2c323f; color: #e8ebf2; font-size: 1rem; font-weight: 700; font-family: inherit; }
+  .duoBtn.duoMain { background: #3f7fe0; color: #fff; }
+  .duoBigCode { font-size: 3rem; font-weight: 800; letter-spacing: 0.18em; text-align: center; color: #f2f4f8; }
+  .duoTip { font-size: 0.88rem; color: #9aa3b6; line-height: 1.4; }
+  .duoWait { font-size: 1rem; color: #c9ceda; text-align: center; }
+  .duoOk { font-size: 1.25rem; font-weight: 800; color: #4fd17a; }
+  .duoErr { font-size: 1rem; color: #ff8a7a; font-weight: 600; }
+  .duoVpn { display: flex; flex-direction: column; gap: 6px; background: #3a2e0c; color: #ffd98a; border-radius: 14px; padding: 12px 14px; font-size: 0.9rem; line-height: 1.4; }
+  .duoVpn b { font-size: 1rem; color: #ffe2a3; }
+  .duoVpn .duoBtn { background: #ffd84a; color: #2a1c00; margin-top: 4px; }
+  .duoLink { border: none; background: none; color: #8fb6ff; font-size: 0.95rem; font-weight: 600; padding: 4px 0; text-align: left; font-family: inherit; }
+  /* в «Далеко» старые плашки сетей не видны — вместо них .duoPanel; игры — только когда друг подключился */
+  .duoFar #netPanel, .duoFar #elitePanel, .duoFar .cupBanner, .duoFar .contCard, .duoNear .cupBanner, .duoNear .contCard { display: none !important; }
+  .duoFar:not(.duoReady) .tiles, .duoNear:not(.duoReady) .tiles { display: none !important; }
+  .duoNear .duoPanel { order: 5; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -8655,7 +8728,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '3.22';
+  const NET_BUILD = '3.26';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -9148,6 +9221,11 @@
       const sp = NET.spike && performance.now() - NET.spike.at < 5000 ? ' · скачок ' + NET.spike.r + ' мс: ' + NET.spike.cause : '';
       txt = via + ' · ' + r + ' мс' + sp + (NT.via === 'elite' && NET.eliteFps && NET.eliteFps < 50 ? ' · сервер тормозит (' + NET.eliteFps + ' к/с)' : '') + (NET.buffered() > 24000 ? ' · затор' : '') + ((rtcOk && NT.rtc.fast.readyState === 'open') || (NT.fast && NT.fast.readyState === 'open') ? ' ⚡' : '');
       cls = r < 120 ? 'ok' : r < 220 ? 'mid' : 'bad';
+    }
+    // 3.25: игра начата из «С другом» — путь не показываем; плашка только при плохой связи
+    if (NET.duoQuiet && !NT.reconnSince && !NT.peerWait) {
+      if (cls === 'ok') { badgeEl.hidden = true; return; }
+      txt = (cls === 'bad' ? 'Слабая связь · ' : 'Связь так себе · ') + Math.round(NET.rttLast == null ? NET.rtt : NET.rttLast) + ' мс';
     }
     badgeEl.textContent = txt; badgeEl.className = cls;
   }
@@ -10889,6 +10967,11 @@
     };
     wait();
   };
+  // 3.25: для экрана «С другом» (duo.js)
+  NET.duoLeave = () => { if (NET.on) netLeave(); else { netClose(true); NET.qrStatus = ''; setLobby('idle'); } };
+  NET.duoQr = () => { if (!NET.on) { netClose(true); NET.qrStatus = ''; setLobby('qrmenu'); } };
+  NET.linkFor = linkFor;
+  NET.viaInfo = () => ({ via: NT.via || '', rtc: !!(NT.rtc && NT.rtc.ok) });
   NET.cancelHost = () => { if (!NET.on && NET.role === 'host') { netClose(true); setLobby('idle'); } };
   NET.inviteJoin = code => { if (NET.on) return false; NET.showNetTab(); applySrv(); openLobby(); joinRoom(String(code)); return true; };
 
@@ -12059,6 +12142,11 @@
     const toElite = () => { if (NET.on && NT_busy()) return false; NET.showEliteTab(); return true; };
     const NT_busy = () => NET.on; // идёт обычная «Сеть» — не мешаем
     window.PPElite = {
+      // 3.25: для экрана «С другом → Далеко» (duo.js)
+      state: () => ({ st: E.st, code: E.code, you: E.you, err: E.err, again: !!E.again }),
+      statusUrl: STATUS_URL,
+      leave() { closeWs(); endPick(); E.st = 'idle'; E.err = ''; E.again = false; render(); },
+      clearErr() { E.err = ''; render(); },
       async create(cb) {
         if (!toElite()) return;
         if (E.st === 'waiting' && E.code) return cb(E.code);
@@ -16660,7 +16748,8 @@
     });
 
     // --- правая часть половины — джойстик-прицел: тянешь — целишься, отпускаешь — действие. Над ним — кнопка (если нужна).
-    BK.aimInput = (onFire, onBtn2, mode2 = 'btn') => {
+    // opt.cancel (Арена, 3.26): увёл палец и вернул в центр — отмена, а не выстрел с автоприцелом (как в «Танках: джойстик»)
+    BK.aimInput = (onFire, onBtn2, mode2 = 'btn', opt = {}) => {
       const base = BK.input(false);
       return {
         down(G, i, x, y, id) {
@@ -16673,17 +16762,19 @@
           base.down(G, i, x, y, id);
         },
         move(G, x, y, id) {
-          for (const P of G.d.P || []) for (const key of ['aimJ', 'aimJ2']) if (P[key] && P[key].id === id) { const [lx, ly] = BK.local(G, P.i, x, y); P[key].dx = lx - P[key].cx; P[key].dy = ly - P[key].cy; return; }
+          for (const P of G.d.P || []) for (const key of ['aimJ', 'aimJ2']) if (P[key] && P[key].id === id) { const [lx, ly] = BK.local(G, P.i, x, y); P[key].dx = lx - P[key].cx; P[key].dy = ly - P[key].cy; if (Math.hypot(P[key].dx, P[key].dy) > 14) P[key].moved = true; return; }
           base.move(G, x, y, id);
         },
         up(G, x, y, id) {
           for (const P of G.d.P || []) if (P.aimJ && P.aimJ.id === id) {
             const j = P.aimJ; P.aimJ = null;
+            if (opt.cancel && j.moved && Math.hypot(j.dx, j.dy) <= 12) { if (opt.onCancel) opt.onCancel(G, P); return; }
             const [wx, wy] = Math.hypot(j.dx, j.dy) > 12 ? BK.unflip(P.i, j.dx, j.dy) : [0, 0];
             onFire(G, P, wx, wy); return;
           }
           for (const P of G.d.P || []) if (P.aimJ2 && P.aimJ2.id === id) {
             const j = P.aimJ2; P.aimJ2 = null;
+            if (opt.cancel && j.moved && Math.hypot(j.dx, j.dy) <= 12) { if (opt.onCancel) opt.onCancel(G, P); return; }
             const [wx, wy] = Math.hypot(j.dx, j.dy) > 12 ? BK.unflip(P.i, j.dx, j.dy) : [0, 0];
             onBtn2(G, P, wx, wy); return;
           }
@@ -18603,7 +18694,11 @@
     }
     const areaCrates = (G, x, y, rad, dmg) => { for (const w of G.d.cr) if (w.hp > 0 && Math.hypot(w.x + 11 - x, w.y + 11 - y) < rad + 11) crateHurt(G, w, dmg); };
     const markHit = (G, O, atk) => { if (atk && O.lastHit !== atk) { O.lastHit = atk; stat(G, O.i).hits++; } };
-    const shell = (D, P, a, o) => { const s = Object.assign({ x: P.x + Math.cos(a) * R, y: P.y + Math.sin(a) * R, vx: Math.cos(a) * F[P.k].v, vy: Math.sin(a) * F[P.k].v, own: P.i, dmg: F[P.k].dmg * P.dm, left: F[P.k].range, r: 3.5, atk: P.curAtk }, o); s.L0 = s.left; D.S.push(s); };
+    const shell = (D, P, a, o) => { const s = Object.assign({ x: P.x + Math.cos(a) * R, y: P.y + Math.sin(a) * R, vx: Math.cos(a) * F[P.k].v, vy: Math.sin(a) * F[P.k].v, own: P.i, dmg: F[P.k].dmg * P.dm, left: F[P.k].range, r: 4.5, atk: P.curAtk }, o); s.L0 = s.left; D.S.push(s); };
+    // 3.26: снаряд задевает ящики и стены всем телом (радиус r), как в «Танках: джойстик»; прицел проверяет то же самое
+    const crateNear = (D, x, y, r) => D.cr.find(w => w.hp > 0 && x > w.x - r && x < w.x + w.w + r && y > w.y - r && y < w.y + w.h + r);
+    const wallNear = (D, x, y, r, pierce) => pierce ? (x < 0 || y < 0 || x > D.W || y > D.H) : inWall(D, x, y, r);
+    const HEAVY_OFF = 5, SHOT_SPREAD = 0.13, FLAME_SPREAD = 0.11, GUN_SUP_SPREAD = 0.16;
     const flameOpts = (P, a, o) => { const v = 270 + Math.random() * 60; return Object.assign({ vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: 4, flame: true, burn: 60 * P.dm }, o); };
     // куда приземлится Ракетчик (тап — на ближайшего видимого врага); в стену не садится — ближе
     function jumpTarget(G, P, wx, wy) {
@@ -18624,17 +18719,88 @@
       }
       return { ux: wx / L, uy: wy / L, dist: Math.min(1, L / 50) * f.range };
     }
+    // ---------- ЧЕСТНЫЙ ПРИЦЕЛ (3.26) ----------
+    // Прогоняем снаряд по тем же правилам, что и настоящий: шарик радиуса r, ящики и стены задевает телом,
+    // врага — если до центра ближе R + r. Враги в кустах, которых ты не видишь, прицел не выдаёт.
+    function aimTrace(G, P, x, y, ang, r, max, pierce) {
+      const D = G.d, dx = Math.cos(ang), dy = Math.sin(ang), x0 = x, y0 = y;
+      const T = foes(D, P).filter(E => !E.jump && (!G.bot || P.i !== 0 || sees(D, P, E, G.now)));
+      for (let d = 0; d < max; d += 3) {
+        x += dx * 3; y += dy * 3;
+        const E = T.find(E => Math.hypot(E.x - x, E.y - y) < R + r); if (E) return { x0, y0, x, y, kind: 'hit', T: E };
+        if (crateNear(D, x, y, r)) return { x0, y0, x, y, kind: 'crate' };
+        if (wallNear(D, x, y, r, pierce)) return { x0, y0, x, y, kind: 'wall' };
+      }
+      return { x0, y0, x, y, kind: 'more' };
+    }
+    const muzzle = (P, ang, off = 0) => [P.x + Math.cos(ang) * R - Math.sin(ang) * off, P.y + Math.sin(ang) * R + Math.cos(ang) * off];
+    function corridor(G, t, r, gold, now) {
+      const c = G.c, lock = t.kind === 'hit';
+      c.lineCap = 'round';
+      c.strokeStyle = lock ? 'rgba(255,210,63,0.38)' : gold ? 'rgba(255,210,63,0.2)' : 'rgba(255,255,255,0.26)'; c.lineWidth = r * 2;
+      c.beginPath(); c.moveTo(t.x0, t.y0); c.lineTo(t.x, t.y); c.stroke();
+      c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 4; c.setLineDash([7, 6]); c.lineDashOffset = -(now / 40) % 13;
+      c.beginPath(); c.moveTo(t.x0, t.y0); c.lineTo(t.x, t.y); c.stroke();
+      c.strokeStyle = lock || gold ? '#ffd23f' : 'rgba(255,255,255,0.95)'; c.lineWidth = 2.5; c.stroke();
+      c.setLineDash([]); c.lineDashOffset = 0;
+      if (t.kind !== 'more') { G.circle(t.x, t.y, r, lock ? 'rgba(255,210,63,0.35)' : 'rgba(255,255,255,0.25)'); c.strokeStyle = lock ? '#ffd23f' : 'rgba(255,255,255,0.95)'; c.lineWidth = 2; c.beginPath(); c.arc(t.x, t.y, r, 0, 7); c.stroke(); }
+    }
+    function lockRing(G, E, now) {
+      const c = G.c, k = 1 + Math.sin(now / 95) * 0.08, rr0 = (R + 5) * k;
+      c.strokeStyle = '#ffd23f'; c.lineWidth = 3; c.beginPath(); c.arc(E.x, E.y, rr0, 0, 7); c.stroke();
+      c.beginPath(); for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { c.moveTo(E.x + ux * (rr0 - 2), E.y + uy * (rr0 - 2)); c.lineTo(E.x + ux * (rr0 + 7), E.y + uy * (rr0 + 7)); } c.stroke();
+    }
+    function zone(G, x, y, rad, lock, gold) {
+      const c = G.c; G.circle(x, y, rad, lock ? 'rgba(255,210,63,0.22)' : gold ? 'rgba(255,210,63,0.12)' : 'rgba(255,255,255,0.12)');
+      c.strokeStyle = lock || gold ? '#ffd23f' : 'rgba(255,255,255,0.9)'; c.lineWidth = 2; c.setLineDash([5, 4]); c.beginPath(); c.arc(x, y, rad, 0, 7); c.stroke(); c.setLineDash([]);
+    }
+    const inZone = (G, P, x, y, rad) => foes(G.d, P).filter(E => !E.jump && Math.hypot(E.x - x, E.y - y) < rad + R * 0.6 && (!G.bot || P.i !== 0 || sees(G.d, P, E, G.now)));
+    // рисует прицел атаки (aimJ) или супера (aimJ2); вернёт true, если попадёт
+    function drawAimFx(G, P, key, now) {
+      const j = P[key], [wx, wy] = BK.unflip(P.i, j.dx, j.dy), a = aimOf(G, P, wx, wy), ang = Math.atan2(a.uy, a.ux), sup = key === 'aimJ2', f = F[P.k];
+      const shots = [];
+      if (!sup) {
+        if (P.k === 'gun' || P.k === 'rocket') shots.push([0, 0, P.k === 'rocket' ? 5 : 4.5, f.range]);
+        else if (P.k === 'snipe') shots.push([0, 0, 4, f.range]);
+        else if (P.k === 'heavy') shots.push([0, -HEAVY_OFF, 3.8, f.range], [0, HEAVY_OFF, 3.8, f.range]);
+        else if (P.k === 'shot') for (let k = -2; k <= 2; k++) shots.push([k * SHOT_SPREAD, 0, 3, f.range]);
+        else if (P.k === 'fire') for (let k = 0; k < 6; k++) shots.push([(k - 2.5) * FLAME_SPREAD, 0, 4, f.range]);
+      } else {
+        if (P.k === 'gun') for (let k = -2; k <= 2; k++) shots.push([k * GUN_SUP_SPREAD, 0, 4.5, 260]);
+        else if (P.k === 'snipe') shots.push([0, 0, 5, 460, true]);
+        else if (P.k === 'shot') shots.push([0, 0, R, 177]); // таран: танк проезжает этим коридором
+      }
+      if (shots.length) {
+        const res = shots.map(([da, off, r, max, pierce]) => { const [x, y] = muzzle(P, ang + da, off); return [aimTrace(G, P, x, y, ang + da, r, max, pierce), r]; });
+        for (const [t, r] of res) corridor(G, t, r, sup, now);
+        const hit = res.find(([t]) => t.kind === 'hit');
+        if (hit) lockRing(G, hit[0].T, now);
+        return !!hit;
+      }
+      // навесом и по площади: круг, где ударит; золотой — враг внутри
+      let list = [];
+      if (P.k === 'mort') {
+        const d = Math.max(sup ? 50 : 40, a.dist), tx = P.x + a.ux * d, ty = P.y + a.uy * d;
+        const pts = sup ? [[0, 0], [30, 14], [-26, 20], [6, -30]].map(([ox, oy]) => [tx + ox, ty + oy, 38]) : [[tx, ty, 34]];
+        const c = G.c; c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 2; c.setLineDash([3, 6]); c.beginPath(); c.moveTo(P.x, P.y); c.quadraticCurveTo((P.x + tx) / 2, (P.y + ty) / 2 - 50, tx, ty); c.stroke(); c.setLineDash([]);
+        for (const [x, y, rad] of pts) { const L = inZone(G, P, x, y, rad); list = list.concat(L); zone(G, x, y, rad, L.length > 0, sup); }
+      } else if (P.k === 'fire') { list = inZone(G, P, P.x, P.y, 140); zone(G, P.x, P.y, 140, list.length > 0, true); }
+      else if (P.k === 'rocket') { const t = jumpTarget(G, P, wx, wy); if (t) { const c = G.c; c.strokeStyle = 'rgba(255,210,63,0.6)'; c.lineWidth = 2; c.setLineDash([3, 6]); c.beginPath(); c.moveTo(P.x, P.y); c.quadraticCurveTo((P.x + t.x) / 2, (P.y + t.y) / 2 - 60, t.x, t.y); c.stroke(); c.setLineDash([]); list = inZone(G, P, t.x, t.y, 48); zone(G, t.x, t.y, 48, list.length > 0, true); } }
+      else if (P.k === 'heavy') zone(G, P.x, P.y, R + 9, false, true);
+      for (const E of new Set(list)) lockRing(G, E, now);
+      return list.length > 0;
+    }
     function fire(G, P, wx, wy) {
       const D = G.d; if (G.state !== 'play' || !D.P || P.hp <= 0 || P.ammo < 1 || P.dash || P.jump) return;
       const a = aimOf(G, P, wx, wy), ang = Math.atan2(a.uy, a.ux);
       P.ammo -= 1; P.ax = a.ux; P.ay = a.uy; P.shotAt = P.actAt = G.now;
       P.curAtk = ++P.atkN; stat(G, P.i).shots++;
       if (P.k === 'gun') shell(D, P, ang);
-      else if (P.k === 'shot') for (let k = -2; k <= 2; k++) shell(D, P, ang + k * 0.13, { r: 2.6 });
-      else if (P.k === 'snipe') shell(D, P, ang, { r: 3 });
-      else if (P.k === 'heavy') for (const s of [-1, 1]) shell(D, P, ang, { x: P.x + Math.cos(ang) * R - Math.sin(ang) * 5 * s, y: P.y + Math.sin(ang) * R + Math.cos(ang) * 5 * s });
-      else if (P.k === 'fire') for (let k = 0; k < 6; k++) shell(D, P, ang + (k - 2.5) * 0.11, flameOpts(P, ang + (k - 2.5) * 0.11));
-      else if (P.k === 'rocket') shell(D, P, ang, { r: 4.5, rocket: true, home: 2.2, splash: 30 });
+      else if (P.k === 'shot') for (let k = -2; k <= 2; k++) shell(D, P, ang + k * SHOT_SPREAD, { r: 3 });
+      else if (P.k === 'snipe') shell(D, P, ang, { r: 4 });
+      else if (P.k === 'heavy') for (const s of [-1, 1]) shell(D, P, ang, { r: 3.8, x: P.x + Math.cos(ang) * R - Math.sin(ang) * HEAVY_OFF * s, y: P.y + Math.sin(ang) * R + Math.cos(ang) * HEAVY_OFF * s });
+      else if (P.k === 'fire') for (let k = 0; k < 6; k++) shell(D, P, ang + (k - 2.5) * FLAME_SPREAD, flameOpts(P, ang + (k - 2.5) * FLAME_SPREAD));
+      else if (P.k === 'rocket') shell(D, P, ang, { r: 5, rocket: true, home: 2.2, splash: 30 });
       else lob(D, P, P.x + a.ux * Math.max(40, a.dist), P.y + a.uy * Math.max(40, a.dist));
       G.sound(P.k === 'snipe' ? 760 : P.k === 'mort' ? 240 : 420, 0.07, 'square', 0.04);
     }
@@ -18645,7 +18811,7 @@
       P.sup = 0; P.ax = a.ux; P.ay = a.uy; P.shotAt = P.actAt = G.now; P.curAtk = 0; // супер в точность не считается
       if (human(G, P)) G.flash('СУПЕР!', '#ffd23f', 700, P.i);
       G.sound(660, 0.1, 'triangle', 0.06); setTimeout(() => G.sound(990, 0.16, 'triangle', 0.06), 80); if (human(G, P)) G.vibrate(30);
-      if (P.k === 'gun') for (let k = -2; k <= 2; k++) shell(D, P, ang + k * 0.16, { dmg: F.gun.dmg * P.dm * 0.9, left: 260, r: 4.5, gold: true });
+      if (P.k === 'gun') for (let k = -2; k <= 2; k++) shell(D, P, ang + k * GUN_SUP_SPREAD, { dmg: F.gun.dmg * P.dm * 0.9, left: 260, r: 4.5, gold: true });
       else if (P.k === 'shot') P.dash = { t: 0.34, ux: a.ux, uy: a.uy, hit: [] };
       else if (P.k === 'snipe') shell(D, P, ang, { dmg: 2100 * P.dm, left: 460, r: 5, pierce: true, gold: true });
       else if (P.k === 'mort') { const d = Math.max(50, a.dist); [[0, 0], [30, 14], [-26, 20], [6, -30]].forEach(([ox, oy], k) => lob(D, P, P.x + a.ux * d + ox, P.y + a.uy * d + oy, { t: -0.16 * k, rad: 38, gold: true })); }
@@ -18653,7 +18819,7 @@
       else if (P.k === 'rocket') P.jump = { sx: P.x, sy: P.y, tx: jt.x, ty: jt.y, t: 0, T: 0.6 };
       else { P.shield = 3; P.hp = Math.min(P.max, P.hp + P.max * 0.25); G.pop(P.x, P.y - 24, 'ремонт', '#7ee08a', 12); }
     }
-    const input = BK.aimInput(fire, superFire, 'aim');
+    const input = BK.aimInput(fire, superFire, 'aim', { cancel: true, onCancel: G => G.sound(260, 0.05, 'sine', 0.02) });
     let lobbyEl = null, lobbyOpts = null, ecoOpen = false;
 
     // --- боты: видят по тем же правилам, что игрок; помнят только последнее место ---
@@ -18813,9 +18979,9 @@
             s.x += s.vx * dt / n; s.y += s.vy * dt / n; s.left -= sp * dt / n;
             const E = foes(D, O).find(T => !T.jump && Math.hypot(T.x - s.x, T.y - s.y) < R + s.r);
             if (E) { s.dead = true; s.hit = true; G.burst(s.x, s.y, s.flame ? '#ff8a3d' : '#ffd9a0', 6, 120, 0.3, 2); G.sound(s.flame ? 260 : 180, 0.05, 'square', 0.04); markHit(G, O, s.atk); hurt(G, E, s.dmg, O); if (s.burn && E.hp > 0) E.burn = { n: 3, t: 0.5, dmg: s.burn, from: s.own }; break; }
-            const w = crateAt(D, s.x, s.y);
+            const w = crateNear(D, s.x, s.y, s.r);
             if (w) { s.dead = true; G.burst(s.x, s.y, '#d9b27a', 4, 80, 0.25, 1.5); crateHurt(G, w, s.dmg); break; }
-            if (s.left <= 0 || (s.pierce ? (s.x < 0 || s.y < 0 || s.x > D.W || s.y > D.H) : inWall(D, s.x, s.y, 0))) { s.dead = true; if (s.left > 0 && !s.flame) G.burst(s.x, s.y, '#c9d2e6', 4, 80, 0.25, 1.5); }
+            if (s.left <= 0 || wallNear(D, s.x, s.y, s.r, s.pierce)) { s.dead = true; if (s.left > 0 && !s.flame) G.burst(s.x, s.y, '#c9d2e6', 4, 80, 0.25, 1.5); }
           }
           if (s.dead && s.splash && G.state === 'play') {
             G.burst(s.x, s.y, '#ff9a4a', 10, 140, 0.35, 2.2); areaCrates(G, s.x, s.y, s.splash, s.dmg * 0.6);
@@ -18869,6 +19035,7 @@
           if (P.jump) { const J = P.jump, h = Math.sin(Math.min(1, J.t / J.T) * Math.PI) * 40; G.circle(P.x, P.y, R * 0.9, 'rgba(0,0,0,0.3)'); c.strokeStyle = 'rgba(255,180,70,0.7)'; c.lineWidth = 2; c.setLineDash([5, 4]); c.beginPath(); c.arc(J.tx, J.ty, 48, 0, 7); c.stroke(); c.setLineDash([]); drawTank(c, P.x, P.y - h, R * (1 + h / 120), P.ba, Math.atan2(P.ay, P.ax), col, dark, P.k); }
           else drawTank(c, P.x, P.y, R, P.ba, Math.atan2(P.ay, P.ax), col, dark, P.k);
           if (P.burn) G.circle(P.x + Math.sin(now / 60) * 4, P.y - 6, 4, 'rgba(255,138,61,0.85)');
+          if (now - P.shotAt < 90 && !P.jump && P.k !== 'mort') { const k = 1 - (now - P.shotAt) / 90, mx = P.x + P.ax * (R + 7), my = P.y + P.ay * (R + 7); c.globalAlpha = 0.9 * k; G.circle(mx, my, 7 + 3 * k, '#ffd27a'); G.circle(mx, my, 4, '#fffbe6'); c.globalAlpha = 1; } // вспышка у дула
           c.globalAlpha = 1;
         }
         // кусты поверх
@@ -18877,7 +19044,11 @@
         for (const s of D.S) {
           if (s.flame) { const k = Math.max(0, s.left / s.L0); c.globalAlpha = 0.35 + 0.6 * k; G.circle(s.x, s.y, s.r + (1 - k) * 6, s.gold ? '#ffd23f' : '#ff8a3d'); G.circle(s.x, s.y, (s.r + (1 - k) * 6) * 0.5, '#fff1b0'); c.globalAlpha = 1; continue; }
           if (s.rocket) { const v = Math.hypot(s.vx, s.vy) || 1; for (let t = 1; t <= 3; t++) G.circle(s.x - s.vx / v * t * 5, s.y - s.vy / v * t * 5, 3 - t * 0.6, 'rgba(255,200,120,0.5)'); G.circle(s.x, s.y, s.r, '#ff5a3d'); continue; }
-          G.circle(s.x, s.y, s.r + 1.5, 'rgba(0,0,0,0.25)'); G.circle(s.x, s.y, s.r, s.gold ? '#ffd23f' : '#fff4d6');
+          const v = Math.hypot(s.vx, s.vy) || 1, ux = s.vx / v, uy = s.vy / v, own = D.P[s.own], oc = own ? colOf(D, own)[0] : '#fff';
+          c.lineCap = 'round'; c.strokeStyle = s.gold ? 'rgba(255,210,63,0.55)' : 'rgba(255,226,150,0.55)'; c.lineWidth = s.r * 1.5;
+          c.beginPath(); c.moveTo(s.x - ux * s.r * 4.5, s.y - uy * s.r * 4.5); c.lineTo(s.x, s.y); c.stroke();
+          G.circle(s.x, s.y, s.r + 2.2, 'rgba(0,0,0,0.45)'); G.circle(s.x, s.y, s.r + 1.2, oc);
+          G.circle(s.x, s.y, s.r * 0.75, s.gold ? '#ffd23f' : '#fff6dc'); G.circle(s.x - s.r * 0.25, s.y - s.r * 0.25, s.r * 0.3, '#ffffff');
         }
         for (const b of D.Lb) if (b.t >= 0) { const k = b.t / b.T, x = b.sx + (b.tx - b.sx) * k, y = b.sy + (b.ty - b.sy) * k, h = Math.sin(k * Math.PI) * 46; G.circle(x, y, 4, 'rgba(0,0,0,0.3)'); G.circle(x, y - h, 5 + h * 0.05, b.gold ? '#ffd23f' : '#3a3f4f'); }
         // газ
@@ -18893,20 +19064,16 @@
           for (let a = 0; a < 3; a++) { c.fillStyle = P.ammo >= a + 1 ? '#ffb347' : 'rgba(255,255,255,0.2)'; c.fillRect(x + a * 12, y + 7, 10, 2.5); }
           if (P.cubes) G.text(`⚡${P.cubes}`, x + w + 10, y + 3, 10, '#7ee08a', 900);
         }
-        // прицел: куда полетит
+        // прицел: честный, как в «Танках: джойстик» (коридор шириной со снаряд, точка остановки, золотой — попадёшь)
         for (const P of D.P.slice(0, 2)) {
-          if ((P.i === 1 && G.bot) || over || P.hp <= 0) continue;
+          if ((P.i === 1 && G.bot) || over || P.hp <= 0) { P.aimLock = false; continue; }
+          let lock = false;
           for (const key of ['aimJ', 'aimJ2']) {
-            const j = P[key]; if (!j || Math.hypot(j.dx, j.dy) < 12) continue; if (key === 'aimJ2' && P.sup < 1) continue;
-            const [wx, wy] = BK.unflip(P.i, j.dx, j.dy), a = aimOf(G, P, wx, wy), f = F[P.k], col = key === 'aimJ2' ? 'rgba(255,210,63,0.8)' : 'rgba(255,255,255,0.7)';
-            c.strokeStyle = col; c.lineWidth = 2; c.setLineDash([6, 5]); c.beginPath();
-            if (P.k === 'mort') { const d = Math.max(key === 'aimJ2' ? 50 : 40, a.dist), tx = P.x + a.ux * d, ty = P.y + a.uy * d; c.moveTo(P.x, P.y); c.lineTo(tx, ty); c.stroke(); c.beginPath(); c.arc(tx, ty, 34, 0, 7); c.stroke(); }
-            else if (P.k === 'fire' && key === 'aimJ2') { c.arc(P.x, P.y, 140, 0, 7); c.stroke(); }
-            else if (P.k === 'rocket' && key === 'aimJ2') { const t = jumpTarget(G, P, wx, wy); if (t) { c.moveTo(P.x, P.y); c.lineTo(t.x, t.y); c.stroke(); c.beginPath(); c.arc(t.x, t.y, 48, 0, 7); c.stroke(); } }
-            else if (P.k === 'heavy' && key === 'aimJ2') { c.arc(P.x, P.y, R + 9, 0, 7); c.stroke(); }
-            else { let d = 0; const max = key === 'aimJ2' ? (P.k === 'snipe' ? 460 : P.k === 'shot' ? 177 : 260) : f.range, pierce = key === 'aimJ2' && P.k === 'snipe'; while (d < max && (pierce || !inWall(D, P.x + a.ux * (d + 6), P.y + a.uy * (d + 6), 0))) d += 6; c.moveTo(P.x, P.y); c.lineTo(P.x + a.ux * d, P.y + a.uy * d); c.stroke(); }
-            c.setLineDash([]);
+            const j = P[key]; if (!j || Math.hypot(j.dx, j.dy) <= 12) continue; if (key === 'aimJ2' && P.sup < 1) continue;
+            if (drawAimFx(G, P, key, now)) lock = true;
           }
+          if (lock && !P.aimLock && human(G, P)) G.vibrate(8);
+          P.aimLock = lock;
         }
         // управление
         const left = Math.max(0, ROUND_MAX - D.t), alive = D.P.filter(P => P.hp > 0).length;
@@ -19087,7 +19254,6 @@
           <div class="ahBottom">
             <div class="ahRow">
               ${first ? '' : `<button class="ahOpt" data-a="mode" ${two ? 'disabled' : ''}><small>Режим</small><b>${two || SV.mode === 'duel' ? '⚔️ Дуэль' : '💥 Столкновение'}</b></button>`}
-              <button class="ahOpt" data-a="opp"><small>Соперник</small><b>${two ? '👥 Вдвоём' : '🤖 Боты'}</b></button>
             </div>
             <div class="ahDesc">${two ? 'Один телефон на двоих: все бойцы открыты, уровни равные, без кубков' : SV.mode === 'sd' && !first ? 'Ты и 4 бота. Ломай ящики, собирай кубы силы, выживи последним' : 'Один на один до 2 побед. Через 45 секунд поле сжимает газ'}</div>
             <button class="ahPlay" data-a="play">ИГРАТЬ</button>
@@ -19137,7 +19303,9 @@
       const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
       const a = b.dataset.a, k = b.dataset.k;
       if (a === 'exit') { const x = G.net.root.querySelector('.pgBack'); if (x) x.click(); return; }
-      if (a === 'play') { if (!isTwo() && !open(SV.sel)) SV.sel = 'gun'; save(); const x = G.net.root.querySelector('.pgStart'); if (x) x.click(); return; }
+      if (a === 'play') { // 3.23: Арена только с ботами — «Вдвоём» убран
+        const go = () => { if (!open(SV.sel)) SV.sel = 'gun'; save(); const x = G.net.root.querySelector('.pgStart'); if (x) x.click(); };
+        if (isTwo()) { clickOpp(false); setTimeout(go, 60); } else go(); return; }
       if (a === 'main') { HS.view = HS.view === 'info' ? 'list' : 'main'; HS.red = false; }
       else if (a === 'list') { HS.view = 'list'; HS.red = false; }
       else if (a === 'listRed') { HS.view = 'list'; HS.red = true; }
@@ -19151,7 +19319,7 @@
       else if (a === 'open') { boxFlow(); return; }
       hubRender(); const sc = HUB.querySelector('.ahScroll'); if (sc) sc.scrollTop = 0;
     });
-    function hubSync() { const show = !!setupEl && !setupEl.hidden && !G.net.root.hidden; if (show && HUB.hidden) { HS.view = 'main'; HS.red = false; } HUB.hidden = !show; if (show) hubRender(); }
+    function hubSync() { const show = !!setupEl && !setupEl.hidden && !G.net.root.hidden; if (show && HUB.hidden) { HS.view = 'main'; HS.red = false; } HUB.hidden = !show; if (show && isTwo()) { clickOpp(false); setTimeout(hubRender, 60); } if (show) hubRender(); }
     if (setupEl) { const mo = new MutationObserver(hubSync); mo.observe(setupEl, { attributes: true, attributeFilter: ['hidden'] }); mo.observe(G.net.root, { attributes: true, attributeFilter: ['hidden'] }); }
     // окно обновляется при каждом открытии и при смене соперника
     const tile = document.getElementById('pgTile-arena'); if (tile) tile.addEventListener('click', () => setTimeout(renderLobby, 0));
@@ -21319,7 +21487,7 @@
     function buildBot() {
       botGrid.innerHTML = ''; botOff.innerHTML = '';
       const miniOrder = id => { const el = document.getElementById(id), box = document.getElementById('tilesMini'); const i = el && box ? [...box.children].indexOf(el) : -1; return i < 0 ? 1e4 : i; }; // порядок — как во «Вдвоём»
-      BOT_IDS.slice().sort((a, b) => miniOrder(a) - miniOrder(b)).forEach(id => { const o = document.getElementById(id); if (o) botGrid.appendChild(proxy(o)); });
+      BOT_IDS.filter(id => id !== 'pgTile-arena').sort((a, b) => miniOrder(a) - miniOrder(b)).forEach(id => { const o = document.getElementById(id); if (o) botGrid.appendChild(proxy(o)); });
       [...document.querySelectorAll('#tilesMini .tile')].filter(o => !BOT_IDS.includes(o.id)).forEach(o => { const p = proxy(o, true); const m = p.querySelector('.modeIcons'); if (m) { m.textContent = 'нет бота'; m.classList.add('txt'); } botOff.appendChild(p); });
     }
 
@@ -21347,7 +21515,7 @@
     }
     // плитки «Вдвоём» (настоящие) — запоминаем последнюю и ставим «Вдвоём»
     document.querySelectorAll('#tilesMini .tile').forEach(t => t.addEventListener('click', () => {
-      if (mode !== 'two') return;
+      if (mode !== 'two' || t.id === 'pgTile-arena') return; // Арена — только с ботами (3.23)
       lastPick = { id: t.id, m: 'two', name: nameOf(t) }; lsSet('home-last', JSON.stringify(lastPick)); renderCont();
       setTimeout(() => applyOpp('two'), 40);
     }));
@@ -21364,8 +21532,7 @@
 
     function setMode(m) { mode = m; lsSet('home-mode', m); render(); }
     function render() {
-      bar.hidden = false; // полоса режимов видна всегда, лаборатория — её последний пункт
-      lay.classList.remove('noSide');
+      if (window.__homeView) __homeView.before(); // экран выбора «Мини-игры / Арена» (3.23) решает, видна ли полоса
       bar.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode && (!b.dataset.s || b.dataset.s === netSub))));
       lab.setAttribute('aria-pressed', String(mode === 'lab'));
       labHead.hidden = true;
@@ -21386,6 +21553,7 @@
       else if (mode === 'inv') { oldTab('mini'); document.getElementById('tilesMini').hidden = true; }
       syncing = false;
       renderCont();
+      if (window.__homeView) __homeView.after();
     }
     let syncing = false;
     bar.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.s) { netSub = b.dataset.s; lsSet('home-netsub', netSub); } if (b.dataset.m === 'lab' && mode !== 'lab') lsSet('home-prev', mode); setMode(b.dataset.m); });
@@ -21427,6 +21595,82 @@
     home.classList.add('lineHome');
     // плитки, которые появляются позже (например, игры Элит)
     new MutationObserver(() => home.querySelectorAll('.tiles .tile:not([data-lined])').forEach(t => { if (t.closest('#botGridX')) return; addIcons(t); })).observe(home, { childList: true, subtree: true });
+
+    // ======================= 3.23: ПЕРВЫЙ ЭКРАН «МИНИ-ИГРЫ / АРЕНА» =======================
+    // Вход из двух режимов. Мини-игры → «С другом» / «С ботом» → плитки без боковой полосы.
+    // Всё прежнее (сеть, друзья, инвентарь, лаборатория) — за кнопкой «Ещё» (старый экран целиком).
+    // Арена танков — отдельный режим: из списков мини-игр убрана, открывается карточкой.
+    {
+      const arenaTile = document.getElementById('pgTile-arena');
+      const head0 = home.querySelector('.homeHead');
+      const start = el('div', 'stScr');
+      const miniIcons = ['hockeyTile', 'pgTile-sumo', 'pgTile-lava', 'tronTile'].map(id => document.getElementById(id)).filter(Boolean)
+        .map(t => { const i = t.querySelector('.tileIcon'); return i ? `<span class="stMi">${i.outerHTML.replace(/ id="[^"]*"/g, '')}</span>` : ''; }).join('');
+      const arIcon = arenaTile && arenaTile.querySelector('.tileIcon') ? arenaTile.querySelector('.tileIcon').outerHTML.replace(/ id="[^"]*"/g, '') : '';
+      start.innerHTML = `
+        <button class="stCard stMini" data-v="mini"><span class="stIcons">${miniIcons}</span><span class="stTxt"><b>Мини-игры</b><small>Короткие игры вдвоём или с ботом</small></span><span class="stArr">›</span></button>
+        <button class="stCard stArena" data-v="arena"${arenaTile ? '' : ' hidden'}><span class="stArIco">${arIcon}</span><span class="stTxt"><b>Арена танков</b><small class="stArSub">Бойцы, кубки, ящики</small></span><span class="stArr">›</span></button>
+        <button class="stMore" data-v="more">${svg('box')}<span>Ещё<small>По сети, друзья, инвентарь, лаборатория</small></span><span class="stArr">›</span></button>`;
+      const mini = el('div', 'stScr stSub');
+      mini.innerHTML = `
+        <div class="stHead"><button class="stBack" data-v="start" aria-label="Назад">‹</button><b>Мини-игры</b></div>
+        <button class="stCard stTwo" data-v="friend">${svg('users', 'stBig')}<span class="stTxt"><b>С другом</b><small>На одном телефоне или на двух</small></span><span class="stArr">›</span></button>
+        <button class="stCard stBot" data-v="bot">${svg('robot', 'stBig')}<span class="stTxt"><b>С ботом</b><small>Играй один против компьютера</small></span><span class="stArr">›</span></button>`;
+      // 3.25: «С другом» — на одном телефоне / рядом / далеко
+      const friend = el('div', 'stScr stSub');
+      friend.innerHTML = `
+        <div class="stHead"><button class="stBack" data-v="mini" aria-label="Назад">‹</button><b>С другом</b></div>
+        <button class="stCard stOne" data-v="two">${svg('pad', 'stBig')}<span class="stTxt"><b>На одном телефоне</b><small>Держите телефон вдвоём</small></span><span class="stArr">›</span></button>
+        <button class="stCard stNear" data-v="near">${svg('users', 'stBig')}<span class="stTxt"><b>Рядом</b><small>У каждого свой телефон, вы рядом</small></span><span class="stArr">›</span></button>
+        <button class="stCard stFar" data-v="far">${svg('world', 'stBig')}<span class="stTxt"><b>Далеко</b><small>Друг в другом месте</small></span><span class="stArr">›</span></button>`;
+      const sub = el('div', 'stHead stGridHead', '<button class="stBack" aria-label="Назад">‹</button><b></b>');
+      head0.after(start, mini, friend, sub);
+      let view = 'start', booted = false;
+      const isPlay = m => m === 'two' || m === 'bot';
+      const isDuo = v => v === 'near' || v === 'far'; // сетевые виды «С другом» (их наполняет duo.js)
+      const arenaCups = () => { try { const S = JSON.parse(lsGet('arena-v1', 'null')); if (!S || !S.f) return 0; return Object.values(S.f).reduce((a, f) => a + (f && f.tr || 0), 0); } catch (e) { return 0; } };
+      const go = v => {
+        if (v === 'arena') { if (arenaTile) arenaTile.click(); return; }
+        view = v;
+        if (isPlay(v)) { setMode(v); return; }
+        if (v === 'more') { render(); return; }
+        if (isDuo(v)) { if (window.PPDuo) PPDuo.enter(v); else apply(); return; }
+        apply();
+      };
+      function apply() {
+        const sv = view === 'start', sm = view === 'mini' || view === 'friend', grid = isPlay(view) || isDuo(view), more = view === 'more';
+        start.hidden = !sv; mini.hidden = view !== 'mini'; friend.hidden = view !== 'friend'; sub.hidden = !(grid || more);
+        lay.hidden = sv || sm;
+        home.classList.toggle('duoNear', view === 'near'); home.classList.toggle('duoFar', view === 'far');
+        bar.hidden = !more;
+        lay.classList.toggle('noSide', !more);
+        lab.hidden = !more;
+        home.classList.toggle('stOn', sv || sm);
+        sub.querySelector('b').textContent = view === 'two' ? 'На одном телефоне' : view === 'bot' ? 'С ботом' : view === 'near' ? 'Рядом' : view === 'far' ? 'Далеко' : 'Ещё';
+        sub.querySelector('.stBack').dataset.v = more ? 'start' : view === 'bot' ? 'mini' : isDuo(view) ? 'duoBack' : 'friend';
+        if (window.PPDuo) PPDuo.sync(view);
+        const c = arenaCups(), as = start.querySelector('.stArSub');
+        if (as) as.innerHTML = c ? `<i class="stCup">🏆 ${c}</i> Бойцы, кубки, ящики` : 'Бойцы, кубки, ящики';
+      }
+      window.__homeView = {
+        before() {
+          // сеть, друзья и т. п. открылись сами (ссылка-приглашение, ответ сервера) — показываем «Ещё»
+          if (booted && mode === 'net' && isDuo(view)) return; // «Рядом» и «Далеко» сами живут на сетевых вкладках
+          if (booted && !isPlay(mode) && view !== 'more') view = 'more';
+          if (booted && isPlay(mode) && isPlay(view)) view = mode;
+        },
+        after: apply,
+        view: () => view,
+        go,
+        set(v) { view = v; } // для duo.js: вид без побочных действий
+      };
+      [start, mini, friend, sub].forEach(b => b.addEventListener('click', e => { const t = e.target.closest('[data-v]'); if (!t) return; if (t.dataset.v === 'duoBack') { if (window.PPDuo) PPDuo.back(); else go('friend'); return; } go(t.dataset.v); }));
+      if (arenaTile) arenaTile.classList.add('stHidden');
+      new MutationObserver(() => { if (!home.hidden) apply(); }).observe(home, { attributes: true, attributeFilter: ['hidden', 'style'] });
+      home.classList.add('stHome');
+      apply();
+      setTimeout(() => { booted = true; }, 0);
+    }
     render();
     // вернулись на главный экран — обновим «Продолжить»
     new MutationObserver(() => { if (!home.hidden) renderCont(); }).observe(home, { attributes: true, attributeFilter: ['hidden', 'style', 'class'] });
@@ -21854,6 +22098,219 @@
       if (b && seen(b)) { e.preventDefault(); b.click(); }
     });
     window.PPCUP = { state: () => S, phase: () => phase };
+  })();
+
+  // ======================= 3.25: «С ДРУГОМ» — РЯДОМ И ДАЛЕКО =======================
+  // Экран из home.js: «С другом» → «На одном телефоне» / «Рядом» / «Далеко».
+  // Своей связи здесь нет — только выбор пути поверх готовых модулей:
+  //  • Рядом — QR из net.js (напрямую по общему Wi‑Fi или точке доступа, интернет не нужен);
+  //  • Далеко — «Позвать друга»: есть место на сервере → Сеть++ (elite.js, код из 4 цифр),
+  //    сервер занят → облегчённая сеть через Москву с попыткой напрямую (net.js, метод 'ru', код из 5 цифр);
+  //    сервер не отвечает → подсказка про VPN и «Открыть в браузере».
+  //  Друг вводит любой код: 4 цифры — Сеть++, 5 цифр — обычная сеть. Игрок путь не выбирает и не видит.
+  (function () {
+    const home = document.getElementById('homeScreen'), HV = window.__homeView;
+    if (!home || !HV || !window.pgHome || !window.PPElite) return;
+    const main = home.querySelector('.homeMain');
+    const tgA = window.Telegram && window.Telegram.WebApp, inTg = !!(tgA && tgA.initData);
+    const panel = document.createElement('div'); panel.className = 'duoPanel'; panel.hidden = true;
+    main.prepend(panel);
+    // via: '' — ещё не подключались, 'elite' — Сеть++, 'net' — обычная сеть, 'qr' — рядом
+    const D = { view: '', via: '', busy: '', err: '', net: false, joinCode: '', sig: '' };
+    const NETLIKE = /не отвечает|не получил|подключиться|пропала|нет связи|недоступ|не удалось|не найден/i;
+    const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+    function linkOf(code) {
+      code = String(code);
+      if (code.length === 5 && NET.linkFor) return NET.linkFor(code);
+      return inTg ? `https://t.me/pifpafgame?startapp=${code}` : location.origin + location.pathname + '?room=' + code;
+    }
+    function siteLink(code) { return location.origin + location.pathname + (code ? '?room=' + code : ''); }
+    function share(code) {
+      const link = linkOf(code);
+      const text = `Сыграем в PifPaf? Код ${code}. Открой ссылку или введи код: Мини-игры → С другом → Далеко. Если не подключается — выключи VPN.`;
+      if (inTg && tgA.openTelegramLink) { tgA.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text)); return; }
+      if (navigator.share) { navigator.share({ title: 'PifPaf', text, url: link }).catch(() => {}); return; }
+      copy(link);
+    }
+    function copy(text) {
+      const done = () => { const b = panel.querySelector('.duoCopy'); if (b) { b.textContent = 'Скопировано'; setTimeout(() => { if (b.isConnected) b.textContent = 'Скопировать ссылку'; }, 1500); } };
+      try { navigator.clipboard.writeText(text).then(done, () => {}); } catch (e) {}
+    }
+
+    // ---------- состояние: читаем у модулей связи ----------
+    function state() {
+      if (D.busy) return { st: 'busy', text: D.busy };
+      if (D.err) return { st: 'error', text: D.err };
+      if (D.via === 'elite') {
+        const S = PPElite.state();
+        if (S.st === 'connecting') return { st: 'busy', text: D.joinCode ? 'Подключаемся к другу…' : 'Создаём комнату…' };
+        if (S.st === 'waiting') return { st: 'waiting', code: S.code };
+        if (S.st === 'ready' || S.st === 'starting' || S.st === 'playing') return { st: 'ready', host: S.you === 0, again: S.again };
+        if (S.st === 'full') return { st: 'full' };
+        if (S.err) return { st: 'error', text: S.err };
+        return { st: 'idle' };
+      }
+      if (D.via === 'net') {
+        const L = NET.lobby;
+        if (NET.on) return { st: 'ready', host: NET.role === 'host' };
+        if (L === 'creating' || L === 'joining') return { st: 'busy', text: L === 'joining' ? 'Подключаемся к другу…' : 'Создаём комнату…' };
+        if (L === 'waiting') return { st: 'waiting', code: NET.code };
+        if (L === 'error') return { st: 'error', text: NET.lobbyErr || 'Ошибка связи' };
+        if (L === 'taken') return { st: 'error', text: 'Этот номер комнаты занят. Попробуйте ещё раз.' };
+        return { st: 'idle' };
+      }
+      return { st: 'idle' };
+    }
+
+    // ---------- «Далеко»: позвать друга ----------
+    async function create() {
+      D.err = ''; D.busy = 'Создаём комнату…'; D.joinCode = ''; draw();
+      let s = null;
+      try {
+        const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 6000);
+        const r = await fetch(PPElite.statusUrl + '?t=' + Date.now(), { cache: 'no-store', signal: ctl.signal });
+        clearTimeout(to);
+        if (r.ok) { const j = await r.json(); if (typeof j.busy === 'number') s = j; }
+      } catch (e) {}
+      if (D.view !== 'far' || !D.busy) return; // ушли с экрана
+      D.busy = '';
+      if (!s) { D.err = 'Не получилось связаться с сервером.'; D.net = true; draw(); return; }
+      NET.duoQuiet = true;
+      if (s.busy < s.max) { D.via = 'elite'; PPElite.create(() => draw()); }
+      else viaNet();
+      draw();
+    }
+    // Сеть++ занят — облегчённая сеть: игру считает телефон того, кто позвал (знакомство через Москву, дальше — напрямую, если выйдет)
+    function viaNet() {
+      if (PPElite.state().st !== 'idle') PPElite.leave();
+      D.via = 'net';
+      NET.inviteHost('ru', () => draw(), why => { if (D.view === 'far' && D.via === 'net') { D.err = why || 'Не получилось создать комнату.'; D.net = true; draw(); } });
+    }
+    function join(code) {
+      D.err = ''; D.joinCode = code;
+      NET.duoQuiet = true;
+      if (code.length === 4) { D.via = 'elite'; PPElite.join(code); }
+      else { D.via = 'net'; if (!NET.inviteJoin(code)) { D.err = 'Сначала закончи текущую сетевую игру.'; } }
+      draw();
+    }
+    // всё закрыть и вернуться к выбору
+    function reset() {
+      if (D.via === 'elite' || PPElite.state().st !== 'idle') PPElite.leave();
+      if (D.via === 'net' || D.via === 'qr' || NET.on || (NET.lobby && NET.lobby !== 'idle')) NET.duoLeave();
+      D.via = ''; D.busy = ''; D.err = ''; D.net = false; D.joinCode = ''; D.sig = ''; NET.duoQuiet = false;
+    }
+
+    // ---------- рисуем ----------
+    function vpnBox(code) {
+      return `<div class="duoVpn"><b>Не подключается? Выключите VPN у обоих</b>
+        <span>С включённым VPN игра в России не соединяется с сервером.${inTg ? ' Без VPN Телеграм может не работать — тогда откройте игру в браузере.' : ''}</span>
+        ${inTg ? `<button class="duoBtn duoSite" data-code="${esc(code || '')}">Открыть в браузере</button>` : ''}</div>`;
+    }
+    function draw() {
+      if (!D.view) { panel.hidden = true; return; }
+      panel.hidden = false;
+      let h = '', ready = false;
+      if (D.view === 'near') {
+        ready = !!NET.on;
+        h = NET.on ? '' : `<p class="duoTip">Нет общего Wi‑Fi? Включите точку доступа на одном телефоне, второй подключите к ней. Интернет не нужен.</p>
+          <button class="duoLink" data-a="toFar">Не получается — играть через интернет ›</button>`;
+      } else {
+        const S = state();
+        if (S.st === 'full') { viaNet(); return draw(); }
+        ready = S.st === 'ready' && S.host; // гостю список игр не нужен — выбирает тот, кто позвал
+        if (S.st === 'idle') {
+          h = `<button class="duoBig" data-a="create"><b>Позвать друга</b><small>Получишь код и ссылку, чтобы отправить другу</small></button>
+            <div class="duoLabel">Друг уже позвал? Введи его код</div>
+            <div class="duoRow"><input class="duoCode" maxlength="5" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="код друга"><button class="duoBtn duoMain" data-a="join">Войти</button></div>
+            <p class="duoTip">Интернет нужен обоим. VPN лучше выключить.</p>`;
+        } else if (S.st === 'busy') {
+          h = `<p class="duoWait">${esc(S.text)}</p><button class="duoBtn" data-a="cancel">Отмена</button>`;
+        } else if (S.st === 'waiting') {
+          h = `<div class="duoLabel">Код комнаты</div><div class="duoBigCode">${esc(S.code)}</div>
+            <button class="duoBtn duoMain" data-a="share">Отправить ссылку другу</button>
+            <button class="duoBtn duoCopy" data-a="copy">Скопировать ссылку</button>
+            <p class="duoWait">Ждём друга…</p>
+            <p class="duoTip">Друг открывает ссылку или вводит код: Мини-игры → С другом → Далеко. Если у него не открывается — пусть выключит VPN. Ссылку удобно отправить, пока VPN ещё включён.</p>
+            <button class="duoBtn" data-a="cancel">Отмена</button>`;
+          D.code = S.code;
+        } else if (S.st === 'ready') {
+          h = S.host
+            ? `<div class="duoOk">Друг подключился!</div><p class="duoTip">Выбери игру ниже — она начнётся у обоих.</p>`
+            : `<div class="duoOk">Ты в комнате</div><p class="duoTip">${S.again ? 'Друг выбирает другую игру…' : 'Друг выбирает игру — подожди. Твоя сторона всегда снизу.'}</p>`;
+          h += `<button class="duoBtn" data-a="cancel">Отключиться</button>`;
+        } else if (S.st === 'error') {
+          const netErr = D.net || NETLIKE.test(S.text);
+          h = `<p class="duoErr">${esc(S.text)}</p>${netErr ? vpnBox(D.joinCode) : ''}<button class="duoBtn duoMain" data-a="retry">${netErr ? 'Попробовать снова' : 'Понятно'}</button>`;
+        }
+      }
+      home.classList.toggle('duoReady', ready);
+      const sig = D.view + '|' + h;
+      if (sig === D.sig) return; // не перерисовываем зря (поле кода не теряет набранное)
+      D.sig = sig;
+      const inp = panel.querySelector('.duoCode'), keep = inp ? inp.value : '';
+      panel.innerHTML = h;
+      const ni = panel.querySelector('.duoCode');
+      if (ni) {
+        ni.value = keep;
+        ni.addEventListener('input', () => { ni.value = ni.value.replace(/\D/g, '').slice(0, 5); ni.classList.remove('bad'); });
+        ni.addEventListener('keydown', e => { if (e.key === 'Enter') panel.querySelector('[data-a="join"]').click(); });
+      }
+    }
+    panel.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      const a = b.dataset.a;
+      try { audioBus(); } catch (er) {}
+      if (b.classList.contains('duoSite')) { const u = siteLink(b.dataset.code); try { tgA.openLink(u); } catch (er) { location.href = u; } return; }
+      if (a === 'create') create();
+      else if (a === 'join') { const i = panel.querySelector('.duoCode'), c = (i.value || '').trim(); if (/^\d{4,5}$/.test(c)) join(c); else { i.classList.add('bad'); i.focus(); } }
+      else if (a === 'share') share(D.code);
+      else if (a === 'copy') copy(linkOf(D.code));
+      else if (a === 'cancel' || a === 'retry') { reset(); draw(); }
+      else if (a === 'toFar') { reset(); enter('far'); }
+    });
+
+    // ---------- вход в «Рядом» / «Далеко» и выход ----------
+    function enter(v) {
+      D.view = v; D.sig = '';
+      HV.set(v);
+      if (v === 'near') {
+        if (D.via && D.via !== 'qr') reset();
+        D.via = 'qr'; NET.duoQuiet = true;
+        NET.showNetTab();
+        if (!NET.on) NET.duoQr();
+      } else {
+        if (D.via === 'qr') reset();
+        if (!D.via) { if (PPElite.state().st !== 'idle') D.via = 'elite'; else if (NET.on || (NET.lobby && NET.lobby !== 'idle' && NET.lobby !== 'error')) D.via = 'net'; }
+        if (D.via === 'elite') NET.showEliteTab(); else NET.showNetTab();
+      }
+      draw();
+    }
+    function back() { reset(); D.view = ''; draw(); HV.go('friend'); }
+    let tickT = null;
+    function sync(view) {
+      const duo = view === 'near' || view === 'far';
+      if (!duo) { D.view = ''; panel.hidden = true; home.classList.remove('duoReady'); clearInterval(tickT); tickT = null; return; }
+      D.view = view;
+      draw();
+      if (!tickT) tickT = setInterval(() => { if (!home.hidden && D.view) tick(); }, 400);
+    }
+    function tick() {
+      // «Рядом»: нажали «Назад» в QR — возвращаемся к выбору «С другом»
+      if (D.view === 'near' && !NET.on && document.querySelector('#netPanel .ncBox')) { back(); return; }
+      draw();
+    }
+    window.PPDuo = { enter, back, sync, state: () => ({ view: D.view, via: D.via, lobby: NET.lobby, on: !!NET.on, s: state() }) };
+
+    // ---------- вход по ссылке с кодом из 4 цифр (Сеть++) и показ «Далеко» для 5 цифр ----------
+    {
+      const sp = inTg && tgA.initDataUnsafe && tgA.initDataUnsafe.start_param;
+      const raw = String(sp || new URLSearchParams(location.search).get('room') || '').trim();
+      if (/^\d{4}$/.test(raw)) setTimeout(() => { enter('far'); join(raw); }, 400);
+      else if (/^\d{5}(-\w+)?$/.test(raw)) setTimeout(() => { D.via = 'net'; NET.duoQuiet = true; D.joinCode = raw.slice(0, 5); enter('far'); }, 500); // net.js уже входит в комнату сам
+    }
+    lsSet('duo-seen', '1');
   })();
 
   let last = performance.now();
