@@ -1942,6 +1942,275 @@
   .icDups span { flex-basis: 100%; opacity: .7; }
   .icDups i { font-style: normal; display: flex; align-items: center; gap: 3px; padding: 4px 8px; border-radius: 10px; background: rgba(255,255,255,.07); font-size: 1rem; }
   .icDups i b { font-size: .75rem; opacity: .8; }
+
+  /* ===== Турнир (3.13, pg/cup.js) ===== */
+  .cupBanner { display: flex; align-items: center; gap: 12px; width: 100%; border: none; border-radius: 18px; padding: 14px 16px; text-align: left; color: #ffd76a;
+    background: linear-gradient(115deg, #3b2d0d 0%, #2a2312 55%, #1f2229 100%); }
+  .cupBanner[hidden] { display: none; }
+  .cupBanner.live { box-shadow: inset 0 0 0 2px rgba(255,197,61,.55); }
+  .cupBIco { width: 30px; height: 30px; flex: none; display: grid; place-items: center; }
+  .cupBIco svg { width: 28px; height: 28px; }
+  .cupBTxt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .cupBTxt b { font-size: 1.05rem; font-weight: 800; }
+  .cupBTxt small { font-size: 0.82rem; color: #cdb57c; }
+  .cupBArr { font-size: 1.5rem; line-height: 1; }
+  .cupBanner:active { transform: scale(0.98); }
+
+  #cupLayer { position: fixed; inset: 0; z-index: 250; color: var(--fg); touch-action: manipulation; }
+  #cupLayer[hidden] { display: none; }
+  #cupLayer .hkOverlay { position: absolute; z-index: 1; background: var(--bg); }
+  .cupH { display: flex; align-items: center; gap: 8px; }
+  .cupH svg { width: 28px; height: 28px; color: #ffc53d; }
+  .cupRules { display: grid; gap: 8px; background: #1f2229; border-radius: 14px; padding: 12px; }
+  .cupRules > div { display: flex; align-items: center; gap: 10px; }
+  .cupRules b { flex: none; width: 40px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: #ffc53d; color: #1a1d24; font-weight: 900; font-size: 1rem; }
+  .cupRules span { font-size: 0.86rem; color: #c9cfdb; line-height: 1.3; }
+  .cupRules small { font-size: 0.76rem; color: #9aa3b6; }
+  .cupSetup .segmented button[aria-pressed="true"] { background: var(--tank1); }
+  .cupSetup .cupLv { margin-top: 8px; }
+  .cupSetup .cupLv[hidden] { display: none; }
+
+  .cupBoard { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; gap: 10px;
+    padding: calc(10px + var(--st, 0px)) max(14px, env(safe-area-inset-right, 0px)) calc(10px + var(--sb, 0px)) max(14px, env(safe-area-inset-left, 0px)); overflow: hidden; }
+  .cupBoard[hidden], .cupRes[hidden], .cupChamp[hidden] { display: none; }
+  .cupSide { position: relative; flex: none; display: grid; gap: 10px; border-radius: 20px; padding: 12px 14px; background: rgba(63,127,224,.14); width: min(460px, 100%); margin: 0 auto; }
+  .cupSide[data-p="1"] { background: rgba(224,79,63,.14); }
+  #cupLayer.two .cupSide[data-p="1"] { transform: rotate(180deg); }
+  .cupWho { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .cupName { font-size: 1.05rem; font-weight: 800; color: #8fb6ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cupSide[data-p="1"] .cupName { color: #ff9a8a; }
+  .cupPips { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+  .cupPips i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--tank1); transition: background .3s, transform .3s; }
+  .cupSide[data-p="1"] .cupPips i { border-color: var(--tank2); }
+  .cupPips i.on { background: var(--tank1); transform: scale(1.1); }
+  .cupSide[data-p="1"] .cupPips i.on { background: var(--tank2); }
+  .cupCards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cupCard { display: flex; align-items: center; gap: 10px; border: none; border-radius: 14px; padding: 9px 12px; background: #262a34; color: #fff; text-align: left; min-width: 0; transition: background .2s, opacity .2s, transform .15s; }
+  .cupCard b { font-size: 1.35rem; font-weight: 900; line-height: 1; flex: none; }
+  .cupCard small { font-size: 0.76rem; color: #aab3c6; line-height: 1.15; }
+  .cupCard:not(:disabled):active { transform: scale(0.95); }
+  .cupCard:disabled { opacity: 0.6; }
+  .cupCard.on { background: #ffc53d; color: #1a1d24; opacity: 1; }
+  .cupCard.on small { color: #4a3a10; font-weight: 700; }
+  .cupCard.used { opacity: 0.28; }
+  .cupSide.bot .cupCard:disabled:not(.used) { opacity: 0.85; }
+  .cupFlash { position: absolute; inset: 0; display: grid; place-items: center; font-size: 3.4rem; font-weight: 900; color: #ffc53d; pointer-events: none; opacity: 0; text-shadow: 0 4px 18px rgba(0,0,0,.5); }
+  .cupFlash.go { animation: cupFlash .9s ease-out; }
+  @keyframes cupFlash { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; transform: scale(1.15); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.3); } }
+
+  .cupMid { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; width: min(460px, 100%); margin: 0 auto; }
+  .cupTop { display: flex; align-items: center; gap: 10px; }
+  .cupX { width: 38px; height: 38px; flex: none; border: none; border-radius: 50%; background: #262a34; color: #c9cfdb; font-size: 1rem; }
+  .cupTitle { flex: 1; display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 1.1rem; color: #ffd76a; }
+  .cupTitle svg { width: 20px; height: 20px; }
+  .cupSub { color: #9aa3b6; font-size: 0.85rem; }
+  .cupScore { text-align: center; font-size: 2.6rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+  .cupScore .cs0 { color: var(--tank1); } .cupScore .cs1 { color: var(--tank2); }
+  .cupScore i { font-style: normal; color: #4a5060; margin: 0 10px; }
+  .cupReel { position: relative; height: 124px; overflow: hidden; border-radius: 20px; background: #15171d;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%); }
+  .cupStrip { display: flex; height: 100%; will-change: transform; }
+  .cupItem { flex: 0 0 116px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0 6px; border-radius: 18px; transition: background .3s; }
+  .cupItem span { font-size: 0.8rem; font-weight: 700; color: #c9cfdb; text-align: center; line-height: 1.1; }
+  .cupIco { width: 60px; height: 60px; display: grid; place-items: center; }
+  .cupIco .tileIcon { transform: scale(0.85); }
+  .cupItem.on { background: rgba(255,197,61,.14); animation: cupPop .45s cubic-bezier(.3,1.6,.5,1); }
+  .cupItem.on span { color: #ffd76a; }
+  @keyframes cupPop { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  .cupMark { position: absolute; top: 0; bottom: 0; left: 50%; width: 116px; margin-left: -58px; border-radius: 18px; box-shadow: inset 0 0 0 2px rgba(255,197,61,.85); pointer-events: none; }
+  .cupMark::before, .cupMark::after { content: ''; position: absolute; left: 50%; margin-left: -8px; border: 8px solid transparent; }
+  .cupMark::before { top: 0; border-top-color: #ffc53d; }
+  .cupMark::after { bottom: 0; border-bottom-color: #ffc53d; }
+  .cupNote { text-align: center; min-height: 2.5em; font-size: 0.9rem; color: #aab3c6; line-height: 1.3; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0 6px; }
+  .cupHot { color: #ffc53d; }
+  .cupPlay { width: 100%; }
+  .cupPlay:disabled { opacity: 0.45; }
+  .cupAsk { display: grid; gap: 10px; background: #252a35; border-radius: 16px; padding: 14px; text-align: center; font-size: 0.92rem; }
+  .cupAsk[hidden] { display: none; }
+
+  .cupRes { position: absolute; inset: 0; background: rgba(8,10,16,.5); display: flex; align-items: flex-end; justify-content: center; padding: 12px 12px calc(16px + var(--sb, 0px)); }
+  .cupSheet { width: min(380px, 100%); background: #252a35; border: 1px solid #323848; border-radius: 22px; padding: 18px; display: grid; gap: 8px; text-align: center; box-shadow: 0 -10px 40px rgba(0,0,0,.4); }
+  .cupRes.in .cupSheet { animation: cupUp .35s cubic-bezier(.2,1.3,.5,1); }
+  @keyframes cupUp { 0% { transform: translateY(60px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  .cupResT { font-size: 1.05rem; color: #dfe3ec; }
+  .cupPts { font-size: 3rem; font-weight: 900; line-height: 1.05; }
+  .cupPts small { display: block; font-size: 0.9rem; font-weight: 800; color: #ffc53d; }
+  .cupResS { font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
+
+  .cupChamp { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; display: flex; padding: calc(16px + var(--st, 0px)) 16px calc(16px + var(--sb, 0px));
+    background: radial-gradient(circle at 50% 22%, #3d3010 0%, #23201a 38%, var(--bg) 70%); }
+  .cupChCard { position: relative; z-index: 2; margin: auto; width: min(380px, 100%); display: flex; flex-direction: column; gap: 12px; text-align: center; }
+  .cupBig { display: grid; place-items: center; }
+  .cupBig svg { width: 120px; height: 120px; color: #ffc53d; stroke-width: 1.5; filter: drop-shadow(0 0 26px rgba(255,197,61,.5)); }
+  .cupChamp.in .cupBig svg { animation: cupJump 1s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes cupJump { 0% { transform: scale(.2) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  .cupChT { font-size: 1.8rem; font-weight: 900; color: var(--cc, #ffc53d); line-height: 1.1; }
+  .cupChS { font-size: 2rem; font-weight: 900; }
+  .cupHist { display: grid; gap: 6px; max-height: 34vh; overflow-y: auto; }
+  .cupHist div { display: flex; align-items: center; gap: 10px; background: rgba(31,34,41,.85); border-radius: 12px; padding: 8px 12px; font-size: 0.9rem; }
+  .cupHist i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .cupHist span { flex: 1; text-align: left; color: #dfe3ec; }
+  .cupHist b { font-size: 0.85rem; }
+  .cupCups { color: #aab3c6; font-size: 0.92rem; }
+  .cupChamp .hkRow .hkPlay { background: #ffc53d; color: #1a1d24; }
+
+  @media (max-height: 640px) {
+    .cupScore { font-size: 2rem; }
+    .cupReel { height: 104px; }
+    .cupIco { transform: scale(.82); margin: -6px 0; }
+    .cupSide { padding: 9px 12px; gap: 8px; }
+    .cupMid { gap: 8px; }
+  }
+
+  /* ===== Арена танков (3.19, pg/arena.js) ===== */
+  .arLobby { display: grid; gap: 10px; }
+  .arTop { display: flex; gap: 10px; }
+  .arTop span { flex: 1; text-align: center; background: #262a34; border-radius: 12px; padding: 8px; font-weight: 800; font-size: 1rem; }
+  .arNote { font-size: 0.82rem; color: #aab3c6; line-height: 1.3; }
+  .arHero { display: flex; gap: 12px; align-items: center; background: #1f2229; border-radius: 16px; padding: 10px 12px; }
+  .pg .arLobby canvas { position: static; inset: auto; display: block; transform: none; }
+  .pg .arHero canvas { width: 90px; height: 90px; flex: none; }
+  .arInfo { display: grid; gap: 4px; min-width: 0; }
+  .arInfo b { font-size: 1.15rem; font-weight: 800; }
+  .arInfo b i { font-style: normal; font-size: 0.85rem; color: #ffd76a; margin-left: 4px; }
+  .arInfo span { font-size: 0.84rem; color: #c9cfdb; line-height: 1.25; }
+  .arInfo .arSup { color: #ffd76a; }
+  .arInfo em { font-style: normal; font-size: 0.8rem; color: #9aa3b6; }
+  .arUp { border: none; border-radius: 12px; padding: 9px 12px; background: #ffc53d; color: #1a1d24; font-weight: 800; font-size: 0.92rem; margin-top: 2px; justify-self: start; }
+  .arUp:disabled { background: #2c3140; color: #7f8798; }
+  .arRow { display: grid; grid-auto-flow: column; grid-auto-columns: 64px; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+  .arChip { border: 2px solid transparent; border-radius: 12px; background: #262a34; color: #fff; padding: 4px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; }
+  .pg .arChip canvas { width: 44px; height: 44px; }
+  .arChip b { font-size: 0.62rem; font-weight: 700; }
+  .arChip small { font-size: 0.56rem; color: #aab3c6; white-space: nowrap; }
+  .arChip { box-shadow: inset 0 -3px 0 var(--rc, transparent); }
+  .arChip u { display: block; width: 80%; height: 3px; border-radius: 2px; background: #3a3f4b; margin-top: 2px; text-decoration: none; overflow: hidden; }
+  .arChip u i { display: block; height: 100%; background: #7ee08a; }
+  .arChip.on { border-color: #ffc53d; background: #332b17; }
+  .arChip.lock { opacity: 0.45; }
+  .arReward { display: grid; gap: 4px; justify-items: center; }
+  .arReward b { font-size: 1.1rem; font-weight: 800; color: #ffd76a; }
+  .arReward span { font-size: 0.95rem; font-weight: 800; color: #7ee08a; }
+
+  /* ===== Арена: ящики (3.20) ===== */
+  .arBars { display: grid; grid-template-columns: 2fr 1fr; gap: 6px; }
+  .arBar { position: relative; height: 26px; border-radius: 10px; background: #262a34; overflow: hidden; }
+  .arBar i { position: absolute; left: 0; top: 0; bottom: 0; background: #3f7fe0; }
+  .arBar.st i { background: #b07a10; }
+  .arBar span { position: relative; display: block; line-height: 26px; text-align: center; font-size: 0.78rem; font-weight: 800; }
+  .arOpen { border: none; border-radius: 14px; padding: 12px; background: #3f7fe0; color: #fff; font-weight: 800; font-size: 1rem; box-shadow: 0 4px 0 #2a5bb0; }
+  .arOpen.big { background: #8a4fe0; box-shadow: 0 4px 0 #5f2fb0; }
+  .arNote b { color: #ffd76a; }
+  .arHero { box-shadow: inset 3px 0 0 var(--rc, transparent); }
+  .arRar { font-size: 0.72rem; font-weight: 800; color: var(--rc, #8fd0ff); text-transform: uppercase; letter-spacing: 0.04em; }
+  .arReward .st { color: #ffd76a; }
+  .arBoxL { position: fixed; inset: 0; z-index: 280; background: radial-gradient(circle at 50% 40%, #24365e 0%, #10141d 70%); display: flex; align-items: center; justify-content: center; color: #fff; touch-action: manipulation; user-select: none; }
+  .arBoxL[hidden] { display: none; }
+  .arBxSt { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 24px; width: min(360px, 100%); }
+  .arBxSt > b { font-size: 1.5rem; font-weight: 900; }
+  .arBxSt > span { color: #aab3c6; font-size: 0.95rem; }
+  .arCrate { width: 200px; height: 184px; filter: drop-shadow(0 12px 24px rgba(0,0,0,.45)); }
+  .arBxCr { animation: arBob 1.6s ease-in-out infinite; }
+  .arBxCr.shake { animation: arShake 0.5s linear; }
+  @keyframes arBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes arShake { 0% { transform: rotate(0) scale(1); } 20% { transform: rotate(-8deg) scale(1.05); } 40% { transform: rotate(8deg) scale(1.1); } 60% { transform: rotate(-10deg) scale(1.15); } 80% { transform: rotate(10deg) scale(1.2); } 100% { transform: scale(1.35); opacity: 0.3; } }
+  .arIt { display: flex; flex-direction: column; align-items: center; gap: 6px; animation: arPop 0.4s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes arPop { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  .arIt canvas { width: 130px; height: 130px; }
+  .arIt.new canvas { width: 170px; height: 170px; filter: drop-shadow(0 0 22px var(--rc)); }
+  .arIt b { font-size: 1.5rem; font-weight: 900; }
+  .arIt span { color: #c9cfdb; font-size: 0.95rem; line-height: 1.3; }
+  .arIt small { color: var(--rc); font-weight: 900; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .arItBig { font-size: 5rem; line-height: 1; }
+  .arItBig.dbl { font-size: 4rem; font-weight: 900; color: #7ee08a; }
+  .arNewT { font-size: 1.6rem; font-weight: 900; color: var(--rc); letter-spacing: 0.04em; }
+  .arItBar { position: relative; width: 200px; height: 18px; border-radius: 9px; background: #262a34; overflow: hidden; }
+  .arItBar i { position: absolute; left: 0; top: 0; bottom: 0; background: #7ee08a; }
+  .arItBar em { position: relative; display: block; font-style: normal; font-size: 0.78rem; font-weight: 800; line-height: 18px; }
+  .arBxLeft { margin-top: 18px; color: #8f98ab; font-size: 0.9rem; }
+  .arSum { display: grid; gap: 6px; width: 100%; }
+  .arSum div { background: rgba(31,34,41,.9); border-radius: 12px; padding: 10px 12px; font-size: 0.95rem; text-align: left; }
+  .arBxBtns { display: flex; gap: 10px; width: 100%; margin-top: 8px; }
+  .arBxBtns button { flex: 1; }
+
+  /* ===== Арена: режимы, сводка, итоги (3.21) ===== */
+  .arMode button { font-size: 0.92rem; }
+  .arMode button[aria-pressed="true"] { background: var(--tank1); color: #fff; }
+  .arEco { display: flex; align-items: center; gap: 6px; width: 100%; border: none; border-radius: 12px; background: #262a34; color: #fff; padding: 9px 12px; font-weight: 800; font-size: 0.92rem; }
+  .arEco span { flex: 1; text-align: center; white-space: nowrap; }
+  .arEco .arEcoArr { flex: 0 0 auto; color: #9aa3b6; }
+  .arFirst { background: #1f2a3f; border-radius: 12px; padding: 10px 12px; color: #dbe7ff; font-size: 0.9rem; }
+  .arStat { font-size: 0.8rem; color: #c9cfdb; line-height: 1.35; text-align: center; }
+  .arStat i { font-style: normal; font-weight: 800; }
+
+  /* ===== Арена: свой экран (3.22) ===== */
+  .arHub { position: fixed; inset: 0; z-index: 255; display: flex; flex-direction: column; color: #fff; user-select: none; touch-action: manipulation; overflow: hidden;
+    background: repeating-linear-gradient(115deg, rgba(255,255,255,0.035) 0 26px, transparent 26px 52px), radial-gradient(circle at 50% 38%, #3b6fe0 0%, #1f3f9a 45%, #101d4a 100%);
+    padding: calc(10px + var(--st, 0px)) 12px calc(12px + var(--sb, 0px)); }
+  .arHub[hidden] { display: none; }
+  .arHub button { font-family: inherit; color: #fff; border: none; }
+  .arHub b, .arHub .ahPlay, .arHub .ahBtn { text-shadow: 0 2px 0 rgba(0,0,0,0.45); }
+  .ahTop { display: flex; align-items: center; gap: 8px; flex: none; }
+  .ahBack { width: 44px; height: 44px; border-radius: 14px; background: #14204d; font-size: 1.8rem; font-weight: 900; line-height: 1; box-shadow: 0 4px 0 #0a1230; }
+  .ahTitle { flex: 1; font-size: 1.05rem; font-weight: 900; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ahPill { background: rgba(8,14,40,0.75); border-radius: 12px; padding: 8px 10px; font-weight: 900; font-size: 0.9rem; white-space: nowrap; }
+  .ahMain { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  .ahSide { position: absolute; left: 0; top: 12px; display: grid; gap: 10px; z-index: 2; }
+  .ahSq { position: relative; width: 70px; padding: 8px 4px 7px; border-radius: 16px; background: #14204d; box-shadow: 0 4px 0 #0a1230; display: flex; flex-direction: column; align-items: center; font-weight: 900; font-size: 0.78rem; gap: 1px; }
+  .ahSq em { font-style: normal; font-size: 1.5rem; line-height: 1.1; }
+  .ahSq small { font-size: 0.66rem; color: #a9b9e8; font-weight: 700; }
+  .ahSq u { position: absolute; right: -6px; top: -6px; min-width: 22px; height: 22px; border-radius: 11px; background: #ff4f3f; text-decoration: none; font-size: 0.78rem; line-height: 22px; text-align: center; }
+  .ahSq.glow { background: #2f56c8; animation: ahGlow 1.2s ease-in-out infinite alternate; }
+  @keyframes ahGlow { from { box-shadow: 0 4px 0 #0a1230, 0 0 0 0 rgba(255,210,63,0.0); } to { box-shadow: 0 4px 0 #0a1230, 0 0 0 5px rgba(255,210,63,0.55); } }
+  .ahHero { background: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0; max-height: 100%; }
+  .ahHero small, .ahInfo > small { font-size: 0.72rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rc, #8fd0ff); }
+  .ahHero > b, .ahName { font-size: 2rem; font-weight: 900; letter-spacing: 0.02em; line-height: 1.05; }
+  .ahHero canvas { width: min(220px, 30vh); height: min(220px, 30vh); filter: drop-shadow(0 14px 14px rgba(0,0,0,0.45)); animation: ahBob 2.4s ease-in-out infinite; }
+  @keyframes ahBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .ahLv { font-weight: 900; font-size: 0.95rem; color: #ffd76a; }
+  .ahTap { font-style: normal; font-size: 0.78rem; color: #b7c6f2; font-weight: 700; margin-top: 2px; }
+  .ahPP { position: relative; width: 190px; max-width: 100%; height: 20px; border-radius: 10px; background: rgba(8,14,40,0.8); overflow: hidden; }
+  .ahPP i { position: absolute; left: 0; top: 0; bottom: 0; background: #e05fd0; border-radius: 10px; }
+  .ahPP.ok i { background: #6fe07c; } .ahPP.max i { background: #ffc53d; } .ahPP.tok i { background: #4f9dff; } .ahPP.star i { background: #ffb02e; }
+  .ahPP span { position: relative; display: block; text-align: center; font-size: 0.72rem; font-weight: 900; line-height: 20px; text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+  .ahNote { background: rgba(8,14,40,0.7); border-radius: 12px; padding: 8px 12px; font-size: 0.86rem; font-weight: 700; text-align: center; }
+  .ahRed { display: flex; align-items: center; gap: 8px; background: rgba(120,20,20,0.75); border-radius: 14px; padding: 4px 12px 4px 4px; font-size: 0.9rem; font-weight: 700; }
+  .ahRed canvas { width: 40px; height: 40px; } .ahRed i { font-style: normal; color: #ffc9c2; font-size: 0.8rem; }
+  .ahBottom { flex: none; display: grid; gap: 8px; }
+  .ahRow { display: flex; gap: 8px; }
+  .ahOpt { flex: 1; background: #14204d; border-radius: 14px; padding: 7px 10px; box-shadow: 0 4px 0 #0a1230; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
+  .ahOpt small { font-size: 0.68rem; color: #a9b9e8; font-weight: 700; } .ahOpt b { font-size: 0.98rem; font-weight: 900; white-space: nowrap; }
+  .ahOpt:disabled { opacity: 0.55; }
+  .ahDesc { text-align: center; font-size: 0.8rem; color: #cfdaf8; font-weight: 600; min-height: 2.3em; line-height: 1.2; }
+  .ahPlay { height: 68px; border-radius: 20px; background: linear-gradient(#ffd84a, #ffb81f); color: #2a1c00 !important; text-shadow: 0 2px 0 rgba(255,255,255,0.45) !important; font-size: 1.9rem; font-weight: 900; letter-spacing: 0.06em; box-shadow: 0 7px 0 #b97700, 0 12px 20px rgba(0,0,0,0.35); }
+  .ahPlay:active, .ahBtn:active, .ahSq:active, .ahOpt:active, .ahBack:active { transform: translateY(3px); }
+  .ahBtn { border-radius: 14px; padding: 12px 18px; background: #3f8cff; font-weight: 900; font-size: 1rem; letter-spacing: 0.04em; box-shadow: 0 5px 0 #1f56b8; }
+  .ahBtn.green { background: #3fc45a; box-shadow: 0 5px 0 #23883a; } .ahBtn.purple { background: #9a5cf0; box-shadow: 0 5px 0 #6a35c4; }
+  .ahBtn:disabled { background: #46507a; box-shadow: 0 5px 0 #2c3454; color: #aab3d0; }
+  .ahHint { font-size: 0.82rem; color: #cfdaf8; font-weight: 700; text-align: center; } .ahHint.lock { background: rgba(8,14,40,0.75); border-radius: 12px; padding: 10px 12px; }
+  .ahScroll { flex: 1; min-height: 0; overflow-y: auto; margin-top: 10px; }
+  .ahGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-bottom: 8px; }
+  .ahCard { background: #14204d; border-radius: 16px; padding: 6px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: 0 4px 0 #0a1230, inset 0 4px 0 var(--rc); min-width: 0; }
+  .ahCard canvas { width: 84px; height: 84px; } .ahCard b { font-size: 0.86rem; font-weight: 900; } .ahCard small { font-size: 0.68rem; color: #b7c6f2; font-weight: 700; }
+  .ahCard .ahPP { width: 86%; height: 12px; } .ahCard .ahPP span { display: none; }
+  .ahCard.on { outline: 3px solid #ffd23f; } .ahCard.lock canvas { filter: grayscale(1) brightness(0.55); }
+  .ahInfo { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-bottom: 10px; }
+  .ahInfo canvas { width: 150px; height: 150px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.45)); margin: -6px 0; }
+  .ahStats { width: 100%; display: grid; gap: 6px; background: rgba(8,14,40,0.72); border-radius: 16px; padding: 12px; }
+  .ahStat { display: grid; grid-template-columns: 96px 1fr 92px; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 700; }
+  .ahStat span { color: #cfdaf8; } .ahStat div { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.12); overflow: hidden; } .ahStat i { display: block; height: 100%; border-radius: 5px; }
+  .ahStat b { text-align: right; font-weight: 900; font-size: 0.8rem; white-space: nowrap; }
+  .ahAb { width: 100%; display: flex; gap: 10px; align-items: flex-start; background: rgba(8,14,40,0.72); border-radius: 14px; padding: 10px 12px; font-size: 0.86rem; line-height: 1.3; box-sizing: border-box; }
+  .ahAb em { font-style: normal; font-weight: 900; font-size: 0.7rem; background: #ff7a3d; border-radius: 8px; padding: 3px 7px; flex: none; } .ahAb.sup em { background: #ffc53d; color: #2a1c00; }
+  .ahBoxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-bottom: 10px; }
+  .ahBx { background: #14204d; border-radius: 18px; padding: 10px 8px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 4px 0 #0a1230; }
+  .ahBx > b { font-weight: 900; } .ahBx .ahPP { width: 100%; }
+  .ahBxPic { position: relative; } .ahBxPic .arCrate { width: 96px; height: 88px; filter: drop-shadow(0 8px 10px rgba(0,0,0,0.45)); }
+  .ahBxPic u { position: absolute; right: -8px; top: 6px; background: #ff4f3f; border-radius: 10px; padding: 1px 7px; font-weight: 900; text-decoration: none; font-size: 0.85rem; }
+  .ahHow { grid-column: 1 / -1; background: rgba(8,14,40,0.72); border-radius: 16px; padding: 12px; display: grid; gap: 8px; }
+  .ahHow > b { font-weight: 900; } .ahHow div { display: grid; grid-template-columns: 84px 1fr; gap: 8px; font-size: 0.83rem; line-height: 1.3; }
+  .ahHow em { font-style: normal; font-weight: 900; color: #ffd76a; } .ahHow i { font-style: normal; font-weight: 900; color: #7ee08a; }
+  @media (max-height: 640px) { .ahHero > b { font-size: 1.5rem; } .ahPlay { height: 56px; font-size: 1.5rem; } .ahSq { width: 60px; } .ahSq em { font-size: 1.2rem; } }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -8386,7 +8655,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '3.12';
+  const NET_BUILD = '3.22';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -9730,7 +9999,7 @@
     ['hockey', 'hockeyTile', 'Аэрохоккей'], ['golf', 'pgTile-golf', 'Мини-гольф'], ['football', 'pgTile-football', 'Футбол'], ['curling', 'pgTile-curling', 'Кёрлинг'],
     ['pinball', 'pgTile-pinball', 'Пинбол'], ['bombs', 'pgTile-bombs', 'Бомбы'], ['arrows', 'pgTile-arrows', 'Стрелы'], ['flail', 'pgTile-flail', 'Кистень'],
     ['hotbomb', 'pgTile-hotbomb', 'Горячая бомба'], ['ice', 'pgTile-ice', 'Тающие льдины'], ['magnet', 'pgTile-magnet', 'Магнит'],
-    ['dark', 'pgTile-dark', 'Пятнашки в темноте'], ['hill', 'pgTile-hill', 'Царь горы'], ['snowball', 'pgTile-snowball', 'Снежный ком']];
+    ['hide', 'pgTile-hide', 'Прятки в темноте'], ['hill', 'pgTile-hill', 'Царь горы'], ['snowball', 'pgTile-snowball', 'Снежный ком']];
   const tilesNet = document.getElementById('tilesNet');
   // плитки Сумо и Лавы появляются чуть позже — поэтому собираем вкладку после загрузки всех игр
   setTimeout(() => { const miniOrder = id => { const el = document.getElementById(id), box = document.getElementById('tilesMini'); const i = el && box ? [...box.children].indexOf(el) : -1; return i < 0 ? 1e4 : i; }; // порядок — как во «Вдвоём»
@@ -10687,7 +10956,7 @@
 
     // --- настройки (запоминаются в браузере) ---
     const options = [{ key: 'goal', type: 'seg', label: cfg.goalLabel || 'Раундов до победы', values: [...new Set([1].concat(cfg.goals || [3, 5, 7]))].map(v => [v, String(v)]), def: cfg.goalDef || 5 }]
-      .concat(cfg.bot ? [{ key: 'opp', type: 'seg', label: 'Соперник', values: [['human', 'Вдвоём'], ['easy', 'Бот: лёгкий'], ['medium', 'Бот: средний'], ['hard', 'Бот: злой']], def: 'human' }] : [])
+      .concat(cfg.bot ? [{ key: 'opp', type: 'seg', label: 'Соперник', values: [['human', 'Вдвоём']].concat(cfg.botLevels || [['easy', 'Бот: лёгкий'], ['medium', 'Бот: средний'], ['hard', 'Бот: злой']]), def: cfg.botDef || 'human' }] : []) // botLevels — свои уровни бота (Прятки: обычный и умный)
       .concat(cfg.options || []);
     const opts = {};
     options.forEach(o => opts[o.key] = o.def);
@@ -10759,7 +11028,7 @@
       cv.width = Math.round(sw * G.dpr); cv.height = Math.round(innerHeight * G.dpr);
       G.W = 360;
       // по сети поле одинаковое на обоих телефонах
-      G.H = G.netMode() ? 640 : Math.max(580, Math.min(780, (sh - 16) / (sw - 16) * G.W));
+      G.H = G.netMode() || cfg.fixedH ? 640 : Math.max(580, Math.min(780, (sh - 16) / (sw - 16) * G.W)); // fixedH — карта нарисована под 360×640 (Прятки)
       G.k = Math.min((sw - 16) / G.W, (sh - 16) / G.H);
       G.ox = (sw - G.W * G.k) / 2; G.oy = safeTop() + (sh - G.H * G.k) / 2;
     };
@@ -11648,7 +11917,7 @@
       ['hockey', 'hockeyTile', 'Аэрохоккей'], ['golf', 'pgTile-golf', 'Мини-гольф'], ['sumo', 'pgTile-sumo', 'Сумо'], ['lava', 'pgTile-lava', 'Лава'],
       ['pinball', 'pgTile-pinball', 'Пинбол'], ['bombs', 'pgTile-bombs', 'Бомбы'], ['arrows', 'pgTile-arrows', 'Стрелы'], ['flail', 'pgTile-flail', 'Кистень'],
       ['hotbomb', 'pgTile-hotbomb', 'Горячая бомба'], ['ice', 'pgTile-ice', 'Тающие льдины'], ['magnet', 'pgTile-magnet', 'Магнит'],
-      ['dark', 'pgTile-dark', 'Пятнашки в темноте'], ['hill', 'pgTile-hill', 'Царь горы'], ['snowball', 'pgTile-snowball', 'Снежный ком']];
+      ['hide', 'pgTile-hide', 'Прятки в темноте'], ['hill', 'pgTile-hill', 'Царь горы'], ['snowball', 'pgTile-snowball', 'Снежный ком']];
     const tiles = document.createElement('div');
     tiles.className = 'tiles'; tiles.id = 'tilesElite';
     tab.appendChild(tiles);
@@ -16339,7 +16608,7 @@
   })();
 
   // ======================= ИГРЫ С ШАРИКАМИ =======================
-  // Горячая бомба, Тающие льдины, Магнит, Пожиратель, Пятнашки в темноте.
+  // Горячая бомба, Тающие льдины, Магнит, Пожиратель.
   // Общее: ты — шарик, водишь пальцем в любом месте своей половины (джойстик);
   // в играх с кнопкой правая часть твоей половины — кнопка.
   (function () {
@@ -17132,168 +17401,7 @@
       });
     })();
 
-    // ======================= ПЯТНАШКИ В ТЕМНОТЕ =======================
-    (function () {
-      const R = 11, ACC = 800, VMAX = 140, FR = 2.8, PHASE = 15, PHASES = 4;
-      const BEAM = 210, HALF = 0.4, TURN = 3.4, HEAT_T = 0.9, BLIND = 2;
-      const WALLS = [[0.10, 0.30, 0.32, 0.025], [0.58, 0.675, 0.32, 0.025], [0.62, 0.38, 0.045, 0.13], [0.335, 0.49, 0.045, 0.13], [0.42, 0.17, 0.16, 0.025], [0.42, 0.805, 0.16, 0.025]];
-      const BUSH = [[0.17, 0.56, 24], [0.83, 0.44, 24], [0.5, 0.5, 18]];
-      const SPAWN = [[0.12, 0.12], [0.88, 0.12], [0.12, 0.88], [0.88, 0.88], [0.5, 0.08], [0.5, 0.92], [0.08, 0.5], [0.92, 0.5]];
-      const hunter = D => (D.first + D.phase) % 2;
-      function blocked(D, x0, y0, x1, y1) {
-        const d = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(d / 6);
-        for (let k = 1; k < n; k++) { const x = x0 + (x1 - x0) * k / n, y = y0 + (y1 - y0) * k / n; for (const w of D.walls) if (x > w.x && x < w.x + w.w && y > w.y && y < w.y + w.h) return true; }
-        return false;
-      }
-      const inBush = (D, x, y) => D.bush.some(b => Math.hypot(x - b.x, y - b.y) < b.r);
-      function inBeam(D, H, x, y) {
-        if (H.blind > 0) return false;
-        const dx = x - H.x, dy = y - H.y, d = Math.hypot(dx, dy);
-        if (d > BEAM || d < 1) return d < 1;
-        let a = Math.atan2(dy, dx) - H.ba; a = Math.atan2(Math.sin(a), Math.cos(a));
-        return Math.abs(a) < HALF && !blocked(D, H.x, H.y, x, y);
-      }
-      function press(G, P, down) {
-        const D = G.d; if (!down || G.state !== 'play' || P.dead) return;
-        if (P.i === hunter(D) || P.flash <= 0) return;
-        P.flash--; const H = D.P[hunter(D)]; H.blind = BLIND; D.flashAt = G.now; D.flashP = P.i;
-        G.ring(P.x, P.y, '#ffffff', 140, 0.5); G.sound(1800, 0.15, 'sine', 0.06); G.vibrate(20);
-        G.flash('Ослеп!', '#ffffff', 900, H.i);
-      }
-      function freeAt(D, x, y) { if (x < ME + R || y < ME + R || x > D.W - ME - R || y > D.H - ME - R) return false; for (const w of D.walls) if (x > w.x - R && x < w.x + w.w + R && y > w.y - R && y < w.y + w.h + R) return false; return true; }
-      function bot(G, dt, now, lvl) {
-        const D = G.d, M = G.botMem; if (!D.P || G.state !== 'play') return;
-        const me = D.P[1], foe = D.P[0];
-        M.t = (M.t || 0) - dt; if (M.t > 0) return;
-        M.t = BK.lvl(lvl, 0.3, 0.16, 0.08);
-        const isH = hunter(D) === 1;
-        let best = { x: 0, y: 0 }, bs = -1e9;
-        for (let a = 0; a < 16; a++) {
-          const dx = Math.cos(a * Math.PI / 8), dy = Math.sin(a * Math.PI / 8), px = me.x + dx * 50, py = me.y + dy * 50;
-          if (!freeAt(D, me.x + dx * 18, me.y + dy * 18)) continue;
-          let s;
-          if (isH) { s = -Math.hypot(foe.x + foe.vx * 0.3 - px, foe.y + foe.vy * 0.3 - py); if (!blocked(D, px, py, foe.x, foe.y)) s += 25; }
-          else {
-            s = Math.min(240, Math.hypot(px - foe.x, py - foe.y)) * 0.5;
-            if (inBeam(D, foe, px, py)) s -= 200;
-            if (blocked(D, foe.x, foe.y, px, py)) s += 60;
-            if (inBush(D, px, py)) s += 30;
-            const w = BK.wallPush(G, px, py, 50); s -= (Math.abs(w.x) + Math.abs(w.y)) * 40;
-          }
-          s += (Math.random() - 0.5) * BK.lvl(lvl, 90, 35, 10);
-          if (s > bs) { bs = s; best = { x: dx, y: dy }; }
-        }
-        me.bot = best;
-        if (!isH && me.heat > BK.lvl(lvl, 0.8, 0.55, 0.4) && me.flash > 0) { BK.botBtn(G, me, true, press); BK.botBtn(G, me, false, press); }
-      }
-      function swapPhase(G, D) {
-        const H = hunter(D);
-        for (const P of D.P) { P.heat = 0; P.flash = 1; P.blind = 0; P.inv = 1; }
-        G.flash('Теперь ловишь ты!', '#ffd23f', 1300, H);
-        G.flash('Прячься!', '#9fd3ff', 1300, 1 - H);
-        G.sound(600, 0.1, 'triangle', 0.05);
-      }
-      partyGame({
-        key: 'dark', netLerp: ['P'], title: 'Пятнашки в темноте', bg: '#0b0d16',
-        desc: 'Темно. Охотник светит фонариком туда, куда едет. Кто попал в луч на секунду или кого коснулись — пойман. Стены закрывают свет, в кустах прятаться легче. Кнопка справа — вспышка: ослепляет охотника на 2 секунды. Каждые 15 секунд роли меняются. Иногда бьёт молния — на миг становится светло.',
-        icon: '<svg viewBox="0 0 60 60"><rect width="60" height="60" rx="12" fill="#0b0d16"/><path d="M18 42 L54 18 L58 40 Z" fill="#fff2b8" opacity=".55"/><circle cx="16" cy="44" r="8" fill="#ff5a4f"/><circle cx="48" cy="28" r="7" fill="#4fa3ff"/><rect x="30" y="8" width="4" height="16" fill="#3a3f58"/><circle cx="12" cy="14" r="7" fill="#2f6b45"/></svg>',
-        controls: 'raw', hint: 'води пальцем',
-        goalLabel: 'Очков до победы', goals: [2, 3, 5], goalDef: 2,
-        countdownMs: 1100, roundEndMs: 2200,
-        options: [{ key: 'bush', type: 'switch', label: 'Кусты', small: 'В кустах луч ловит вдвое дольше', def: true }],
-        bot,
-        newRound(G) {
-          const D = G.d = { t: 0, phase: 0, pt: 0, W: G.W, H: G.H, sc: [0, 0], nextBolt: BK.rnd(7, 12), boltAt: -1e9 };
-          D.first = G.round % 2;
-          D.walls = WALLS.map(([x, y, w, h]) => ({ x: x * G.W, y: y * G.H, w: w * G.W, h: h * G.H }));
-          D.bush = G.opts.bush ? BUSH.map(([x, y, r]) => ({ x: x * G.W, y: y * G.H, r })) : [];
-          D.P = [0, 1].map(i => ({ i, x: G.W * (i ? 0.85 : 0.15), y: G.H * (i ? 0.12 : 0.88), vx: 0, vy: 0, ba: i ? Math.PI / 2 : -Math.PI / 2, heat: 0, flash: 1, blind: 0, inv: 0, joy: null }));
-          const H = hunter(D);
-          G.flash(H === 0 ? 'Ловит синий' : 'Ловит красный', PG_COL[H], 1200);
-        },
-        ...BK.input(true, press),
-        update(G, dt, now) {
-          const D = G.d; if (!D.P) return;
-          const play = G.state === 'play';
-          if (play) { D.t += dt; D.pt += dt; }
-          if (play && D.pt >= PHASE) {
-            D.pt = 0; D.phase++;
-            if (D.phase >= PHASES) { const [a, b] = D.sc; G.roundOver(a === b ? null : a > b ? 0 : 1, `Поймал: ${a} : ${b}`); return; }
-            swapPhase(G, D);
-          }
-          const Hi = hunter(D);
-          for (const P of D.P) {
-            const inp = BK.inp(G, P, play), slow = inBush(D, P.x, P.y) ? 0.7 : 1;
-            BK.move(P, inp, dt, ACC * slow, VMAX * slow, FR);
-            for (const w of D.walls) BK.rect(P, R, w);
-            BK.walls(P, R, ME, ME, G.W - ME, G.H - ME, 0.3);
-            P.blind = Math.max(0, P.blind - dt); P.inv = Math.max(0, P.inv - dt);
-            // луч поворачивается за движением, не мгновенно
-            const m = Math.hypot(inp.x, inp.y);
-            if (m > 0.2) { let a = Math.atan2(inp.y, inp.x) - P.ba; a = Math.atan2(Math.sin(a), Math.cos(a)); P.ba += Math.max(-TURN * dt, Math.min(TURN * dt, a)); }
-          }
-          const H = D.P[Hi], Q = D.P[1 - Hi];
-          BK.collide(H, Q, R, R);
-          if (play) {
-            // молния: на миг светло везде
-            if (D.t > D.nextBolt) { D.nextBolt = D.t + BK.rnd(8, 14); D.boltAt = now; G.sound(55, 0.6, 'sawtooth', 0.06); setTimeout(() => G.sound(40, 0.5, 'sine', 0.05), 120); G.vibrate([10, 40, 20]); }
-          }
-          if (!play || Q.inv > 0) return;
-          const touch = Math.hypot(H.x - Q.x, H.y - Q.y) < R * 2 + 2;
-          if (inBeam(D, H, Q.x, Q.y)) Q.heat += dt / HEAT_T * (inBush(D, Q.x, Q.y) ? 0.5 : 1);
-          else Q.heat = Math.max(0, Q.heat - dt * 0.4);
-          if (Q.heat >= 1 || touch) {
-            D.sc[Hi]++; Q.heat = 0; Q.inv = 1.2;
-            G.burst(Q.x, Q.y, '#fff2b8', 18, 160, 0.5, 2.5); G.sound(880, 0.12, 'triangle', 0.06); G.vibrate(25);
-            G.pop(Q.x, Q.y - 20, 'Попался!', '#fff2b8', 14);
-            let bx = Q.x, by = Q.y, bd = -1;
-            for (const [sx, sy] of SPAWN) { const x = sx * G.W, y = sy * G.H, d = Math.hypot(x - H.x, y - H.y); if (d > bd) { bd = d; bx = x; by = y; } }
-            Q.x = bx; Q.y = by; Q.vx = Q.vy = 0;
-          }
-        },
-        draw(G, now) {
-          const c = G.c, D = G.d; if (!D.P) return;
-          const Hi = hunter(D), H = D.P[Hi], Q = D.P[1 - Hi];
-          const scene = (bright) => {
-            BK.floor(G, bright ? '#3a3d52' : '#151826', bright ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)');
-            for (const b of D.bush) { G.circle(b.x, b.y, b.r, bright ? '#3f8a58' : '#1d3a28'); for (let k = 0; k < 5; k++) G.circle(b.x + Math.cos(k * 1.3) * b.r * 0.5, b.y + Math.sin(k * 1.3) * b.r * 0.5, b.r * 0.45, bright ? '#4fa36a' : '#234631'); }
-            for (const w of D.walls) { c.fillStyle = bright ? '#7a7f9c' : '#3a3f58'; c.fillRect(w.x, w.y, w.w, w.h); }
-          };
-          scene(false);
-          // темнота
-          c.fillStyle = 'rgba(3,4,10,0.7)'; c.fillRect(0, 0, G.W, G.H);
-          // луч: лучи до стен
-          if (H.blind <= 0) {
-            const pts = [[H.x, H.y]], N = 34;
-            for (let k = 0; k <= N; k++) {
-              const a = H.ba - HALF + 2 * HALF * k / N, dx = Math.cos(a), dy = Math.sin(a);
-              let d = 0; while (d < BEAM) { d += 6; const x = H.x + dx * d, y = H.y + dy * d; if (x < 0 || y < 0 || x > G.W || y > G.H || D.walls.some(w => x > w.x && x < w.x + w.w && y > w.y && y < w.y + w.h)) break; }
-              pts.push([H.x + dx * d, H.y + dy * d]);
-            }
-            c.save(); c.beginPath(); pts.forEach(([x, y], k) => k ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.clip();
-            scene(true); c.fillStyle = 'rgba(255,240,170,0.14)'; c.fillRect(0, 0, G.W, G.H); c.restore();
-          }
-          // молния — всё видно, мерцает
-          const bk = now - D.boltAt;
-          if (bk < 380 && (bk < 90 || (bk > 160 && bk < 260))) { scene(true); c.fillStyle = 'rgba(220,230,255,0.25)'; c.fillRect(0, 0, G.W, G.H); }
-          // вспышка
-          if (now - (D.flashAt || -1e9) < 400) { const k = (now - D.flashAt) / 400, F = D.P[D.flashP]; c.globalAlpha = 0.6 * (1 - k); G.circle(F.x, F.y, 40 + 140 * k, '#ffffff'); c.globalAlpha = 1; }
-          // шарики: свой свет вокруг
-          for (const P of D.P) {
-            c.save(); c.beginPath(); c.arc(P.x, P.y, 22, 0, Math.PI * 2); c.clip(); scene(true); c.restore();
-            const hid = P.i !== Hi && inBush(D, P.x, P.y);
-            BK.ball(G, P, R, P.inv > 0 ? 0.4 + 0.3 * Math.sin(now / 60) : hid ? 0.55 : 1);
-            if (P.i === Hi) { c.fillStyle = '#fff2b8'; c.globalAlpha = P.blind > 0 ? 0.2 : 0.9; const tx = P.x + Math.cos(P.ba) * (R + 2), ty = P.y + Math.sin(P.ba) * (R + 2); c.beginPath(); c.arc(tx, ty, 4, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; }
-            if (P.i !== Hi && P.heat > 0) { c.strokeStyle = '#ffd23f'; c.lineWidth = 3; c.beginPath(); c.arc(P.x, P.y, R + 4, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, P.heat)); c.stroke(); }
-          }
-          const left = Math.max(0, PHASE - D.pt);
-          for (const P of D.P) {
-            const isH = P.i === Hi;
-            BK.hud(G, P, { hint: 'води пальцем', btn: isH ? '' : 'вспышка', btnReady: !isH && P.flash > 0, text: `${isH ? 'лови' : 'убегай'} · ${Math.ceil(left)} с · поймал ${D.sc[P.i]}:${D.sc[1 - P.i]}`, textCol: isH ? '#ffe7a0' : '#bfe0ff' });
-          }
-        }
-      });
-    })();
+    // Пятнашки в темноте убраны в 3.15 — вместо них «Прятки в темноте» только по сети (pg/hide.js); старый код — balls_before_hide.js
   })();
 
   // ======================= ИГРЫ С ШАРИКАМИ — 2 =======================
@@ -17875,6 +17983,1183 @@
     })();
   })();
 
+  // ======================= ПРЯТКИ В ТЕМНОТЕ (3.15) — только по сети =======================
+  // У каждого свой телефон, поэтому охотник видит только освещённое: свой луч, круг вокруг себя и два брошенных фонаря.
+  // Прячущийся видит всю карту и свет охотника. Раунд 45 с: поймал (луч 1 с или касание) — очко охотнику,
+  // не поймал — прячущемуся. Следующий раунд — роли меняются.
+  // Прячущийся: правый джойстик — телепорт (тянешь — видно, куда прыгнешь; 1 раз за раунд).
+  //   Над ним — «табличка» (1 раз за раунд), какая — решает случай в начале раунда (охотник не знает):
+  //   «под себя» — тап; «бросок» — тянешь в одну из 4 сторон, ровно на треть карты, через стену нельзя.
+  //   Охотник видит табличку всегда, она не светит. Эмоция прячущегося идёт не в облачко над ним (оно бы выдало его),
+  //   а на табличку: 😊 или касание своей таблички.
+  // Охотник: правая сторона — бросок фонаря (тянешь — видно, куда упадёт; 2 штуки, подобрать — подойти). Фонари только показывают.
+  // Действия прячущегося — без звуков и искр: эффекты хоста повторяются у соперника и выдали бы его.
+  (function () {
+    const BK = window.PGBK, ME = 10;
+    const R = 8, ACC = 700, VMAX = 112, FR = 2.8, ROUND = 45;
+    const BEAM = 170, HALF = 0.42, TURN = 3.4, HEAT_T = 1.0, SELF_R = 30;
+    const LT_N = 2, LT_R = 58, LT_MAX = 250, LT_FLY = 0.35;
+    const TP_MAX = 300, PULL = 60;
+    const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    // карта 360×640: половина стен и кустов + её копия, повёрнутая на 180° — честно для обоих
+    const HALF_WALLS = [[40, 96, 100, 10], [200, 60, 10, 100], [250, 160, 80, 10], [70, 170, 10, 80], [120, 240, 100, 10], [290, 250, 10, 70], [10, 300, 50, 10], [150, 160, 30, 30], [160, 315, 40, 10]];
+    const HALF_BUSH = [[110, 130, 17], [300, 92, 17], [222, 200, 15], [32, 232, 15]];
+    const SPOTS = [[40, 40], [320, 40], [40, 600], [320, 600], [180, 205], [180, 435], [330, 330], [30, 345], [100, 285], [260, 355], [110, 60], [250, 580]];
+    function buildMap(G) {
+      const W = G.W, H = G.H, walls = [], seen = new Set();
+      for (const [x, y, w, h] of HALF_WALLS) for (const r of [[x, y, w, h], [W - x - w, H - y - h, w, h]]) { const k = r.join(); if (!seen.has(k)) { seen.add(k); walls.push({ x: r[0], y: r[1], w: r[2], h: r[3] }); } }
+      const bush = []; for (const [x, y, r] of HALF_BUSH) { bush.push({ x, y, r }); bush.push({ x: W - x, y: H - y, r }); }
+      return { walls, bush };
+    }
+    // луч из точки до первой стены или края (точно, без шагов)
+    function rayHit(D, x, y, dx, dy, max) {
+      let t = max;
+      const edge = (p, d, lo, hi) => { if (d > 0) return (hi - p) / d; if (d < 0) return (lo - p) / d; return Infinity; };
+      t = Math.min(t, edge(x, dx, 0, D.W), edge(y, dy, 0, D.H));
+      for (const w of D.walls) {
+        let t0 = -Infinity, t1 = Infinity;
+        for (const [p, d, lo, hi] of [[x, dx, w.x, w.x + w.w], [y, dy, w.y, w.y + w.h]]) {
+          if (Math.abs(d) < 1e-9) { if (p < lo || p > hi) { t0 = Infinity; break; } continue; }
+          let a = (lo - p) / d, b = (hi - p) / d; if (a > b) [a, b] = [b, a];
+          t0 = Math.max(t0, a); t1 = Math.min(t1, b);
+        }
+        if (t0 <= t1 && t1 >= 0 && t0 < t) t = Math.max(0, t0);
+      }
+      return t;
+    }
+    const blocked = (D, x0, y0, x1, y1) => { const d = Math.hypot(x1 - x0, y1 - y0); if (d < 0.5) return false; return rayHit(D, x0, y0, (x1 - x0) / d, (y1 - y0) / d, d) < d - 0.5; };
+    const inBush = (D, x, y) => D.bush.some(b => Math.hypot(x - b.x, y - b.y) < b.r);
+    function freeAt(D, x, y, r = R) { if (x < ME + r || y < ME + r || x > D.W - ME - r || y > D.H - ME - r) return false; for (const w of D.walls) if (x > w.x - r && x < w.x + w.w + r && y > w.y - r && y < w.y + w.h + r) return false; return true; }
+    // источники света охотника: луч, свой круг, упавшие фонари
+    function inBeam(D, H, x, y) {
+      const dx = x - H.x, dy = y - H.y, d = Math.hypot(dx, dy);
+      if (d > BEAM) return false; if (d < 1) return true;
+      let a = Math.atan2(dy, dx) - H.ba; a = Math.atan2(Math.sin(a), Math.cos(a));
+      return Math.abs(a) < HALF && !blocked(D, H.x, H.y, x, y);
+    }
+    // освещено ли место: луч охотника H, его круг и упавшие фонари Ls (одно и то же для экрана охотника и для бота)
+    function litFrom(D, H, Ls, x, y) {
+      if (inBeam(D, H, x, y)) return true;
+      if (Math.hypot(x - H.x, y - H.y) < SELF_R && !blocked(D, H.x, H.y, x, y)) return true;
+      for (const L of Ls) if (L.fly <= 0 && Math.hypot(x - L.x, y - L.y) < LT_R && !blocked(D, L.x, L.y, x, y)) return true;
+      return false;
+    }
+    const lit = (D, x, y) => litFrom(D, D.P[D.hun], D.L, x, y);
+    // куда прыгнет телепорт / упадёт фонарь / полетит табличка (одинаково у хоста и у телефона игрока — для подсказки)
+    function tpTarget(D, P, wx, wy) {
+      const L = Math.hypot(wx, wy); if (L < 12) return null;
+      const ux = wx / L, uy = wy / L; let dist = 30 + Math.min(1, (L - 12) / PULL) * (TP_MAX - 30);
+      for (; dist > 0; dist -= 6) { const x = P.x + ux * dist, y = P.y + uy * dist; if (freeAt(D, x, y)) return { x, y }; }
+      return null;
+    }
+    function ltTarget(D, P, wx, wy) {
+      const L = Math.hypot(wx, wy); if (L < 12) return null;
+      const ux = wx / L, uy = wy / L; let dist = 30 + Math.min(1, (L - 12) / PULL) * (LT_MAX - 30);
+      // 3.18: фонарь перелетает стены — падает в любое свободное место; попал в стену или за край — падает рядом, чуть ближе
+      for (; dist > 12; dist -= 4) { const x = P.x + ux * dist, y = P.y + uy * dist; if (freeAt(D, x, y, 5)) return { x, y }; }
+      return null;
+    }
+    function sgTarget(D, P, wx, wy) {
+      if (Math.hypot(wx, wy) < 12) return null;
+      const hor = Math.abs(wx) > Math.abs(wy), ux = hor ? Math.sign(wx) : 0, uy = hor ? 0 : Math.sign(wy), dist = hor ? D.W / 3 : D.H / 3;
+      const x = P.x + ux * dist, y = P.y + uy * dist;
+      const ok = x > ME + 8 && x < D.W - ME - 8 && y > ME + 8 && y < D.H - ME - 8 && !blocked(D, P.x, P.y, x, y) && freeAt(D, x, y, 4);
+      return { x, y, ok, ux, uy };
+    }
+    // --- действия (считает хост / сервер) ---
+    function fire(G, P, wx, wy) { // правый джойстик
+      const D = G.d; if (G.state !== 'play' || !D.P) return;
+      if (P.i === D.hun) {
+        if (D.L.length >= LT_N) return;
+        const t = ltTarget(D, P, wx, wy); if (!t) return;
+        D.L.push({ x: t.x, y: t.y, sx: P.x, sy: P.y, fly: LT_FLY, age: 0 });
+        G.sound(520, 0.06, 'triangle', 0.04);
+      } else {
+        if (P.tp <= 0) return;
+        const t = tpTarget(D, P, wx, wy); if (!t) return;
+        P.x = t.x; P.y = t.y; P.vx = P.vy = 0; P.tp = 0; P.tpN = (P.tpN || 0) + 1; // без звука и искр — соперник не должен знать
+      }
+    }
+    function sign(G, P, wx, wy) { // кнопка «табличка» (у охотника — тоже бросок фонаря)
+      const D = G.d; if (G.state !== 'play' || !D.P) return;
+      if (P.i === D.hun) { fire(G, P, wx, wy); return; }
+      if (P.sgUsed || D.sg) return;
+      if (D.sgType === 'self') { D.sg = { x: P.x, y: P.y + 2, sx: P.x, sy: P.y + 2, fly: 0 }; }
+      else { const t = sgTarget(D, P, wx, wy); if (!t || !t.ok) return; D.sg = { x: t.x, y: t.y, sx: P.x, sy: P.y, fly: 0.3 }; }
+      P.sgUsed = true;
+      G.sound(700, 0.05, 'triangle', 0.035); // табличку видно обоим — звук её не выдаёт сверх этого
+    }
+
+    // ======================= БОТ (3.16) =======================
+    // Главное правило: бот знает только то, что видел бы на экране человек в его роли.
+    // Всё, что ему можно знать, собирают senseHunter / senseHider — дальше мозг работает только с этим и с картой (она видна всем).
+    // Охотник: карта подозрений по клеткам 20×20. Где посветил — там пусто; со временем подозрение растекается к соседям (мог перебежать);
+    //   пока телепорт может быть не потрачен — понемногу возвращается в любую клетку, даже проверенную (мог прыгнуть).
+    //   Умный ещё: правило таблички (4 точки на трети карты) и «исчез посреди света — это телепорт, он потрачен».
+    // Прячущийся: видит охотника и свет, как человек; укрытие — подальше по пути, за стеной, в кусте; дорога — в обход света; телепорт — когда почти поймали.
+    // Без шума: решение держится, пока не изменилось увиденное; путь — по клеткам 10×10 вокруг стен.
+    const NG = 10, CG = 20, THINK_H = 100, THINK_Q = 250;
+    const REACT = 450; // заметил — начинает погоню через столько мс (как человек; у обоих ботов одинаково)
+    const NAV = new WeakMap();
+    const fcell = (n, x, y) => Math.max(0, Math.min(n.nh - 1, Math.floor(y / NG))) * n.nw + Math.max(0, Math.min(n.nw - 1, Math.floor(x / NG)));
+    function navOf(D) {
+      let n = NAV.get(D.walls); if (n) return n;
+      const nw = Math.ceil(D.W / NG), nh = Math.ceil(D.H / NG), free = new Uint8Array(nw * nh);
+      for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) free[y * nw + x] = freeAt(D, (x + 0.5) * NG, (y + 0.5) * NG, R + 1) ? 1 : 0;
+      const cw = Math.floor(D.W / CG), ch = Math.floor(D.H / CG), cells = [];
+      for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) { const cx = (x + 0.5) * CG, cy = (y + 0.5) * CG; if (freeAt(D, cx, cy, R + 1)) cells.push({ k: cells.length, x: cx, y: cy, f: fcell({ nw, nh }, cx, cy), bush: inBush(D, cx, cy) }); }
+      cells.forEach(c => { c.nb = cells.filter(o => o !== c && Math.abs(o.x - c.x) <= CG && Math.abs(o.y - c.y) <= CG && !blocked(D, c.x, c.y, o.x, o.y)).map(o => o.k); c.area = cells.filter(o => Math.hypot(o.x - c.x, o.y - c.y) <= 52 && !blocked(D, c.x, c.y, o.x, o.y)).map(o => o.k); });
+      n = { nw, nh, free, cells }; cells.forEach(c => { c.f = freeCell(n, c.x, c.y); }); // у каждой клетки — точка, до которой точно можно дойти
+      NAV.set(D.walls, n); return n;
+    }
+    function freeCell(n, x, y) {
+      const c = fcell(n, x, y); if (n.free[c]) return c;
+      const cx = c % n.nw, cy = (c / n.nw) | 0;
+      for (let r = 1; r < 6; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const X = cx + dx, Y = cy + dy; if (X < 0 || Y < 0 || X >= n.nw || Y >= n.nh) continue; const j = Y * n.nw + X; if (n.free[j]) return j; }
+      return c;
+    }
+    const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
+    function dijkstra(n, s, extra) {
+      const N = n.nw * n.nh, dist = new Float64Array(N).fill(1e9), prev = new Int32Array(N).fill(-1), h = [];
+      const push = (d, i) => { h.push([d, i]); let k = h.length - 1; while (k > 0) { const q = (k - 1) >> 1; if (h[q][0] <= h[k][0]) break; [h[q], h[k]] = [h[k], h[q]]; k = q; } };
+      const pop = () => { const top = h[0], last = h.pop(); if (h.length) { h[0] = last; let k = 0; for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < h.length && h[l][0] < h[m][0]) m = l; if (r < h.length && h[r][0] < h[m][0]) m = r; if (m === k) break; [h[m], h[k]] = [h[k], h[m]]; k = m; } } return top; };
+      dist[s] = 0; push(0, s);
+      while (h.length) {
+        const [d, i] = pop(); if (d > dist[i]) continue;
+        const x = i % n.nw, y = (i / n.nw) | 0;
+        for (const [dx, dy, c] of NB) {
+          const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= n.nw || Y >= n.nh) continue;
+          const j = Y * n.nw + X; if (!n.free[j]) continue;
+          if (dx && dy && (!n.free[y * n.nw + X] || !n.free[Y * n.nw + x])) continue;
+          const nd = d + c + (extra ? extra[j] : 0);
+          if (nd < dist[j]) { dist[j] = nd; prev[j] = i; push(nd, j); }
+        }
+      }
+      return { dist, prev };
+    }
+    function pathTo(n, dj, t) { if (dj.dist[t] >= 1e9) return null; const out = []; for (let i = t; i >= 0; i = dj.prev[i]) out.push([(i % n.nw + 0.5) * NG, (((i / n.nw) | 0) + 0.5) * NG]); return out.reverse(); }
+    const clearLine = (D, x0, y0, x1, y1) => { const d = Math.hypot(x1 - x0, y1 - y0); if (d < 1) return true; const nx = -(y1 - y0) / d * (R - 1), ny = (x1 - x0) / d * (R - 1); return !blocked(D, x0, y0, x1, y1) && !blocked(D, x0 + nx, y0 + ny, x1 + nx, y1 + ny) && !blocked(D, x0 - nx, y0 - ny, x1 - nx, y1 - ny); };
+    // ехать по пути: к самой дальней из ближайших точек, до которой видно напрямую — плавно, без зигзагов
+    function steer(D, P, M) {
+      const path = M.path; if (!path || !path.length) return { x: 0, y: 0 };
+      while (path.length > 1 && Math.hypot(path[0][0] - P.x, path[0][1] - P.y) < 9) path.shift();
+      let t = path[0];
+      for (let k = Math.min(7, path.length - 1); k > 0; k--) if (clearLine(D, P.x, P.y, path[k][0], path[k][1])) { path.splice(0, k); t = path[0]; break; } // идём только вперёд: пройденные точки забываем (иначе метание туда-сюда)
+      const dx = t[0] - P.x, dy = t[1] - P.y, d = Math.hypot(dx, dy);
+      if ((path.length === 1 && d < 5) || d < 0.01) { if (path.length === 1) M.path = null; return { x: 0, y: 0 }; }
+      if (Math.hypot(P.vx, P.vy) < 12) { M.stuck = (M.stuck || 0) + 1; if (M.stuck > 40) { M.stuck = 0; M.replan = true; } } else M.stuck = 0; // упёрся — пересчитать путь
+      const k = path.length === 1 ? Math.min(1, d / 24) : 1;
+      return { x: dx / d * k, y: dy / d * k };
+    }
+    const pull = (dist, max) => 12 + Math.max(0, dist - 30) / (max - 30) * PULL; // насколько «потянуть», чтобы улетело на dist
+    // --- охотник ---
+    function senseHunter(D, me) { // ровно то, что охотник видит на экране
+      const Q = D.P[1 - me.i];
+      const see = lit(D, Q.x, Q.y) || Math.hypot(Q.x - me.x, Q.y - me.y) < R * 2 + 4;
+      return { see: see ? { x: Q.x, y: Q.y, vx: Q.vx, vy: Q.vy } : null, sign: D.sg && D.sg.fly <= 0 ? { x: D.sg.x, y: D.sg.y } : null };
+    }
+    function hunterBrain(G, D, P, M, now, smart) {
+      const n = navOf(D), C = n.cells, S = senseHunter(D, P);
+      if (!M.p) { // начало раунда: где угодно, кроме мест возле меня
+        M.p = new Float32Array(C.length); let s = 0;
+        C.forEach(c => { const v = Math.hypot(c.x - P.x, c.y - P.y) > 160 ? 1 : 0; M.p[c.k] = v; s += v; });
+        for (let k = 0; k < C.length; k++) M.p[k] /= s;
+        M.tpUsed = false; M.ltCD = now + 2500; M.t = 0;
+      }
+      if (now - M.t >= THINK_H) {
+        const dt = M.t ? Math.min(0.5, (now - M.t) / 1000) : 0.1; M.t = now;
+        const p = M.p, litC = C.map(c => lit(D, c.x, c.y));
+        if (S.see) {
+          if (!M.vis) { M.vis = true; M.seeAt = now; }
+          p.fill(0); let best = C[0], bd = 1e9; for (const c of C) { const d = Math.hypot(c.x - S.see.x, c.y - S.see.y); if (d < bd) { bd = d; best = c; } } p[best.k] = 1;
+          M.last = { x: S.see.x, y: S.see.y, vx: S.see.vx, vy: S.see.vy, at: now };
+        } else {
+          if (M.vis) { // только что пропал
+            M.vis = false; M.lostAt = now;
+            M.last0 = M.last;
+            if (smart && !M.tpUsed && M.last) { // исчез посреди света, шагом так не уйти — значит, телепорт
+              const deep = [0, 1, 2, 3, 4, 5, 6, 7].every(k => lit(D, M.last.x + Math.cos(k * 0.785) * 18, M.last.y + Math.sin(k * 0.785) * 18));
+              if (deep) { M.tpUsed = true; M.last = null; p.fill(0); C.forEach(c => { if (!litC[c.k] && Math.hypot(c.x - M.last0.x, c.y - M.last0.y) < TP_MAX) p[c.k] = 1; }); } // прыгнул — куда-то, докуда достаёт телепорт; дальше ищем без поправки на телепорт
+            }
+            // убежал из света шагом: «бежал вон туда» — подозрение и там, где видел, и дальше по направлению бега
+            if (M.last && p.some(v => v > 0.5)) { const ex = M.last.x + M.last.vx * 0.9, ey = M.last.y + M.last.vy * 0.9; let bc = null, bd = 1e9; for (const c of C) { const d = Math.hypot(c.x - ex, c.y - ey); if (d < bd && !blocked(D, M.last.x, M.last.y, c.x, c.y)) { bd = d; bc = c; } } if (bc) { for (let k = 0; k < p.length; k++) p[k] *= 0.5; p[bc.k] += 0.5; } }
+          }
+          // шагом: подозрение растекается к соседям
+          const run = (M.lostAt && now - M.lostAt < 4000) || (M.signAt && now - M.signAt < 4000); // только что убежал или бросил табличку — бежит, а не сидит
+          for (let it = 0; it < (run ? 2 : 1); it++) { const q = new Float32Array(p.length), a = run ? 0.45 : 0.3; for (const c of C) { let s = 0; for (const j of c.nb) s += p[j]; q[c.k] = p[c.k] * (1 - a) + (c.nb.length ? s / c.nb.length : p[c.k]) * a; } p.set(q); }
+          // телепорт ещё может быть — часть подозрения возвращается куда угодно, даже в проверенные места
+          if (!M.tpUsed) { const lam = 0.004 * dt / 0.1; for (let k = 0; k < p.length; k++) p[k] = p[k] * (1 - lam) + lam / p.length; }
+          for (const c of C) if (litC[c.k]) p[c.k] = 0; // посветил — пусто
+        }
+        if (S.sign && !M.signSeen) { // появилась табличка
+          M.signSeen = true; M.signAt = now;
+          const q = new Float32Array(p.length), add = (x, y, w) => { for (const c of C) { const d = Math.hypot(c.x - x, c.y - y); if (d < 45) q[c.k] += w * (1 - d / 45); } };
+          add(S.sign.x, S.sign.y, 1);
+          // умный знает правило броска: прячущийся стоял в одной из 4 точек на трети карты — проверит их, если у таблички пусто
+          if (smart) M.signOrig = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([ux, uy]) => [S.sign.x + ux * D.W / 3, S.sign.y + uy * D.H / 3]).filter(([x, y]) => freeAt(D, x, y) && !blocked(D, x, y, S.sign.x, S.sign.y));
+          const w = 0.5; let sq = 0; for (const v of q) sq += v; if (sq > 0) for (let k = 0; k < p.length; k++) p[k] = p[k] * (1 - w) + q[k] / sq * w;
+          M.target = null;
+        }
+        if (M.signOrig && S.sign && lit(D, S.sign.x, S.sign.y) && !S.see) { // у таблички пусто — теперь точки, откуда её могли бросить
+          const q = new Float32Array(p.length); for (const [x, y] of M.signOrig) for (const c of C) { const d = Math.hypot(c.x - x, c.y - y); if (d < 60) q[c.k] += 1 - d / 60; }
+          let sq = 0; for (const v of q) sq += v; if (sq > 0) for (let k = 0; k < p.length; k++) p[k] = p[k] * 0.75 + q[k] / sq * 0.25;
+          M.signOrig = null; M.signAt = now; M.target = null;
+        }
+        let sum = 0; for (const v of p) sum += v;
+        if (sum <= 1e-9) { for (const c of C) p[c.k] = litC[c.k] ? 0 : 1; sum = 0; for (const v of p) sum += v; }
+        for (let k = 0; k < p.length; k++) p[k] /= sum;
+        if (!M.dj || now - M.djAt > 400 || M.replan) { M.dj = dijkstra(n, freeCell(n, P.x, P.y)); M.djAt = now; }
+        if (M.vis && now - M.seeAt >= REACT) { // заметил (с задержкой, как человек) — погоня
+          const tx = S.see.x + S.see.vx * 0.25, ty = S.see.y + S.see.vy * 0.25;
+          M.path = clearLine(D, P.x, P.y, S.see.x, S.see.y) ? [[tx, ty]] : pathTo(n, M.dj, freeCell(n, tx, ty)); M.target = null; M.replan = false;
+        } else if (!M.vis) { // ищем: туда, где подозрение выше, с учётом дороги
+          const reach = smart ? 700 : 1500; // насколько важна дорога: умный прочёсывает по порядку, обычный чаще срывается в дальние места (подобрано прогоном бот против бота)
+          const score = c => { let s = 0; for (const j of c.area) s += p[j]; return s / (1 + M.dj.dist[c.f] * NG / reach); };
+          let best = null, bs = -1; for (const c of C) { const v = score(c); if (v > bs) { bs = v; best = c; } }
+          const cur = M.target && C[M.target.k], keep = cur && !litC[cur.k] && now - M.target.at < 6000 && score(cur) >= bs * 0.4 && !M.replan;
+          if (!keep && best) { M.target = { k: best.k, at: now }; M.path = pathTo(n, M.dj, best.f); M.replan = false; }
+          else if (keep && !M.path) { M.path = pathTo(n, M.dj, cur.f); if (!M.path) M.target = null; }
+          // фонари: туда, где только что потерял, или в далёкую подозрительную точку; без фонарей — подобрать ближайший
+          const hand = LT_N - D.L.length;
+          if (hand > 0 && now > M.ltCD) {
+            let aim = null;
+            if (M.lostAt && now - M.lostAt < 1500 && M.last) aim = M.last;
+            else if (smart && M.target) { const c = C[M.target.k], d = Math.hypot(c.x - P.x, c.y - P.y); if (d > 110 && d < LT_MAX) aim = c; } // умный ещё и «проверяет» дальние места фонарём
+            if (aim) { const d = Math.hypot(aim.x - P.x, aim.y - P.y); if (d > 50 && d < LT_MAX) { const L = pull(d, LT_MAX); fire(G, P, (aim.x - P.x) / d * L, (aim.y - P.y) / d * L); M.ltCD = now + 4500; } }
+          } else if (hand === 0) {
+            let near = null, nd = 1e9; for (const L of D.L) { if (L.fly > 0) continue; const d = Math.hypot(L.x - P.x, L.y - P.y); if (d < nd) { nd = d; near = L; } }
+            if (near && nd < 160 && nd > 15) M.path = pathTo(n, M.dj, freeCell(n, near.x, near.y));
+          }
+        }
+      }
+      return steer(D, P, M);
+    }
+    // --- прячущийся ---
+    function senseHider(D, me) { // прячущийся видит охотника и весь свет (как человек на своём экране)
+      const H = D.P[D.hun];
+      return { H: { x: H.x, y: H.y, ba: H.ba }, L: D.L.map(L => ({ x: L.x, y: L.y, fly: L.fly })) };
+    }
+    function hiderBrain(G, D, P, M, now) {
+      const n = navOf(D), C = n.cells, S = senseHider(D, P), H = S.H;
+      const litAt = (x, y) => litFrom(D, H, S.L, x, y);
+      if (now - (M.t || 0) >= THINK_Q) {
+        M.t = now;
+        const djH = dijkstra(n, freeCell(n, H.x, H.y));
+        // почти поймали (луч уже на мне или охотник вплотную) — телепорт; перед ним табличка «под себя»
+        const close = Math.hypot(H.x - P.x, H.y - P.y) < 48 && !blocked(D, H.x, H.y, P.x, P.y);
+        if (P.tp > 0 && (P.heat > 0.3 || close)) {
+          let best = null, bs = -1e9;
+          for (const c of C) { const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > TP_MAX - 12 || d < 90 || litAt(c.x, c.y)) continue; const v = Math.min(420, djH.dist[c.f] * NG) + (c.bush ? 40 : 0) + (blocked(D, H.x, H.y, c.x, c.y) ? 50 : 0); if (v > bs) { bs = v; best = c; } }
+          if (best) {
+            if (D.sgType === 'self' && !P.sgUsed) sign(G, P, 0, 0);
+            const d = Math.hypot(best.x - P.x, best.y - P.y), L = pull(d, TP_MAX);
+            fire(G, P, (best.x - P.x) / d * L, (best.y - P.y) / d * L);
+            M.spot = { k: best.k }; M.path = null; return { x: 0, y: 0 };
+          }
+        }
+        // укрытие: подальше от охотника по пути, за стеной, лучше в кусте; не на свету и не у фонаря; дорога — в обход света и охотника
+        const extra = new Float32Array(n.nw * n.nh);
+        for (let j = 0; j < extra.length; j++) { if (!n.free[j]) continue; const x = (j % n.nw + 0.5) * NG, y = (((j / n.nw) | 0) + 0.5) * NG; if (litAt(x, y)) extra[j] = 40; const dh = Math.hypot(x - H.x, y - H.y); if (dh < 70) extra[j] += (70 - dh) * 0.5; }
+        const djM = dijkstra(n, freeCell(n, P.x, P.y), extra);
+        const score = c => { if (litAt(c.x, c.y)) return -1e9; let v = Math.min(420, djH.dist[c.f] * NG) + (c.bush ? 45 : 0) + (blocked(D, H.x, H.y, c.x, c.y) ? 50 : 0) - djM.dist[c.f] * NG * 0.25; for (const L of S.L) if (Math.hypot(c.x - L.x, c.y - L.y) < LT_R + 25) v -= 150; return v; };
+        let best = null, bs = -1e9; for (const c of C) { const v = score(c); if (v > bs) { bs = v; best = c; } }
+        // как человек: выбрал укрытие — сидит; уходит, только когда опасно (укрытие на свету, у фонаря, охотник подходит близко)
+        const cur = M.spot && C[M.spot.k];
+        const curOk = cur && score(cur) > -1e8 && djH.dist[cur.f] * NG > 150 && !S.L.some(L => Math.hypot(cur.x - L.x, cur.y - L.y) < LT_R + 25);
+        if (!curOk && best) { M.spot = { k: best.k }; M.path = pathTo(n, djM, best.f); M.replan = false; }
+        else if (cur && (M.replan || !M.path) && Math.hypot(cur.x - P.x, cur.y - P.y) > 8) { M.path = pathTo(n, djM, cur.f); M.replan = false; }
+        // табличка-обманка: подальше от своего укрытия
+        if (!P.sgUsed && M.spot) {
+          const sp = C[M.spot.k];
+          if (D.sgType === 'self' && D.t > 6 && Math.hypot(sp.x - P.x, sp.y - P.y) > 150) sign(G, P, 0, 0);
+          if (D.sgType === 'throw' && D.t > 4 && D.t < 30) {
+            let bt = null, bd = 120;
+            for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const t = sgTarget(D, P, ux * 40, uy * 40); if (t && t.ok) { const d = Math.hypot(t.x - sp.x, t.y - sp.y); if (d > bd) { bd = d; bt = [ux, uy]; } } }
+            if (bt) sign(G, P, bt[0] * 40, bt[1] * 40);
+          }
+        }
+      }
+      return steer(D, P, M);
+    }
+    function brain(G, D, P, M, now, smart) { if (!D.P || G.state !== 'play') return { x: 0, y: 0 }; return P.i === D.hun ? hunterBrain(G, D, P, M, now, smart) : hiderBrain(G, D, P, M, now); }
+    function bot(G, dt, now, lvl) { const D = G.d; if (!D.P) return; const P = D.P[1]; P.bot = brain(G, D, P, G.botMem, now, lvl === 'hard'); }
+    const input = BK.aimInput(fire, sign, 'aim');
+
+    const G = partyGame({
+      key: 'hide', netLerp: ['P'], title: 'Прятки в темноте', bg: '#0b0d16',
+      desc: 'По сети или с ботом (вдвоём на одном телефоне нельзя — вы бы видели друг друга). Один прячется, другой ищет — раунд 45 секунд, потом роли меняются. Охотник видит лишь то, что светит: свой луч, круг вокруг себя и два фонаря, которые можно бросать (потяни справа и отпусти, подобрать — подойти). Поймал — продержи прячущегося в луче секунду или коснись его. Прячущийся видит всё. Справа у него телепорт — один раз за раунд. Над ним табличка-обманка, тоже один раз: какая выпадет — под себя или бросок на треть карты. Охотник видит табличку всегда. На неё можно поставить эмоцию.',
+      icon: '<svg viewBox="0 0 60 60"><rect width="60" height="60" rx="12" fill="#0b0d16"/><path d="M14 46 L52 20 L56 42 Z" fill="#fff2b8" opacity=".5"/><circle cx="13" cy="47" r="7" fill="#ff5a4f"/><circle cx="46" cy="14" r="6" fill="#4fa3ff" opacity=".55"/><rect x="24" y="22" width="3" height="14" fill="#c9a774"/><rect x="17" y="13" width="17" height="11" rx="2.5" fill="#f4f1e6" stroke="#2b2e3b" stroke-width="1.5"/></svg>',
+      controls: 'raw', hint: 'води пальцем', fixedH: true,
+      bot, botLevels: [['medium', 'Бот: обычный'], ['hard', 'Бот: умный']], botDef: 'medium',
+      newMatch(G) { if (!G.netMode() && !G.bot) G.bot = 'medium'; }, // вдвоём на одном телефоне нельзя — только с ботом
+      goalLabel: 'Очков до победы', goals: [2, 3, 5], goalDef: 3,
+      countdownMs: 1600, roundEndMs: 2400,
+      newRound(G) {
+        const { walls, bush } = buildMap(G);
+        const D = G.d = { t: 0, W: G.W, H: G.H, walls, bush, L: [], sg: null };
+        D.hun = G.round % 2; // раунд 1 — ищет красный, раунд 2 — синий, …
+        D.sgType = Math.random() < 0.5 ? 'self' : 'throw';
+        const hi = D.hun, qi = 1 - hi;
+        D.P = [0, 1].map(i => ({ i, x: G.W / 2, y: i === 0 ? G.H - 26 : 26, vx: 0, vy: 0, ba: i ? Math.PI / 2 : -Math.PI / 2, heat: 0, tp: 1, tpN: 0, sgUsed: false, joy: null }));
+        // прячущийся — в случайном месте подальше от охотника
+        const H = D.P[hi], ok = SPOTS.map(([x, y]) => ({ x, y })).filter(s => freeAt(D, s.x, s.y) && Math.hypot(s.x - H.x, s.y - H.y) > 260);
+        const s = ok[Math.floor(Math.random() * ok.length)] || { x: G.W / 2, y: G.H / 2 };
+        D.P[qi].x = s.x; D.P[qi].y = s.y;
+        G.flash('Ищи!', '#ffd23f', 1500, hi);
+        G.flash('Прячься!', '#9fd3ff', 1500, qi);
+      },
+      ...input,
+      update(G, dt, now) {
+        const D = G.d; if (!D.P) return;
+        const play = G.state === 'play';
+        if (play) D.t += dt;
+        for (const P of D.P) {
+          const inp = BK.inp(G, P, play), slow = inBush(D, P.x, P.y) ? 0.75 : 1;
+          BK.move(P, inp, dt, ACC * slow, VMAX * slow, FR);
+          for (const w of D.walls) BK.rect(P, R, w);
+          BK.walls(P, R, ME, ME, G.W - ME, G.H - ME, 0.3);
+          const m = Math.hypot(inp.x, inp.y);
+          if (m > 0.2) { P.fx = inp.x / m; P.fy = inp.y / m; if (P.i === D.hun) { let a = Math.atan2(inp.y, inp.x) - P.ba; a = Math.atan2(Math.sin(a), Math.cos(a)); P.ba += Math.max(-TURN * dt, Math.min(TURN * dt, a)); } }
+        }
+        for (const L of D.L) { L.fly = Math.max(0, L.fly - dt); if (L.fly <= 0) L.age += dt; }
+        if (D.sg) D.sg.fly = Math.max(0, D.sg.fly - dt);
+        const H = D.P[D.hun], Q = D.P[1 - D.hun];
+        // фонарь подобрать — подойти к нему
+        if (play) D.L = D.L.filter(L => { if (L.fly <= 0 && L.age > 0.8 && Math.hypot(L.x - H.x, L.y - H.y) < R + 12) { G.sound(880, 0.05, 'triangle', 0.04); return false; } return true; });
+        BK.collide(H, Q, R, R);
+        if (!play) return;
+        const touch = Math.hypot(H.x - Q.x, H.y - Q.y) < R * 2 + 2;
+        if (inBeam(D, H, Q.x, Q.y)) Q.heat += dt / HEAT_T * (inBush(D, Q.x, Q.y) ? 0.5 : 1);
+        else Q.heat = Math.max(0, Q.heat - dt * 0.5);
+        if (Q.heat >= 1 || touch) {
+          Q.heat = 1;
+          G.burst(Q.x, Q.y, '#fff2b8', 20, 170, 0.6, 2.5); G.sound(880, 0.12, 'triangle', 0.06); G.vibrate([25, 30, 50]);
+          G.roundOver(D.hun, 'Поймал!');
+          return;
+        }
+        if (D.t >= ROUND) G.roundOver(1 - D.hun, 'Не нашёл — спрятался!');
+      },
+      draw(G, now) {
+        const c = G.c, D = G.d; if (!D.P) return;
+        const H = D.P[D.hun], Q = D.P[1 - D.hun];
+        const view = G.netMode() ? G.me() : G.bot ? 0 : (G.hideView != null ? G.hideView : 1 - D.hun); // кто смотрит в этот экран (с ботом — ты, синий)
+        const iHunt = view === D.hun, over = G.state === 'roundEnd' || G.state === 'over';
+        const scene = bright => {
+          c.fillStyle = bright ? '#3a3d52' : '#161a28'; c.fillRect(0, 0, G.W, G.H);
+          c.strokeStyle = bright ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)'; c.lineWidth = 1; c.beginPath();
+          for (let x = 30; x < G.W; x += 30) { c.moveTo(x, 0); c.lineTo(x, G.H); } for (let y = 30; y < G.H; y += 30) { c.moveTo(0, y); c.lineTo(G.W, y); } c.stroke();
+          for (const b of D.bush) { G.circle(b.x, b.y, b.r, bright ? '#3f8a58' : '#1d3a28'); for (let k = 0; k < 5; k++) G.circle(b.x + Math.cos(k * 1.3) * b.r * 0.5, b.y + Math.sin(k * 1.3) * b.r * 0.5, b.r * 0.45, bright ? '#4fa36a' : '#234631'); }
+          for (const w of D.walls) { c.fillStyle = bright ? '#7a7f9c' : '#3c4160'; c.fillRect(w.x, w.y, w.w, w.h); }
+        };
+        // многоугольник света: лучи до стен
+        const poly = (x, y, a0, half, range, n) => { const pts = [[x, y]]; for (let k = 0; k <= n; k++) { const a = a0 - half + 2 * half * k / n, dx = Math.cos(a), dy = Math.sin(a), d = rayHit(D, x, y, dx, dy, range); pts.push([x + dx * d, y + dy * d]); } return pts; };
+        const shine = (pts, tint) => { c.save(); c.beginPath(); pts.forEach(([x, y], k) => k ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.clip(); scene(true); c.fillStyle = tint; c.fillRect(0, 0, G.W, G.H); c.restore(); };
+        scene(false);
+        c.fillStyle = iHunt ? 'rgba(3,4,10,0.74)' : 'rgba(3,4,10,0.4)'; c.fillRect(0, 0, G.W, G.H);
+        shine(poly(H.x, H.y, H.ba, HALF, BEAM, 30), 'rgba(255,240,170,0.14)');
+        shine(poly(H.x, H.y, 0, Math.PI, SELF_R, 20), 'rgba(255,240,170,0.08)');
+        for (const L of D.L) if (L.fly <= 0) shine(poly(L.x, L.y, 0, Math.PI, LT_R, 32), 'rgba(255,220,140,0.12)');
+        if (!iHunt) { // прячущийся видит границу луча — где опасно
+          c.strokeStyle = 'rgba(255,230,140,0.35)'; c.lineWidth = 1.5; c.beginPath(); poly(H.x, H.y, H.ba, HALF, BEAM, 30).forEach(([x, y], k) => k ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.stroke();
+        }
+        // фонари
+        for (const L of D.L) {
+          const k = L.fly > 0 ? 1 - L.fly / LT_FLY : 1, x = L.sx + (L.x - L.sx) * k, y = L.sy + (L.y - L.sy) * k - Math.sin(k * Math.PI) * 24;
+          G.circle(x, y + 2, 5, 'rgba(0,0,0,0.35)'); G.circle(x, y, 5.5, '#ffd36a'); G.circle(x, y - 1, 2.6, '#fff8dc');
+        }
+        // табличка — видна всем, сама не светит
+        if (D.sg) {
+          const s = D.sg, k = s.fly > 0 ? 1 - s.fly / 0.3 : 1, x = s.sx + (s.x - s.sx) * k, y = s.sy + (s.y - s.sy) * k - Math.sin(k * Math.PI) * 30;
+          const blink = now - (G.sgSeen || now) < 900 && Math.floor(now / 150) % 2 === 0;
+          c.fillStyle = '#8a6a44'; c.fillRect(x - 1.5, y - 14, 3, 14);
+          G.rr(x - 19, y - 42, 38, 30, 5); c.fillStyle = blink ? '#ffe9a8' : '#f4f1e6'; c.fill(); c.strokeStyle = '#2b2e3b'; c.lineWidth = 2; c.stroke();
+          const em = G.signEmo && G.signEmo.r === G.round ? G.signEmo.id : null;
+          if (em && window.PPFX && PPFX.pinDraw) { c.save(); c.translate(x, y - 27); PPFX.pinDraw(c, em, 1 - D.hun, 30); c.restore(); }
+          if (!G.sgSeen) G.sgSeen = now;
+        } else G.sgSeen = 0;
+        // игроки: охотника видят все; прячущегося охотник видит, только если он на свету (сразу после телепорта — нет: картинка сглаживается)
+        if (Q.tpN !== G.tpSeen) { G.tpSeen = Q.tpN; G.tpAt = now; }
+        const fresh = now - (G.tpAt || -1e9) < 250;
+        const showQ = !iHunt || over || (!fresh && lit(D, Q.x, Q.y));
+        G.hideDbg = { view, iHunt, showQ }; // для проверок
+        if (showQ) {
+          const hid = inBush(D, Q.x, Q.y);
+          BK.ball(G, Q, R, hid && !over ? 0.6 : 1);
+          if (Q.heat > 0 && !over) { c.strokeStyle = '#ffd23f'; c.lineWidth = 2.5; c.beginPath(); c.arc(Q.x, Q.y, R + 4, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, Q.heat)); c.stroke(); }
+        }
+        BK.ball(G, H, R);
+        { const tx = H.x + Math.cos(H.ba) * (R + 2), ty = H.y + Math.sin(H.ba) * (R + 2); G.circle(tx, ty, 3.2, '#fff2b8'); }
+        // свои подсказки: куда прыгну / куда кину
+        const me = D.P[view];
+        if (me && !over && (!G.netMode() || view === me.i)) {
+          const aim = (P, key) => { const j = P[key]; if (!j || Math.hypot(j.dx, j.dy) < 12) return null; const [wx, wy] = BK.unflip(P.i, j.dx, j.dy); return [wx, wy]; };
+          const dash = (x0, y0, x1, y1, col) => { c.strokeStyle = col; c.lineWidth = 2; c.setLineDash([5, 5]); c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); c.setLineDash([]); };
+          if (view === D.hun) {
+            for (const key of ['aimJ', 'aimJ2']) { const a = aim(me, key); if (!a || D.L.length >= LT_N) continue; const t = ltTarget(D, me, a[0], a[1]); if (!t) continue; dash(me.x, me.y, t.x, t.y, 'rgba(255,220,140,0.6)'); c.strokeStyle = 'rgba(255,220,140,0.45)'; c.beginPath(); c.arc(t.x, t.y, LT_R, 0, Math.PI * 2); c.stroke(); G.circle(t.x, t.y, 4, '#ffd36a'); }
+          } else {
+            const a = aim(me, 'aimJ');
+            if (a && me.tp > 0) { const t = tpTarget(D, me, a[0], a[1]); if (t) { dash(me.x, me.y, t.x, t.y, 'rgba(159,211,255,0.7)'); c.strokeStyle = '#9fd3ff'; c.lineWidth = 2; c.beginPath(); c.arc(t.x, t.y, R + 3, 0, Math.PI * 2); c.stroke(); } }
+            const b = aim(me, 'aimJ2');
+            if (b && !me.sgUsed && D.sgType === 'throw') { const t = sgTarget(D, me, b[0], b[1]); if (t) { const col = t.ok ? 'rgba(244,241,230,0.85)' : 'rgba(255,106,90,0.9)'; dash(me.x, me.y, t.x, t.y, col); G.rr(t.x - 10, t.y - 8, 20, 14, 3); c.strokeStyle = col; c.lineWidth = 2; c.stroke(); } }
+          }
+        }
+        // управление и строка внизу — у каждого своё
+        const left = Math.max(0, ROUND - D.t);
+        for (const P of D.P) {
+          const isH = P.i === D.hun;
+          const sgTxt = isH ? '' : ` · табличка: ${P.sgUsed ? 'поставлена' : D.sgType === 'self' ? 'под себя' : 'бросок'}`;
+          BK.hud(G, P, { hint: 'води пальцем', text: `${isH ? 'ищи' : 'прячься'} · ${fmt(left)}${sgTxt}`, textCol: isH ? '#ffe7a0' : '#bfe0ff' });
+          if (isH) BK.aimHud(G, P, `фонарь ×${LT_N - D.L.length}`, D.L.length < LT_N, null, '255,224,150');
+          else {
+            BK.aimHud(G, P, P.tp > 0 ? 'телепорт' : 'телепорт ✓', P.tp > 0, null, '159,211,255');
+            BK.aimHud2(G, P, P.sgUsed ? 'табличка ✓' : D.sgType === 'self' ? 'под себя' : 'бросок', !P.sgUsed, null, '244,241,230');
+          }
+        }
+      }
+    });
+    G.hideView = null; // для проверок без сети: чьими глазами рисовать
+    // в окне настроек — только выбор бота (обычный / умный), без «Вдвоём»
+    setTimeout(() => { const pk = G.net && G.net.root.querySelector('.oppPick'); if (pk && pk.children[0]) pk.children[0].hidden = true; }, 0);
+    // бот против бота без экрана — для подстройки (только для проверок)
+    G.hideSim = (rounds, smart, maxSteps) => {
+      const keep = { bot: G.bot, state: G.state, score: G.score.slice(), round: G.round, d: G.d, now: G.now, result: G.result, msg: G.msg }, res = { n: 0, caught: 0, tCatch: 0, tp: 0, sign: 0, seenT: 0, heat: 0, lt: 0, lit0: 0 };
+      G.bot = 'medium';
+      for (let r = 0; r < rounds; r++) {
+        G.round = r + 1; G.score = [0, 0]; G.now = 0; G.result = null; G.msg = [null, null];
+        G.cfg.newRound(G); G.state = 'play';
+        const D = G.d, mem = [{}, {}], dt = 1 / 60;
+        for (let st = 0; st < (maxSteps || 60 * 47) && G.state === 'play'; st++) {
+          G.now += dt * 1000;
+          for (const P of D.P) P.bot = brain(G, D, P, mem[P.i], G.now, P.i === D.hun ? smart : false);
+          G.keyVec[0] = { x: D.P[0].bot.x, y: D.P[0].bot.y };
+          G.cfg.update(G, dt, G.now);
+          const Q = D.P[1 - D.hun]; if (lit(D, Q.x, Q.y)) res.seenT += dt; if (G.hideTrace && st % 15 === 0) G.hideTrace.push([D.hun, Math.round(D.P[0].x), Math.round(D.P[0].y), Math.round(D.P[1].x), Math.round(D.P[1].y), lit(D, Q.x, Q.y) ? 1 : 0, D.L.map(L => [Math.round(L.x), Math.round(L.y)]), D.sg ? [Math.round(D.sg.x), Math.round(D.sg.y)] : null]); res.heat = Math.max(res.heat, Q.heat); res.lt += D.L.length / 60;
+        }
+        const mh = mem[D.hun]; res.det = (res.det || 0) + (mh.tpUsed ? 1 : 0); res.detWrong = (res.detWrong || 0) + (mh.tpUsed && D.P[1 - D.hun].tp > 0 ? 1 : 0); // проверка вывода «телепорт был» (считает прогон, не мозг)
+        res.n++; if (G.result && G.result.winner === D.hun) { res.caught++; res.tCatch += D.t; }
+        if (D.P[1 - D.hun].tp === 0) res.tp++; if (D.sg) res.sign++;
+      }
+      G.keyVec[0] = { x: 0, y: 0 }; Object.assign(G, keep);
+      return res;
+    };
+
+    // плитки нет ни во «Вдвоём», ни «С ботом», ни в Турнире — только в списках «Сеть» и «Сеть++» (они берут иконку отсюда)
+    (() => { const t = document.getElementById('pgTile-hide'); if (!t) return; const box = document.createElement('div'); box.hidden = true; box.id = 'netOnlyTiles'; document.body.appendChild(box); box.appendChild(t); })();
+
+    // эмоция прячущегося — на табличку (облачко над ним выдало бы его); касание своей таблички открывает эмоции
+    const live = () => G.active && (G.netMode() || G.bot) && G.d && G.d.P && (G.state === 'play' || G.state === 'countdown' || G.state === 'roundEnd');
+    setTimeout(() => {
+      if (!window.PPFX) return;
+      const prev = PPFX.pinHook;
+      PPFX.pinHook = (i, id) => {
+        if (!live()) return prev ? prev(i, id) : false;
+        const D = G.d; if (i === D.hun) return false; // охотник — обычное облачко
+        if (D.sg) G.signEmo = { r: G.round, id };
+        else if (i === G.me()) G.tipAt = performance.now();
+        return true;
+      };
+    }, 0);
+    const cvs = G.c && G.c.canvas; // на сервере (Сеть++) холста нет — там это не нужно
+    if (cvs && cvs.addEventListener) cvs.addEventListener('pointerdown', e0 => {
+      if (!live() || !G.d.sg || G.me() === G.d.hun) return;
+      const e = G.netMode() === 'guest' ? { clientX: innerWidth - e0.clientX, clientY: innerHeight - e0.clientY } : e0;
+      const [x, y] = G.toField(e), s = G.d.sg;
+      if (Math.hypot(x - s.x, y - (s.y - 27)) > 28) return;
+      e0.stopImmediatePropagation(); e0.preventDefault();
+      if (window.PPFX && PPFX.pinOpen) PPFX.pinOpen();
+    }, true);
+    // подсказка, если эмоцию кинули без таблички
+    const origDraw = G.cfg.draw;
+    G.cfg.draw = function (G2, now) {
+      origDraw(G2, now);
+      if (G.tipAt && performance.now() - G.tipAt < 1600 && (G.netMode() || G.bot)) G.half(G.me(), () => G.text('Сначала поставь табличку', G.W / 2, G.H * 0.6, 15, '#f4f1e6', 800));
+    };
+  })();
+
+  // ======================= АРЕНА ТАНКОВ (3.19–3.22) =======================
+  // Отдельная игра в духе Brawl Stars 2018: танки-бойцы, у каждого своё оружие, здоровье, скорость и супер.
+  // Управление одно на всех: слева — езда, справа — огонь (тап — сам целится, потянул и отпустил — туда, куда тянул),
+  // над ним — супер (заряжается уроном). 3 снаряда, перезаряжаются сами. Не воюешь 4 с — понемногу чинишься.
+  // Режимы: «Дуэль» (1×1, с ботом или вдвоём) и «Столкновение» (3.21: ты и 4 бота, каждый сам за себя, ящики с кубами силы,
+  // газ сжимает поле к центру, побеждает последний выживший; только с ботами).
+  // Кусты прячут: с ботами чужой танк в кусте не виден, пока он далеко и не стреляет / не получил урон. Боты видят по тем же правилам.
+  // Прогресс (на этом телефоне, только с ботами): кубки у каждого бойца, жетоны → ящики, очки силы + монеты → уровни.
+  // Уровень и умение ботов — по кубкам выбранного бойца (не по его уровню: прокачка даёт настоящее преимущество).
+  (function () {
+    const BK = window.PGBK, ME = 8, R = 13, Z = { x: 0, y: 0 };
+    const ROUND_MAX = 95, GAS_AT = 45, REGEN_AFTER = 4000, REGEN = 0.09, SD_GAS = 12, SD_N = 5;
+    const F = {
+      gun: { name: 'Пушкарь', hp: 3600, spd: 118, range: 235, dmg: 1000, rl: 1.0, v: 420, chg: 4500, need: 0, atk: 'Один точный снаряд', sup: 'Залп: 5 снарядов веером' },
+      shot: { name: 'Картечь', hp: 4400, spd: 124, range: 125, dmg: 330, rl: 1.3, v: 460, chg: 5200, need: 30, atk: '5 дробин — сильна вблизи', sup: 'Таран: рывок с ударом' },
+      snipe: { name: 'Снайпер', hp: 2700, spd: 112, range: 330, dmg: 1250, rl: 2.1, v: 640, chg: 4500, need: 80, atk: 'Дальний быстрый снаряд', sup: 'Сквозной: пробивает стены' },
+      mort: { name: 'Мортира', hp: 3100, spd: 108, range: 250, dmg: 1150, rl: 1.6, v: 0, chg: 4200, need: 150, atk: 'Бомба навесом через стены', sup: 'Обстрел: 4 бомбы' },
+      heavy: { name: 'Броневик', hp: 5800, spd: 98, range: 160, dmg: 640, rl: 1.1, v: 400, chg: 5000, need: 250, atk: 'Два снаряда рядом', sup: 'Щит на 3 с и ремонт' },
+      // только из ящиков
+      fire: { name: 'Огнемёт', hp: 3900, spd: 120, range: 120, dmg: 190, rl: 1.0, v: 300, chg: 4800, box: 'super', atk: 'Струя огня вблизи, поджигает', sup: 'Огненное кольцо вокруг' },
+      rocket: { name: 'Ракетчик', hp: 3200, spd: 114, range: 280, dmg: 1050, rl: 1.5, v: 250, chg: 4600, box: 'epic', atk: 'Ракета сама доворачивает к врагу', sup: 'Прыжок через стены с ударом' }
+    };
+    const RAR = { road: ['Дорога кубков', '#8fd0ff'], super: ['Сверхредкий', '#4f9dff'], epic: ['Эпический', '#c06bff'] };
+    const rarOf = k => RAR[F[k].box || 'road'];
+    const JUMP = 210;
+    const KEYS = Object.keys(F), MAXL = 9;
+    // улучшение (как в 2018): очки силы + монеты
+    const COST = [10, 15, 30, 55, 110, 180, 300, 470], PPC = [10, 15, 25, 40, 65, 105, 170, 275];
+    const mult = l => 1 + 0.06 * (l - 1);
+    // --- прогресс ---
+    const SV = (() => { let s = {}; try { s = JSON.parse(localStorage.getItem('arena-v1') || '{}') || {}; } catch (e) {} s.coins = s.coins || 0; s.f = s.f || {}; KEYS.forEach(k => { s.f[k] = Object.assign({ lvl: 1, tr: 0, pp: 0, own: false }, s.f[k]); }); ['tok', 'star', 'boxes', 'big', 'dbl', 'luck', 'played'].forEach(q => { s[q] = s[q] || 0; }); s.starDay = s.starDay || { d: '', w: [] }; if (!F[s.sel]) s.sel = 'gun'; if (!F[s.selRed]) s.selRed = 'gun'; if (s.mode !== 'sd') s.mode = 'duel'; return s; })();
+    const save = () => { try { localStorage.setItem('arena-v1', JSON.stringify(SV)); } catch (e) {} };
+    const total = () => KEYS.reduce((a, k) => a + SV.f[k].tr, 0);
+    const open = k => F[k].box ? SV.f[k].own : total() >= F[k].need;
+    const luckChance = () => Math.min(0.6, 0.06 + 0.03 * SV.luck); // шанс бойца в ящике: растёт с каждым ящиком без бойца
+    // цвета танков: в дуэли — синий и красный, в столкновении — пять своих
+    const SDC = [['#3f7fe0', '#2a5bb0'], ['#e04f3f', '#b0302a'], ['#f08a24', '#b8620e'], ['#9a5cf0', '#6a35c4'], ['#2fb58a', '#1d7d5e']];
+    const colOf = (D, P) => D.sd ? SDC[P.i] : [PG_COL[P.i], PG_DARK[P.i]];
+
+    // --- рисунок танка (и на поле, и в окне выбора) ---
+    const rr = (c, x, y, w, h, r) => { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
+    function drawTank(c, x, y, r, ba, ta, col, dark, k) {
+      const big = k === 'heavy' ? 1.15 : k === 'snipe' ? 0.92 : 1; r *= big;
+      c.save(); c.translate(x, y); c.rotate(ba);
+      c.fillStyle = '#23262e'; rr(c, -r * 1.05, -r * 1.02, r * 2.1, r * 0.5, 3); c.fill(); rr(c, -r * 1.05, r * 0.52, r * 2.1, r * 0.5, 3); c.fill();
+      c.fillStyle = col; rr(c, -r * 0.95, -r * 0.72, r * 1.9, r * 1.44, 4); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.14)'; rr(c, -r * 0.95, -r * 0.72, r * 1.9, r * 0.5, 4); c.fill();
+      c.restore();
+      c.save(); c.translate(x, y); c.rotate(ta); c.fillStyle = dark;
+      if (k === 'shot') { c.beginPath(); c.moveTo(0, -r * 0.2); c.lineTo(r * 1.15, -r * 0.42); c.lineTo(r * 1.15, r * 0.42); c.lineTo(0, r * 0.2); c.fill(); }
+      else if (k === 'snipe') c.fillRect(0, -r * 0.13, r * 1.95, r * 0.26);
+      else if (k === 'mort') { c.fillRect(0, -r * 0.36, r * 0.85, r * 0.72); c.fillStyle = '#23262e'; c.beginPath(); c.arc(r * 0.85, 0, r * 0.3, 0, 7); c.fill(); c.fillStyle = dark; }
+      else if (k === 'heavy') { c.fillRect(0, -r * 0.42, r * 1.2, r * 0.26); c.fillRect(0, r * 0.16, r * 1.2, r * 0.26); }
+      else if (k === 'fire') { c.fillRect(0, -r * 0.24, r * 1.05, r * 0.48); c.fillStyle = '#ff8a3d'; c.fillRect(r * 0.95, -r * 0.3, r * 0.3, r * 0.6); c.fillStyle = dark; c.beginPath(); c.arc(-r * 0.55, 0, r * 0.32, 0, 7); c.fill(); }
+      else if (k === 'rocket') { for (const sy of [-1, 1]) { c.fillRect(0, sy * r * 0.34 - r * 0.15, r * 1.3, r * 0.3); c.fillStyle = '#ff5a3d'; c.fillRect(r * 1.15, sy * r * 0.34 - r * 0.15, r * 0.22, r * 0.3); c.fillStyle = dark; } }
+      else c.fillRect(0, -r * 0.17, r * 1.4, r * 0.34);
+      c.beginPath(); c.arc(0, 0, r * 0.52, 0, 7); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.25)'; c.beginPath(); c.arc(-r * 0.12, -r * 0.12, r * 0.2, 0, 7); c.fill();
+      c.restore();
+    }
+
+    // --- карты (половина + её копия, повёрнутая на 180°) ---
+    const MAPS = [
+      { w: [[60, 200, 90, 14], [230, 150, 14, 80], [150, 290, 60, 14], [20, 300, 40, 14]], b: [[300, 250, 26], [90, 120, 24], [180, 230, 20]] },
+      { w: [[100, 170, 14, 90], [200, 120, 100, 14], [40, 280, 80, 14], [260, 260, 14, 50]], b: [[60, 220, 24], [300, 180, 24], [180, 300, 22]] },
+      { w: [[130, 150, 100, 14], [60, 230, 14, 70], [286, 230, 14, 70], [160, 280, 40, 14]], b: [[40, 140, 24], [320, 140, 24], [180, 210, 22]] }
+    ];
+    const SD_MAP = { w: [[80, 110, 70, 14], [210, 90, 14, 70], [40, 200, 14, 80], [150, 210, 60, 14], [260, 230, 70, 14], [110, 290, 14, 40]], b: [[120, 170, 24], [290, 150, 22], [40, 420, 22], [230, 300, 24]], c: [[180, 120], [90, 250], [300, 300]] };
+    const SD_SPAWN = [[40, 40], [320, 40], [40, 600], [320, 600], [180, 320]];
+    function buildMap(G, m) {
+      const W = G.W, H = G.H, walls = [], bush = [], cr = [];
+      for (const [x, y, w, h] of m.w) { walls.push({ x, y, w, h }); walls.push({ x: W - x - w, y: H - y - h, w, h }); }
+      for (const [x, y, r] of m.b) { bush.push({ x, y, r }); bush.push({ x: W - x, y: H - y, r }); }
+      for (const [x, y] of m.c || []) for (const [cx, cy] of [[x, y], [W - x, H - y]]) cr.push({ x: cx - 11, y: cy - 11, w: 22, h: 22, hp: 1600, max: 1600 });
+      return { walls, bush, cr };
+    }
+    const inWall = (D, x, y, r) => { if (x < ME + r || y < ME + r || x > D.W - ME - r || y > D.H - ME - r) return true; for (const w of D.walls) if (x > w.x - r && x < w.x + w.w + r && y > w.y - r && y < w.y + w.h + r) return true; for (const w of D.cr) if (w.hp > 0 && x > w.x - r && x < w.x + w.w + r && y > w.y - r && y < w.y + w.h + r) return true; return false; };
+    const crateAt = (D, x, y) => D.cr.find(w => w.hp > 0 && x > w.x && x < w.x + w.w && y > w.y && y < w.y + w.h);
+    const los = (D, x0, y0, x1, y1) => { const d = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(d / 6); for (let k = 1; k < n; k++) if (inWall(D, x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n, 0)) return false; return true; };
+    const inBush = (D, P) => D.bush.some(b => Math.hypot(P.x - b.x, P.y - b.y) < b.r);
+    // видит ли A танк T (одно правило и для экрана игрока, и для ботов)
+    const sees = (D, A, T, now) => !inBush(D, T) || Math.hypot(A.x - T.x, A.y - T.y) < 60 || now - T.shotAt < 700 || now - T.hurtAt < 700;
+    const foes = (D, P) => D.P.filter(T => T !== P && T.hp > 0);
+    function nearestSeen(D, P, now) { let best = null, bd = 1e9; for (const T of foes(D, P)) { if (!sees(D, P, T, now)) continue; const d = Math.hypot(T.x - P.x, T.y - P.y); if (d < bd) { bd = d; best = T; } } return best; }
+    // газ: отступ от краёв по x и y (в дуэли — после 45 с, в столкновении — с 12-й секунды и к центру)
+    function gasZone(D) {
+      if (!D.sd) { const g = D.t < GAS_AT ? 0 : Math.min(150, (D.t - GAS_AT) * 3.6); return { x: g, y: g }; }
+      const g = Math.max(0, D.t - SD_GAS) * 3; return { x: Math.min(140, g), y: Math.min(290, g * 1.78) };
+    }
+    const inGas = (D, z, P) => P.x < z.x || P.y < z.y || P.x > D.W - z.x || P.y > D.H - z.y;
+
+    // --- бой ---
+    const human = (G, P) => P.i === 0 || (P.i === 1 && !G.bot);
+    const stat = (G, i) => (G.arSt[i] = G.arSt[i] || { dmg: 0, shots: 0, hits: 0, best: 0, kills: 0 });
+    function hurt(G, T, amount, from, quiet) {
+      const D = G.d; if (G.state !== 'play' || T.hp <= 0) return;
+      if (T.shield > 0) amount *= 0.3;
+      if (D.sd && from) amount *= 0.75; // в столкновении бои медленнее: есть время отступить
+      amount = Math.round(amount); T.hp -= amount; T.hurtAt = T.actAt = G.now;
+      G.pop(T.x, T.y - 24, '-' + amount, '#ffffff', 12);
+      if (from && from !== T) {
+        const st = stat(G, from.i); st.dmg += amount; if (amount > st.best) st.best = amount;
+        const was = from.sup; from.sup = Math.min(1, from.sup + amount / (F[from.k].chg * from.m));
+        if (was < 1 && from.sup >= 1 && human(G, from)) { G.pop(from.x, from.y - 40, 'СУПЕР ГОТОВ', '#ffd23f', 12); G.sound(784, 0.08, 'triangle', 0.06); setTimeout(() => G.sound(1175, 0.16, 'triangle', 0.06), 90); }
+        if (G.bot && from.i === 0 && !quiet) G.vibrate(12); // своё попадание — короткий толчок
+      }
+      if (T.hp <= 0) {
+        T.hp = 0; const [col] = colOf(D, T);
+        G.burst(T.x, T.y, col, 26, 220, 0.8, 3); G.burst(T.x, T.y, '#ffb347', 14, 160, 0.6, 2.5); G.shake = Math.max(G.shake || 0, 8); G.sound(90, 0.3, 'sawtooth', 0.08); G.vibrate([40, 40, 80]);
+        if (from && from !== T) stat(G, from.i).kills++;
+        if (!D.sd) { G.roundOver(1 - T.i, 'Подбит!'); return; }
+        // столкновение: сбитый роняет кубы (хотя бы один), место — сколько осталось + 1
+        const alive = D.P.filter(q => q.hp > 0).length; T.place = alive + 1;
+        for (let k = 0; k < Math.max(1, T.cubes); k++) { const a = Math.random() * 7, d = 10 + Math.random() * 18; dropCube(D, T.x + Math.cos(a) * d, T.y + Math.sin(a) * d); }
+        if (T.i === 0) sdEnd(G, T.place);
+        else if (alive === 1 && D.P[0].hp > 0) sdEnd(G, 1);
+        else if (from && from.i === 0) G.flash(`Сбит! Осталось ${alive - 1}`, '#ffd23f', 900, 0);
+      }
+    }
+    function sdEnd(G, place) { G.arPlace = place; const w = place === 1 ? 0 : 1; G.roundOver(w, place === 1 ? 'Последний выживший!' : `${place}-е место`); G.score[w] = 99; } // один раунд — сразу конец матча
+    function dropCube(D, x, y) { x = Math.max(ME + 8, Math.min(D.W - ME - 8, x)); y = Math.max(ME + 8, Math.min(D.H - ME - 8, y)); D.cubes.push({ x, y, t: 0 }); }
+    function crateHurt(G, w, amount) {
+      w.hp -= amount; if (w.hp > 0) return;
+      const D = G.d; G.burst(w.x + 11, w.y + 11, '#b98a4e', 16, 160, 0.5, 2.5); G.sound(200, 0.1, 'square', 0.05); dropCube(D, w.x + 11, w.y + 11);
+    }
+    const areaCrates = (G, x, y, rad, dmg) => { for (const w of G.d.cr) if (w.hp > 0 && Math.hypot(w.x + 11 - x, w.y + 11 - y) < rad + 11) crateHurt(G, w, dmg); };
+    const markHit = (G, O, atk) => { if (atk && O.lastHit !== atk) { O.lastHit = atk; stat(G, O.i).hits++; } };
+    const shell = (D, P, a, o) => { const s = Object.assign({ x: P.x + Math.cos(a) * R, y: P.y + Math.sin(a) * R, vx: Math.cos(a) * F[P.k].v, vy: Math.sin(a) * F[P.k].v, own: P.i, dmg: F[P.k].dmg * P.dm, left: F[P.k].range, r: 3.5, atk: P.curAtk }, o); s.L0 = s.left; D.S.push(s); };
+    const flameOpts = (P, a, o) => { const v = 270 + Math.random() * 60; return Object.assign({ vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: 4, flame: true, burn: 60 * P.dm }, o); };
+    // куда приземлится Ракетчик (тап — на ближайшего видимого врага); в стену не садится — ближе
+    function jumpTarget(G, P, wx, wy) {
+      const D = G.d, E = nearestSeen(D, P, G.now), L = Math.hypot(wx, wy); let ux, uy, dist;
+      if (L < 1) { if (E) { const d = Math.hypot(E.x - P.x, E.y - P.y) || 1; ux = (E.x - P.x) / d; uy = (E.y - P.y) / d; dist = Math.min(JUMP, d); } else { ux = P.ax; uy = P.ay; dist = JUMP * 0.7; } }
+      else { ux = wx / L; uy = wy / L; dist = Math.min(1, L / 50) * JUMP; }
+      for (let d = dist; d > 20; d -= 4) { const x = P.x + ux * d, y = P.y + uy * d; if (!inWall(D, x, y, R)) return { x, y }; }
+      return null;
+    }
+    const lob = (D, P, tx, ty, o) => D.Lb.push(Object.assign({ sx: P.x, sy: P.y, tx: Math.max(ME + 6, Math.min(D.W - ME - 6, tx)), ty: Math.max(ME + 6, Math.min(D.H - ME - 6, ty)), t: 0, T: 0.75, own: P.i, dmg: F.mort.dmg * P.dm, rad: 34, atk: P.curAtk }, o));
+    // куда целимся: тап — в ближайшего видимого врага, иначе куда смотрит танк
+    function aimOf(G, P, wx, wy) {
+      const D = G.d, f = F[P.k], L = Math.hypot(wx, wy);
+      if (L < 1) {
+        const E = nearestSeen(D, P, G.now);
+        if (E) { const d = Math.hypot(E.x - P.x, E.y - P.y) || 1; return { ux: (E.x - P.x) / d, uy: (E.y - P.y) / d, dist: Math.min(f.range, d) }; }
+        return { ux: P.ax, uy: P.ay, dist: f.range * 0.6 };
+      }
+      return { ux: wx / L, uy: wy / L, dist: Math.min(1, L / 50) * f.range };
+    }
+    function fire(G, P, wx, wy) {
+      const D = G.d; if (G.state !== 'play' || !D.P || P.hp <= 0 || P.ammo < 1 || P.dash || P.jump) return;
+      const a = aimOf(G, P, wx, wy), ang = Math.atan2(a.uy, a.ux);
+      P.ammo -= 1; P.ax = a.ux; P.ay = a.uy; P.shotAt = P.actAt = G.now;
+      P.curAtk = ++P.atkN; stat(G, P.i).shots++;
+      if (P.k === 'gun') shell(D, P, ang);
+      else if (P.k === 'shot') for (let k = -2; k <= 2; k++) shell(D, P, ang + k * 0.13, { r: 2.6 });
+      else if (P.k === 'snipe') shell(D, P, ang, { r: 3 });
+      else if (P.k === 'heavy') for (const s of [-1, 1]) shell(D, P, ang, { x: P.x + Math.cos(ang) * R - Math.sin(ang) * 5 * s, y: P.y + Math.sin(ang) * R + Math.cos(ang) * 5 * s });
+      else if (P.k === 'fire') for (let k = 0; k < 6; k++) shell(D, P, ang + (k - 2.5) * 0.11, flameOpts(P, ang + (k - 2.5) * 0.11));
+      else if (P.k === 'rocket') shell(D, P, ang, { r: 4.5, rocket: true, home: 2.2, splash: 30 });
+      else lob(D, P, P.x + a.ux * Math.max(40, a.dist), P.y + a.uy * Math.max(40, a.dist));
+      G.sound(P.k === 'snipe' ? 760 : P.k === 'mort' ? 240 : 420, 0.07, 'square', 0.04);
+    }
+    function superFire(G, P, wx, wy) {
+      const D = G.d; if (G.state !== 'play' || !D.P || P.hp <= 0 || P.sup < 1 || P.dash || P.jump) return;
+      const a = aimOf(G, P, wx, wy), ang = Math.atan2(a.uy, a.ux), jt = P.k === 'rocket' ? jumpTarget(G, P, wx, wy) : null;
+      if (P.k === 'rocket' && !jt) return;
+      P.sup = 0; P.ax = a.ux; P.ay = a.uy; P.shotAt = P.actAt = G.now; P.curAtk = 0; // супер в точность не считается
+      if (human(G, P)) G.flash('СУПЕР!', '#ffd23f', 700, P.i);
+      G.sound(660, 0.1, 'triangle', 0.06); setTimeout(() => G.sound(990, 0.16, 'triangle', 0.06), 80); if (human(G, P)) G.vibrate(30);
+      if (P.k === 'gun') for (let k = -2; k <= 2; k++) shell(D, P, ang + k * 0.16, { dmg: F.gun.dmg * P.dm * 0.9, left: 260, r: 4.5, gold: true });
+      else if (P.k === 'shot') P.dash = { t: 0.34, ux: a.ux, uy: a.uy, hit: [] };
+      else if (P.k === 'snipe') shell(D, P, ang, { dmg: 2100 * P.dm, left: 460, r: 5, pierce: true, gold: true });
+      else if (P.k === 'mort') { const d = Math.max(50, a.dist); [[0, 0], [30, 14], [-26, 20], [6, -30]].forEach(([ox, oy], k) => lob(D, P, P.x + a.ux * d + ox, P.y + a.uy * d + oy, { t: -0.16 * k, rad: 38, gold: true })); }
+      else if (P.k === 'fire') for (let k = 0; k < 16; k++) { const a2 = k * Math.PI / 8; shell(D, P, a2, flameOpts(P, a2, { left: 140, r: 5, gold: true, dmg: 230 * P.dm, burn: 70 * P.dm })); }
+      else if (P.k === 'rocket') P.jump = { sx: P.x, sy: P.y, tx: jt.x, ty: jt.y, t: 0, T: 0.6 };
+      else { P.shield = 3; P.hp = Math.min(P.max, P.hp + P.max * 0.25); G.pop(P.x, P.y - 24, 'ремонт', '#7ee08a', 12); }
+    }
+    const input = BK.aimInput(fire, superFire, 'aim');
+    let lobbyEl = null, lobbyOpts = null, ecoOpen = false;
+
+    // --- боты: видят по тем же правилам, что игрок; помнят только последнее место ---
+    function botTank(G, P, now) {
+      const D = G.d, M = P.mem, f = F[P.k], sk = P.skill;
+      if (G.state !== 'play' || P.hp <= 0) { P.bot = Z; return; }
+      // в столкновении бот ввязывается в бой только с близкими: первые 15 с — сбор кубов (как в Brawl Stars: сначала ящики)
+      let E = nearestSeen(D, P, now);
+      if (E && D.sd && Math.hypot(E.x - P.x, E.y - P.y) > (D.t < 15 ? 140 : 230) && now - P.hurtAt > 1500) E = null;
+      if (E) M.last = { x: E.x, y: E.y, at: now, id: E.i }; else if (M.last && (now - M.last.at > 6000 || D.P[M.last.id].hp <= 0)) M.last = null;
+      // куда ехать: к врагу (на дистанцию своего оружия) → к кубу → к ящику (чтобы разбить) → к центру
+      let goal = null, want = 0, fight = false, crate = null;
+      if (M.last) { goal = M.last; want = f.range * (P.k === 'shot' || P.k === 'fire' ? 0.55 : 0.72); fight = true; }
+      else if (D.sd) {
+        let bd = 1e9; for (const q of D.cubes) { const d = Math.hypot(q.x - P.x, q.y - P.y); if (d < bd) { bd = d; goal = q; } }
+        if (!goal) { for (const w of D.cr) { if (w.hp <= 0) continue; const d = Math.hypot(w.x + 11 - P.x, w.y + 11 - P.y); if (d < bd) { bd = d; crate = w; } } if (crate) { goal = { x: crate.x + 11, y: crate.y + 11 }; want = Math.min(f.range * 0.6, 110); } }
+      }
+      if (!goal) goal = { x: D.W / 2, y: D.H / 2 };
+      const z = gasZone(D), gassed = inGas(D, z, P);
+      if (now >= (M.think || 0)) {
+        M.think = now + 160;
+        if (!M.sideAt || now > M.sideAt) { M.side = Math.random() < 0.5 ? -1 : 1; M.sideAt = now + 900 + Math.random() * 1400; }
+        const foe = E || (M.last && D.P[M.last.id]);
+        const flee = fight && foe && P.hp < P.max * 0.33 && foe.hp > P.hp * 0.8;
+        let best = Z, bs = -1e9;
+        for (let k = 0; k < 16; k++) {
+          const a = k * Math.PI / 8, ux = Math.cos(a), uy = Math.sin(a), x = P.x + ux * 34, y = P.y + uy * 34;
+          if (inWall(D, x, y, R - 2) || inWall(D, P.x + ux * 16, P.y + uy * 16, R - 2)) continue;
+          const d = Math.hypot(x - goal.x, y - goal.y), clear = los(D, x, y, goal.x, goal.y);
+          let s = flee ? d * 0.6 + (clear ? 0 : 90) : -Math.abs(d - want) + (fight && (clear || P.k === 'mort') ? 26 : 0);
+          if (fight) { const tx = -(goal.y - P.y), ty = goal.x - P.x, tl = Math.hypot(tx, ty) || 1; s += (ux * tx + uy * ty) / tl * M.side * 14; } // боком, а не по прямой
+          if (x < z.x + 22 || y < z.y + 22 || x > D.W - z.x - 22 || y > D.H - z.y - 22) s -= 300; // газ
+          if (gassed) { const cx = D.W / 2 - P.x, cy = D.H / 2 - P.y, cl = Math.hypot(cx, cy) || 1; s += (ux * cx + uy * cy) / cl * 200; }
+          if (M.dir) s += (ux * M.dir.x + uy * M.dir.y) * 8; // не дёргаться
+          if (s > bs) { bs = s; best = { x: ux, y: uy }; }
+        }
+        M.dir = best;
+      }
+      P.bot = M.dir || Z;
+      // огонь: видит, достаёт, нет стены (мортире стена не мешает)
+      if (E && now >= (M.fireAt || 0)) {
+        const d = Math.hypot(E.x - P.x, E.y - P.y);
+        if (!M.seenAt) M.seenAt = now;
+        const ready = now - M.seenAt > [520, 380, 260][sk], clear = P.k === 'mort' || los(D, P.x, P.y, E.x, E.y);
+        const tt = P.k === 'mort' ? 0.75 : d / f.v, lead = [0.3, 0.7, 0.95][sk], err = (Math.random() - 0.5) * [0.34, 0.2, 0.1][sk];
+        const ax = E.x + E.vx * tt * lead - P.x, ay = E.y + E.vy * tt * lead - P.y, al = Math.hypot(ax, ay) || 1, c = Math.cos(err), s = Math.sin(err);
+        const vx = (ax * c - ay * s) / al, vy = (ax * s + ay * c) / al, pull = P.k === 'mort' ? Math.min(1, al / f.range) * 50 : 50;
+        if (ready && clear) {
+          const supOk = P.sup >= 1 && (P.k === 'heavy' ? P.hp < P.max * 0.55 : P.k === 'shot' ? d < 170 : P.k === 'fire' ? d < 125 : P.k === 'rocket' ? d < 200 && P.hp > P.max * 0.35 : d < (P.k === 'snipe' ? 440 : f.range));
+          const spull = P.k === 'rocket' ? Math.min(1, al / JUMP) * 50 : pull;
+          if (supOk) { superFire(G, P, vx * spull, vy * spull); M.fireAt = now + 500; }
+          else if (P.ammo >= 1 && d <= f.range * 1.03) { fire(G, P, vx * pull, vy * pull); M.fireAt = now + [900, 620, 380][sk] + Math.random() * 250; }
+        }
+      } else if (!E) {
+        M.seenAt = 0;
+        if (crate && now >= (M.fireAt || 0) && P.ammo >= 2) { // разбить ящик
+          const cx = crate.x + 11 - P.x, cy = crate.y + 11 - P.y, d = Math.hypot(cx, cy) || 1;
+          if (d < f.range * 0.95 && (P.k === 'mort' || los(D, P.x, P.y, crate.x + 11 - cx / d * 13, crate.y + 11 - cy / d * 13))) { fire(G, P, cx / d * (P.k === 'mort' ? Math.min(1, d / f.range) * 50 : 50), cy / d * (P.k === 'mort' ? Math.min(1, d / f.range) * 50 : 50)); M.fireAt = now + 700; }
+        }
+      }
+    }
+    function bot(G, dt, now) { const D = G.d; if (!D.P) return; for (const P of D.P) if (P.i >= 1) botTank(G, P, now); }
+
+    function makeTank(G, i, k, lvl, x, y, skill) {
+      const m = mult(lvl), max = Math.round(F[k].hp * m);
+      return { i, k, m, dm: m, lvl, x, y, vx: 0, vy: 0, ba: y < G.H / 2 ? Math.PI / 2 : -Math.PI / 2, ax: 0, ay: y < G.H / 2 ? 1 : -1, hp: max, max, ammo: 3, sup: 0, shotAt: -1e9, hurtAt: -1e9, actAt: -1e9, shield: 0, dash: null, joy: null, cubes: 0, atkN: 0, curAtk: 0, skill, mem: {} };
+    }
+
+    const G = partyGame({
+      key: 'arena', title: 'Арена танков', bg: '#1b2433', fixedH: true,
+      desc: 'Танки-бойцы, у каждого своё оружие и супер. Слева — езда. Справа — огонь: тап — танк сам целится, потянул и отпустил — стреляет туда, куда тянул. Над ним — супер, он заряжается уроном. Снарядов три, они перезаряжаются сами. Не воюешь четыре секунды — понемногу чинишься. В кустах тебя не видно издалека. Дуэль — один на один, газ после 45 секунд. Столкновение — ты и 4 бота, каждый сам за себя: разбивай ящики, собирай кубы силы, газ сжимает поле, побеждает последний. С ботами идут кубки и жетоны: 100 жетонов — ящик с монетами, очками силы и новыми бойцами.',
+      icon: '<svg viewBox="0 0 60 60"><rect width="60" height="60" rx="12" fill="#1b2433"/><rect x="9" y="33" width="24" height="16" rx="4" fill="#3f7fe0"/><rect x="20" y="38" width="20" height="5" fill="#2a5bb0" transform="rotate(-35 20 40)"/><circle cx="21" cy="41" r="6" fill="#2a5bb0"/><rect x="30" y="10" width="22" height="15" rx="4" fill="#e04f3f"/><circle cx="41" cy="17" r="5.5" fill="#b0302a"/><path d="M38 26 l3 6 l3 -6" fill="#ffd23f"/><circle cx="14" cy="14" r="6" fill="#ffd23f"/><path d="M11 14h6M14 11v6" stroke="#1b2433" stroke-width="2"/></svg>',
+      controls: 'raw', hint: 'слева — езда, справа — огонь',
+      bot, botLevels: [['medium', 'Бот: по кубкам']], botDef: 'medium',
+      goalLabel: 'Побед в раундах', goals: [2, 3], goalDef: 2,
+      countdownMs: 1600, roundEndMs: 2200,
+      options: [{ key: 'lobby', type: 'custom', label: '', build(wrap, opts, changed) { lobbyEl = wrap; lobbyOpts = opts; wrap.className = 'arLobby'; wrap.addEventListener('click', e => lobbyClick(e, changed)); renderLobby(); return wrap; }, update(el, opts) { lobbyOpts = opts; renderLobby(); } }],
+      newMatch(G) {
+        G.matchId = (G.matchId || 0) + 1; G.arSup = null; G.arSt = {}; G.arPlace = 0;
+        const r = G.net.root.querySelector('.arReward'); if (r) r.remove();
+        G.arMode = G.bot ? SV.mode : 'duel';
+        G.cfg.scoreCorner = G.arMode !== 'sd'; // в столкновении счёт раундов не нужен
+        if (G.bot) {
+          if (!open(SV.sel)) SV.sel = 'gun';
+          const tr = SV.f[SV.sel].tr, base = Math.max(1, Math.min(MAXL, 1 + Math.floor(tr / 30))); // уровень и умение ботов — по кубкам бойца
+          const lv = () => Math.max(1, Math.min(MAXL, base + (Math.random() < 0.35 ? 1 : 0) - (Math.random() < 0.25 ? 1 : 0)));
+          const n = G.arMode === 'sd' ? SD_N : 2;
+          G.ar = { k: [SV.sel], l: [SV.f[SV.sel].lvl], skill: tr < 25 ? 0 : tr < 90 ? 1 : 2 };
+          for (let i = 1; i < n; i++) { G.ar.k.push(KEYS[Math.floor(Math.random() * KEYS.length)]); G.ar.l.push(lv()); }
+        } else G.ar = { k: [SV.sel, SV.selRed], l: [5, 5], skill: 1 };
+      },
+      newRound(G) {
+        const sd = G.arMode === 'sd';
+        const { walls, bush, cr } = buildMap(G, sd ? SD_MAP : MAPS[(G.round + (G.matchId || 0)) % MAPS.length]);
+        const D = G.d = { t: 0, W: G.W, H: G.H, walls, bush, cr, cubes: [], S: [], Lb: [], sd };
+        if (sd) {
+          const sp = SD_SPAWN.slice().sort(() => Math.random() - 0.5);
+          D.P = G.ar.k.map((k, i) => makeTank(G, i, k, G.ar.l[i], sp[i][0], sp[i][1], G.ar.skill));
+          D.P.forEach(P => { P.shield = 3; }); // защита на старте
+          G.flash('Выживи последним!', '#ffd23f', 1800, 0);
+        } else {
+          D.P = [0, 1].map(i => makeTank(G, i, G.ar.k[i], G.ar.l[i], G.W / 2, i ? 40 : G.H - 40, G.ar.skill));
+          if (G.round > 1 && G.arSup) D.P.forEach(P => { P.sup = G.arSup[P.i] || 0; });
+          if (G.bot && G.round === 1) G.flash(`Соперник: ${F[G.ar.k[1]].name} · ур. ${G.ar.l[1]}`, '#ff9a8a', 1800, 0);
+        }
+      },
+      ...input,
+      update(G, dt, now) {
+        const D = G.d; if (!D.P) return; const play = G.state === 'play';
+        if (play) D.t += dt;
+        for (const P of D.P) {
+          if (P.hp <= 0) continue;
+          const f = F[P.k];
+          P.ammo = Math.min(3, P.ammo + dt / f.rl); P.shield = Math.max(0, P.shield - dt);
+          if (P.burn && play) { P.burn.t -= dt; if (P.burn.t <= 0) { const b = P.burn; b.n--; b.t = 0.5; if (b.n <= 0) P.burn = null; G.burst(P.x, P.y, '#ff8a3d', 4, 60, 0.3, 1.6); hurt(G, P, b.dmg, D.P[b.from], true); if (G.state !== 'play' || P.hp <= 0) continue; } }
+          if (play && P.hp < P.max && now - P.actAt > REGEN_AFTER) P.hp = Math.min(P.max, P.hp + P.max * REGEN * dt);
+          if (P.jump) { // прыжок Ракетчика: через стены, в воздухе снаряды не попадают
+            const J = P.jump; J.t += dt; const k = Math.min(1, J.t / J.T); P.x = J.sx + (J.tx - J.sx) * k; P.y = J.sy + (J.ty - J.sy) * k; P.vx = P.vy = 0;
+            if (k >= 1) {
+              P.jump = null; G.burst(P.x, P.y, '#ffb347', 18, 190, 0.5, 2.6); G.shake = Math.max(G.shake || 0, 6); G.sound(110, 0.16, 'sawtooth', 0.07);
+              if (play) {
+                areaCrates(G, P.x, P.y, 48, 1400 * P.dm);
+                for (const E of foes(D, P)) { const dd = Math.hypot(E.x - P.x, E.y - P.y); if (dd < 48 + R && !E.jump) { if (dd > 1) { E.vx += (E.x - P.x) / dd * 300; E.vy += (E.y - P.y) / dd * 300; } hurt(G, E, 1400 * P.dm, P); if (G.state !== 'play') return; } }
+              }
+            }
+            continue;
+          } else if (P.dash) { // таран
+            P.vx = P.dash.ux * 520; P.vy = P.dash.uy * 520; P.x += P.vx * dt; P.y += P.vy * dt; P.dash.t -= dt;
+            for (const E of foes(D, P)) if (!P.dash.hit.includes(E.i) && !E.jump && Math.hypot(E.x - P.x, E.y - P.y) < R * 2 + 4) { P.dash.hit.push(E.i); E.vx += P.dash.ux * 380; E.vy += P.dash.uy * 380; G.shake = Math.max(G.shake || 0, 6); hurt(G, E, 1500 * P.dm, P); if (G.state !== 'play') return; }
+            if (P.dash && P.dash.t <= 0) P.dash = null;
+          } else {
+            const inp = P.i >= 1 && G.bot ? (play ? P.bot || Z : Z) : BK.inp(G, P, play);
+            BK.move(P, inp, dt, 900, f.spd, 3.2);
+            const m = Math.hypot(inp.x, inp.y); if (m > 0.2) { let a = Math.atan2(inp.y, inp.x) - P.ba; a = Math.atan2(Math.sin(a), Math.cos(a)); P.ba += Math.max(-9 * dt, Math.min(9 * dt, a)); if (now - P.shotAt > 900) { P.ax = inp.x / m; P.ay = inp.y / m; } }
+          }
+          for (const w of D.walls) BK.rect(P, R, w);
+          for (const w of D.cr) if (w.hp > 0) BK.rect(P, R, w);
+          BK.walls(P, R, ME, ME, G.W - ME, G.H - ME, 0.1);
+          // кубы силы: +10% здоровья и урона за каждый
+          if (play) for (const q of D.cubes) if (!q.taken && Math.hypot(q.x - P.x, q.y - P.y) < R + 8) {
+            q.taken = true; P.cubes++; const inc = Math.round(F[P.k].hp * P.m * 0.1); P.max += inc; P.hp += inc; P.dm = P.m * (1 + 0.1 * P.cubes);
+            G.pop(P.x, P.y - 30, '+куб силы', '#7ee08a', 11); if (human(G, P)) G.sound(990, 0.08, 'triangle', 0.05);
+          }
+        }
+        D.cubes = D.cubes.filter(q => !q.taken);
+        const live = D.P.filter(P => P.hp > 0 && !P.jump);
+        for (let a = 0; a < live.length; a++) for (let b = a + 1; b < live.length; b++) BK.collide(live[a], live[b], R, R);
+        if (!play) return;
+        // снаряды
+        for (const s of D.S) {
+          const O = D.P[s.own];
+          if (s.home) { const E = nearestSeen(D, O, now); if (E && !E.jump) { // ракета доворачивает к видимому врагу
+            const cur = Math.atan2(s.vy, s.vx), want = Math.atan2(E.y - s.y, E.x - s.x); let da = Math.atan2(Math.sin(want - cur), Math.cos(want - cur)); da = Math.max(-s.home * dt, Math.min(s.home * dt, da));
+            const v = Math.hypot(s.vx, s.vy); s.vx = Math.cos(cur + da) * v; s.vy = Math.sin(cur + da) * v; } }
+          const sp = Math.hypot(s.vx, s.vy), n = Math.max(1, Math.ceil(sp * dt / 5));
+          for (let k = 0; k < n && !s.dead; k++) {
+            s.x += s.vx * dt / n; s.y += s.vy * dt / n; s.left -= sp * dt / n;
+            const E = foes(D, O).find(T => !T.jump && Math.hypot(T.x - s.x, T.y - s.y) < R + s.r);
+            if (E) { s.dead = true; s.hit = true; G.burst(s.x, s.y, s.flame ? '#ff8a3d' : '#ffd9a0', 6, 120, 0.3, 2); G.sound(s.flame ? 260 : 180, 0.05, 'square', 0.04); markHit(G, O, s.atk); hurt(G, E, s.dmg, O); if (s.burn && E.hp > 0) E.burn = { n: 3, t: 0.5, dmg: s.burn, from: s.own }; break; }
+            const w = crateAt(D, s.x, s.y);
+            if (w) { s.dead = true; G.burst(s.x, s.y, '#d9b27a', 4, 80, 0.25, 1.5); crateHurt(G, w, s.dmg); break; }
+            if (s.left <= 0 || (s.pierce ? (s.x < 0 || s.y < 0 || s.x > D.W || s.y > D.H) : inWall(D, s.x, s.y, 0))) { s.dead = true; if (s.left > 0 && !s.flame) G.burst(s.x, s.y, '#c9d2e6', 4, 80, 0.25, 1.5); }
+          }
+          if (s.dead && s.splash && G.state === 'play') {
+            G.burst(s.x, s.y, '#ff9a4a', 10, 140, 0.35, 2.2); areaCrates(G, s.x, s.y, s.splash, s.dmg * 0.6);
+            if (!s.hit) for (const E of foes(D, O)) if (!E.jump && Math.hypot(E.x - s.x, E.y - s.y) < s.splash + R * 0.6) { markHit(G, O, s.atk); hurt(G, E, s.dmg * 0.6, O); if (G.state !== 'play') break; }
+          }
+          if (G.state !== 'play') break;
+        }
+        D.S = D.S.filter(s => !s.dead);
+        if (G.state !== 'play') return;
+        // бомбы навесом
+        for (const b of D.Lb) {
+          b.t += dt; if (b.t < b.T) continue; b.dead = true;
+          G.burst(b.tx, b.ty, '#ffb347', 14, 170, 0.45, 2.5); G.shake = Math.max(G.shake || 0, 3); G.sound(120, 0.12, 'sawtooth', 0.06);
+          const O = D.P[b.own]; areaCrates(G, b.tx, b.ty, b.rad, b.dmg);
+          for (const E of foes(D, O)) if (!E.jump && Math.hypot(E.x - b.tx, E.y - b.ty) < b.rad + R * 0.6) { markHit(G, O, b.atk); hurt(G, E, b.dmg, O); if (G.state !== 'play') return; }
+        }
+        D.Lb = D.Lb.filter(b => !b.dead);
+        // газ
+        const z = gasZone(D);
+        if (z.x > 0) for (const P of D.P) if (P.hp > 0 && inGas(D, z, P)) { P.gasT = (P.gasT || 0) + dt; if (P.gasT >= 0.5) { P.gasT = 0; hurt(G, P, D.sd ? 300 + Math.max(0, D.t - SD_GAS) * 4 : 260, null); if (G.state !== 'play') return; } }
+        if (!D.sd && D.t >= ROUND_MAX) { const a = D.P[0].hp / D.P[0].max, b = D.P[1].hp / D.P[1].max; G.roundOver(a >= b ? 0 : 1, 'Время! У кого больше здоровья'); }
+        if (D.sd && D.t >= 150) { const alive = D.P.filter(P => P.hp > 0).sort((a, b) => b.hp / b.max - a.hp / a.max); sdEnd(G, alive.indexOf(D.P[0]) + 1); }
+        if (!D.sd) G.arSup = D.P.map(P => P.sup); // супер переходит в следующий раунд дуэли
+      },
+      draw(G, now) {
+        const c = G.c, D = G.d; if (!D.P) return;
+        const solo = !!G.bot, over = G.state !== 'play' && G.state !== 'countdown', me = D.P[0];
+        // пол, стены, ящики
+        c.fillStyle = '#2b3a4f'; c.fillRect(0, 0, G.W, G.H);
+        c.fillStyle = 'rgba(255,255,255,0.025)'; for (let y = 0; y < G.H; y += 40) for (let x = (y / 40 % 2) * 40; x < G.W; x += 80) c.fillRect(x, y, 40, 40);
+        for (const w of D.walls) { c.fillStyle = '#141a26'; c.fillRect(w.x, w.y + 3, w.w, w.h); c.fillStyle = '#8a93ad'; c.fillRect(w.x, w.y - 2, w.w, w.h); c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(w.x, w.y - 2, w.w, 3); }
+        for (const w of D.cr) {
+          if (w.hp <= 0) continue;
+          c.fillStyle = '#141a26'; c.fillRect(w.x, w.y + 3, w.w, w.h); c.fillStyle = '#b98a4e'; rr(c, w.x, w.y - 1, w.w, w.h, 3); c.fill();
+          c.strokeStyle = '#7a5a30'; c.lineWidth = 2; c.beginPath(); c.moveTo(w.x + 3, w.y + 2); c.lineTo(w.x + w.w - 3, w.y + w.h - 4); c.moveTo(w.x + w.w - 3, w.y + 2); c.lineTo(w.x + 3, w.y + w.h - 4); c.stroke();
+          G.circle(w.x + 11, w.y + 10, 4, '#7ee08a');
+          if (w.hp < w.max) { c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(w.x, w.y - 8, w.w, 4); c.fillStyle = '#ffd23f'; c.fillRect(w.x, w.y - 8, w.w * w.hp / w.max, 4); }
+        }
+        // кубы силы
+        for (const q of D.cubes) { const s = 7 + Math.sin(now / 200 + q.x) * 1; c.save(); c.translate(q.x, q.y); c.rotate(now / 900); c.fillStyle = 'rgba(126,224,138,0.3)'; c.fillRect(-s - 3, -s - 3, 2 * s + 6, 2 * s + 6); c.fillStyle = '#7ee08a'; c.fillRect(-s, -s, 2 * s, 2 * s); c.fillStyle = '#1d5a2a'; c.fillRect(-2, -s + 2, 4, 2 * s - 4); c.restore(); }
+        // метки, куда упадут бомбы
+        for (const b of D.Lb) if (b.t >= 0) { c.strokeStyle = b.gold ? 'rgba(255,210,63,0.8)' : 'rgba(255,120,90,0.8)'; c.lineWidth = 2; c.setLineDash([5, 4]); c.beginPath(); c.arc(b.tx, b.ty, b.rad, 0, 7); c.stroke(); c.setLineDash([]); }
+        // танки
+        for (const P of D.P) {
+          if (P.hp <= 0) { P.hid = true; continue; }
+          const hidden = solo && P.i !== 0 && !over && me.hp > 0 && !sees(D, me, P, now);
+          P.hid = hidden; if (hidden) continue;
+          const [col, dark] = colOf(D, P);
+          if (P.shield > 0) { c.strokeStyle = 'rgba(126,224,255,0.8)'; c.lineWidth = 3; c.beginPath(); c.arc(P.x, P.y, R + 7, 0, 7); c.stroke(); }
+          c.globalAlpha = inBush(D, P) && !P.jump ? 0.75 : 1;
+          if (P.jump) { const J = P.jump, h = Math.sin(Math.min(1, J.t / J.T) * Math.PI) * 40; G.circle(P.x, P.y, R * 0.9, 'rgba(0,0,0,0.3)'); c.strokeStyle = 'rgba(255,180,70,0.7)'; c.lineWidth = 2; c.setLineDash([5, 4]); c.beginPath(); c.arc(J.tx, J.ty, 48, 0, 7); c.stroke(); c.setLineDash([]); drawTank(c, P.x, P.y - h, R * (1 + h / 120), P.ba, Math.atan2(P.ay, P.ax), col, dark, P.k); }
+          else drawTank(c, P.x, P.y, R, P.ba, Math.atan2(P.ay, P.ax), col, dark, P.k);
+          if (P.burn) G.circle(P.x + Math.sin(now / 60) * 4, P.y - 6, 4, 'rgba(255,138,61,0.85)');
+          c.globalAlpha = 1;
+        }
+        // кусты поверх
+        for (const b of D.bush) { c.globalAlpha = 0.82; G.circle(b.x, b.y, b.r, '#2f7d4c'); for (let k = 0; k < 6; k++) G.circle(b.x + Math.cos(k * 1.05) * b.r * 0.55, b.y + Math.sin(k * 1.05) * b.r * 0.55, b.r * 0.5, '#3c9a5f'); c.globalAlpha = 1; }
+        // снаряды и бомбы
+        for (const s of D.S) {
+          if (s.flame) { const k = Math.max(0, s.left / s.L0); c.globalAlpha = 0.35 + 0.6 * k; G.circle(s.x, s.y, s.r + (1 - k) * 6, s.gold ? '#ffd23f' : '#ff8a3d'); G.circle(s.x, s.y, (s.r + (1 - k) * 6) * 0.5, '#fff1b0'); c.globalAlpha = 1; continue; }
+          if (s.rocket) { const v = Math.hypot(s.vx, s.vy) || 1; for (let t = 1; t <= 3; t++) G.circle(s.x - s.vx / v * t * 5, s.y - s.vy / v * t * 5, 3 - t * 0.6, 'rgba(255,200,120,0.5)'); G.circle(s.x, s.y, s.r, '#ff5a3d'); continue; }
+          G.circle(s.x, s.y, s.r + 1.5, 'rgba(0,0,0,0.25)'); G.circle(s.x, s.y, s.r, s.gold ? '#ffd23f' : '#fff4d6');
+        }
+        for (const b of D.Lb) if (b.t >= 0) { const k = b.t / b.T, x = b.sx + (b.tx - b.sx) * k, y = b.sy + (b.ty - b.sy) * k, h = Math.sin(k * Math.PI) * 46; G.circle(x, y, 4, 'rgba(0,0,0,0.3)'); G.circle(x, y - h, 5 + h * 0.05, b.gold ? '#ffd23f' : '#3a3f4f'); }
+        // газ
+        const z = gasZone(D);
+        if (z.x > 0) { c.fillStyle = 'rgba(90,220,110,0.28)'; c.fillRect(0, 0, G.W, z.y); c.fillRect(0, G.H - z.y, G.W, z.y); c.fillRect(0, z.y, z.x, G.H - 2 * z.y); c.fillRect(G.W - z.x, z.y, z.x, G.H - 2 * z.y); c.strokeStyle = 'rgba(140,255,150,0.7)'; c.lineWidth = 2; c.strokeRect(z.x, z.y, G.W - 2 * z.x, G.H - 2 * z.y); }
+        else if (D.t > (D.sd ? SD_GAS : GAS_AT) - 5 && Math.floor(now / 300) % 2) G.text('Газ!', G.W / 2, G.H / 2, 20, 'rgba(140,255,150,0.8)', 900);
+        // здоровье, снаряды и кубы над танком
+        for (const P of D.P) {
+          if (P.hp <= 0 || P.hid) continue;
+          const w = 34, x = P.x - w / 2, y = P.y - R - 14, k = P.hp / P.max;
+          c.fillStyle = 'rgba(0,0,0,0.55)'; rr(c, x - 1, y - 1, w + 2, 7, 3); c.fill();
+          c.fillStyle = k > 0.5 ? '#6fe07c' : k > 0.25 ? '#ffd23f' : '#ff6a5a'; rr(c, x, y, Math.max(2, w * k), 5, 2.5); c.fill();
+          for (let a = 0; a < 3; a++) { c.fillStyle = P.ammo >= a + 1 ? '#ffb347' : 'rgba(255,255,255,0.2)'; c.fillRect(x + a * 12, y + 7, 10, 2.5); }
+          if (P.cubes) G.text(`⚡${P.cubes}`, x + w + 10, y + 3, 10, '#7ee08a', 900);
+        }
+        // прицел: куда полетит
+        for (const P of D.P.slice(0, 2)) {
+          if ((P.i === 1 && G.bot) || over || P.hp <= 0) continue;
+          for (const key of ['aimJ', 'aimJ2']) {
+            const j = P[key]; if (!j || Math.hypot(j.dx, j.dy) < 12) continue; if (key === 'aimJ2' && P.sup < 1) continue;
+            const [wx, wy] = BK.unflip(P.i, j.dx, j.dy), a = aimOf(G, P, wx, wy), f = F[P.k], col = key === 'aimJ2' ? 'rgba(255,210,63,0.8)' : 'rgba(255,255,255,0.7)';
+            c.strokeStyle = col; c.lineWidth = 2; c.setLineDash([6, 5]); c.beginPath();
+            if (P.k === 'mort') { const d = Math.max(key === 'aimJ2' ? 50 : 40, a.dist), tx = P.x + a.ux * d, ty = P.y + a.uy * d; c.moveTo(P.x, P.y); c.lineTo(tx, ty); c.stroke(); c.beginPath(); c.arc(tx, ty, 34, 0, 7); c.stroke(); }
+            else if (P.k === 'fire' && key === 'aimJ2') { c.arc(P.x, P.y, 140, 0, 7); c.stroke(); }
+            else if (P.k === 'rocket' && key === 'aimJ2') { const t = jumpTarget(G, P, wx, wy); if (t) { c.moveTo(P.x, P.y); c.lineTo(t.x, t.y); c.stroke(); c.beginPath(); c.arc(t.x, t.y, 48, 0, 7); c.stroke(); } }
+            else if (P.k === 'heavy' && key === 'aimJ2') { c.arc(P.x, P.y, R + 9, 0, 7); c.stroke(); }
+            else { let d = 0; const max = key === 'aimJ2' ? (P.k === 'snipe' ? 460 : P.k === 'shot' ? 177 : 260) : f.range, pierce = key === 'aimJ2' && P.k === 'snipe'; while (d < max && (pierce || !inWall(D, P.x + a.ux * (d + 6), P.y + a.uy * (d + 6), 0))) d += 6; c.moveTo(P.x, P.y); c.lineTo(P.x + a.ux * d, P.y + a.uy * d); c.stroke(); }
+            c.setLineDash([]);
+          }
+        }
+        // управление
+        const left = Math.max(0, ROUND_MAX - D.t), alive = D.P.filter(P => P.hp > 0).length;
+        for (const P of D.P.slice(0, 2)) {
+          BK.hud(G, P, { hint: 'езда', text: `${F[P.k].name} · ур. ${P.lvl} · ${D.sd ? `танков: ${alive}` : `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`}` });
+          BK.aimHud(G, P, 'огонь', P.ammo >= 1, null);
+          BK.aimHud2(G, P, P.sup >= 1 ? 'СУПЕР' : 'супер', P.sup >= 1, P.sup, '255,210,63');
+        }
+        if (G.state === 'over' && G.arPaid !== G.matchId) finish(G);
+      }
+    });
+    G.net.root.classList.add('arRoot');
+
+    // --- конец матча: итоги боя (всегда) и награда (с ботами) ---
+    function finish(G) {
+      G.arPaid = G.matchId;
+      const sd = G.arMode === 'sd', place = G.arPlace || 1;
+      const card = G.net.root.querySelector('.pgWin .vCard') || G.net.root.querySelector('.pgWin'); if (!card) return;
+      if (sd) { const t = card.querySelector('.vTitle'), s = card.querySelector('.vScore'); if (t) { t.textContent = place === 1 ? 'Победа! 1-е место' : `${place}-е место`; t.style.color = place <= 2 ? '#ffd23f' : '#ff9a8a'; } if (s) s.textContent = `из ${SD_N} танков`; }
+      const line = i => { const s = stat(G, i), acc = s.shots ? Math.round(s.hits / s.shots * 100) : 0; return `урон ${s.dmg} · попадания ${s.hits} из ${s.shots} (${acc}%)${s.best ? ` · сильнейший удар ${s.best}` : ''}${sd ? ` · сбито ${s.kills}` : ''}`; };
+      let html = G.bot ? `<div class="arStat">Твой бой: ${line(0)}</div>` : `<div class="arStat"><i style="color:${PG_COL[0]}">Синий:</i> ${line(0)}</div><div class="arStat"><i style="color:${PG_COL[1]}">Красный:</i> ${line(1)}</div>`;
+      if (G.bot) {
+        const win = sd ? place <= 2 : G.score[0] > G.score[1], me = SV.f[SV.sel], before = total();
+        let dTr = sd ? [10, 6, 2, -1, -3][place - 1] : win ? 8 : -3; if (dTr < 0) dTr = -Math.min(-dTr, me.tr);
+        let tok = sd ? [20, 16, 12, 8, 6][place - 1] : win ? 20 : 8; const dbl = Math.min(SV.dbl, tok); SV.dbl -= dbl; tok += dbl;
+        me.tr += dTr; SV.tok += tok; SV.played++; let boxes = 0; while (SV.tok >= 100) { SV.tok -= 100; SV.boxes++; boxes++; }
+        const day = new Date().toDateString(); if (SV.starDay.d !== day) SV.starDay = { d: day, w: [] };
+        let star = false, big = false; if (win && !SV.starDay.w.includes(SV.sel)) { SV.starDay.w.push(SV.sel); SV.star++; star = true; if (SV.star >= 10) { SV.star -= 10; SV.big++; big = true; } }
+        save();
+        const fresh = KEYS.filter(k => !F[k].box && F[k].need > before && F[k].need <= total());
+        html = `<b>${dTr >= 0 ? '+' : ''}${dTr} 🏆 · +${tok} жетонов${dbl ? ' (×2)' : ''}</b>` + (star ? `<span class="st">+1 ⭐ — первая победа за бойца «${F[SV.sel].name}» сегодня</span>` : '') + (boxes || big ? `<span>${boxes && big ? 'Ящик и большой ящик готовы' : big ? 'Большой ящик готов' : 'Ящик готов'}! Открой в окне бойца</span>` : '') + (fresh.length ? `<span>Новый боец: ${fresh.map(k => F[k].name).join(', ')}!</span>` : '') + html;
+      }
+      const el = document.createElement('div'); el.className = 'arReward'; el.innerHTML = html;
+      const sc = card.querySelector('.vScore'); if (sc) sc.after(el); else card.appendChild(el);
+    }
+
+    // --- окно выбора бойца ---
+    function icon(cv, k, i) { const c = cv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); const s = cv.width / 60; c.scale(s, s); drawTank(c, 28, 34, 20, -Math.PI / 2, -Math.PI / 3, PG_COL[i], PG_DARK[i], k); }
+    function renderLobby() {
+      if (!lobbyEl) return;
+      const two = lobbyOpts && lobbyOpts.opp === 'human', first = !two && !SV.played && !total();
+      const k = !two && !open(SV.sel) ? 'gun' : SV.sel, f = F[k], me = SV.f[k], lvl = two ? 5 : me.lvl, m = mult(lvl), cost = COST[me.lvl - 1], need = PPC[me.lvl - 1], [rn, rc] = rarOf(k);
+      const lockTxt = q => F[q].box ? `🔒 из ящика` : `🔒 ${F[q].need} 🏆`;
+      const chips = (sel, attr, i) => KEYS.map(q => { const ok = two || open(q), Q = SV.f[q], pr = Q.lvl >= MAXL ? 100 : Math.min(100, Q.pp / PPC[Q.lvl - 1] * 100); return `<button class="arChip${q === sel ? ' on' : ''}${ok ? '' : ' lock'}" style="--rc:${rarOf(q)[1]}" ${attr}="${q}" ${ok ? '' : 'disabled'}><canvas width="120" height="120" data-k="${q}" data-i="${i}"></canvas><b>${F[q].name}</b><small>${ok ? (two ? 'ур. 5' : `ур. ${Q.lvl} · ${Q.tr} 🏆`) : lockTxt(q)}</small>${ok && !two ? `<u><i style="width:${pr}%"></i></u>` : ''}</button>`; }).join('');
+      const locked = KEYS.filter(q => F[q].box && !SV.f[q].own);
+      const boxBtn = SV.big ? `Открыть большой ящик${SV.boxes ? ` · и ещё ${SV.boxes}` : ''}` : SV.boxes ? `Открыть ящик${SV.boxes > 1 ? ` · ×${SV.boxes}` : ''}` : '';
+      const upBtn = me.lvl >= MAXL ? '<em>Максимальный уровень</em>' : me.pp < need ? `<button class="arUp" disabled>Очки силы ${me.pp}/${need}</button>` : `<button class="arUp" data-up="1" ${SV.coins >= cost ? '' : 'disabled'}>Улучшить · ${cost} 🪙</button>`;
+      let top;
+      if (two) top = '<div class="arNote">Вдвоём — дуэль: все бойцы открыты, уровни равные. Кубки, жетоны и ящики — только с ботами.</div>';
+      else if (first) top = '<div class="arNote arFirst">Первый бой — просто попробуй: слева езда, справа огонь. Ящики, прокачка и Столкновение откроются после боя.</div>';
+      else top = `
+        <div class="segmented arMode"><button data-mode="duel" aria-pressed="${SV.mode === 'duel'}">⚔️ Дуэль</button><button data-mode="sd" aria-pressed="${SV.mode === 'sd'}">💥 Столкновение</button></div>
+        ${SV.mode === 'sd' ? '<div class="arNote">Ты и 4 бота, каждый сам за себя. Разбивай ящики — кубы силы прибавляют здоровье и урон. Газ сжимает поле — побеждает последний.</div>' : ''}
+        <button class="arEco" data-eco="1"><span>🏆 ${total()}</span><span>🪙 ${SV.coins}</span><span>📦 ${SV.boxes + SV.big}</span><span>⭐ ${SV.star}/10</span><span class="arEcoArr">${ecoOpen ? '▴' : '▾'}</span></button>
+        ${ecoOpen ? `<div class="arBars"><div class="arBar"><i style="width:${SV.tok}%"></i><span>Жетоны ${SV.tok}/100${SV.dbl ? ` · ×2` : ''}</span></div><div class="arBar st"><i style="width:${SV.star * 10}%"></i><span>⭐ ${SV.star}/10</span></div></div>
+        <div class="arNote">100 жетонов — ящик. Первая победа каждым бойцом за день — ⭐, 10 ⭐ — большой ящик.${locked.length ? ` Шанс нового бойца в ящике: <b>${Math.round(luckChance() * 100)}%</b> — растёт с каждым ящиком без бойца.` : ''}</div>` : ''}
+        ${boxBtn ? `<button class="arOpen${SV.big ? ' big' : ''}" data-box="1">${boxBtn}</button>` : ''}`;
+      lobbyEl.innerHTML = `${top}
+        <div class="arHero" style="--rc:${rc}"><canvas width="180" height="180" data-k="${k}" data-i="0"></canvas>
+          <div class="arInfo"><small class="arRar">${rn}</small><b>${f.name} <i>ур. ${lvl}</i></b>
+            <span>❤ ${Math.round(f.hp * m)} · урон ${Math.round(f.dmg * m)}${k === 'shot' ? '×5' : k === 'heavy' ? '×2' : k === 'fire' ? '×6 + горение' : ''}</span>
+            <span>${f.atk}</span><span class="arSup">Супер — ${f.sup}</span>
+            ${two || first ? '' : upBtn}
+          </div></div>
+        <div class="arRow">${chips(k, 'data-f', 0)}</div>
+        ${two ? `<div class="arNote">Боец красного:</div><div class="arRow">${chips(SV.selRed, 'data-fr', 1)}</div>` : ''}`;
+      lobbyEl.querySelectorAll('canvas').forEach(cv => icon(cv, cv.dataset.k, +cv.dataset.i));
+      // в Арене выбор уровня бота не нужен (он по кубкам); «побед в раундах» — только для дуэли
+      const root = lobbyEl.closest('.pg');
+      if (root) {
+        root.querySelectorAll('.botLv').forEach(e => { e.style.display = 'none'; });
+        const sdNow = !two && !first && SV.mode === 'sd';
+        root.querySelectorAll('.segInline, .settingRow, .optRow').forEach(e => { if (/Побед в раундах/.test(e.textContent) && !e.contains(lobbyEl)) e.style.display = sdNow ? 'none' : ''; });
+      }
+    }
+    function lobbyClick(e, changed) {
+      const b = e.target.closest('button'); if (!b || b.disabled) return;
+      if (b.dataset.f) SV.sel = b.dataset.f; else if (b.dataset.fr) SV.selRed = b.dataset.fr;
+      else if (b.dataset.mode) SV.mode = b.dataset.mode;
+      else if (b.dataset.eco) { ecoOpen = !ecoOpen; renderLobby(); return; }
+      else if (b.dataset.up) { if (!open(SV.sel)) SV.sel = 'gun'; const me = SV.f[SV.sel], cost = COST[me.lvl - 1], need = PPC[me.lvl - 1]; if (me.lvl >= MAXL || SV.coins < cost || me.pp < need) return; SV.coins -= cost; me.pp -= need; me.lvl++; try { sound(660, 0.1, 'triangle', 0.05); } catch (er) {} }
+      else if (b.dataset.box) { boxFlow(); return; }
+      else return;
+      save(); renderLobby();
+    }
+
+    // ======================= ЯЩИКИ (3.20) =======================
+    // Как в Brawl Stars 2018: 100 жетонов — ящик, 10 звёздных жетонов — большой (втрое больше).
+    // В ящике: монеты, очки силы для своих бойцов, иногда удвоитель жетонов, с шансом — новый боец (только из ящика).
+    // Наше отличие: шанс на бойца виден и растёт с каждым ящиком без бойца (6% + 3% за ящик, не больше 60%).
+    function rollBox(big) {
+      const n = big ? 3 : 1, items = [];
+      items.push({ t: 'coins', v: Math.round((28 + Math.random() * 24) * n) });
+      const need = KEYS.filter(k => open(k) && SV.f[k].lvl < MAXL).sort(() => Math.random() - 0.5);
+      const stacks = Math.min(big ? 4 : 2, need.length);
+      for (let i = 0; i < stacks; i++) items.push({ t: 'pp', k: need[i], v: Math.round((8 + Math.random() * 12) * (big ? 1.7 : 1)) });
+      if (!stacks) items[0].v += 30 * n; // все бойцы на максимуме — монетами
+      if (Math.random() < (big ? 0.3 : 0.1)) items.push({ t: 'dbl', v: 100 });
+      for (let r = 0; r < n; r++) {
+        const locked = KEYS.filter(k => F[k].box && !SV.f[k].own); if (!locked.length) break;
+        if (Math.random() < luckChance()) { const pool = []; locked.forEach(k => { for (let w = 0; w < (F[k].box === 'epic' ? 1 : 2); w++) pool.push(k); }); const k = pool[Math.floor(Math.random() * pool.length)]; SV.f[k].own = true; SV.luck = 0; items.push({ t: 'fighter', k }); }
+        else SV.luck++;
+      }
+      for (const it of items) { if (it.t === 'coins') SV.coins += it.v; else if (it.t === 'pp') SV.f[it.k].pp += it.v; else if (it.t === 'dbl') SV.dbl += it.v; }
+      save(); // всё начислено сразу — закрыл на середине, ничего не потерял
+      return items;
+    }
+    const crate = big => `<svg viewBox="0 0 120 110" class="arCrate" aria-hidden="true"><rect x="8" y="36" width="104" height="66" rx="10" fill="${big ? '#6a35c4' : '#2a62c8'}"/><rect x="4" y="20" width="112" height="28" rx="9" fill="${big ? '#9a5cf0' : '#4a8cf0'}"/><rect x="51" y="20" width="18" height="82" fill="#ffd23f"/><rect x="45" y="46" width="30" height="24" rx="5" fill="#5a3b00"/><circle cx="60" cy="58" r="4.5" fill="#ffd23f"/><path d="M12 84h96" stroke="rgba(0,0,0,.18)" stroke-width="4"/>${big ? '<path d="M22 28l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#ffd23f"/>' : ''}</svg>`;
+    const BX = document.createElement('div'); BX.className = 'arBoxL'; BX.hidden = true; document.body.appendChild(BX);
+    let BQ = null;
+    const snd = (f, d, v) => { try { sound(f, d, 'triangle', v || 0.05); } catch (e) {} };
+    function boxFlow() {
+      if (!SV.big && !SV.boxes) return;
+      const big = SV.big > 0; if (big) SV.big--; else SV.boxes--;
+      BQ = { big, items: rollBox(big).sort((a, b) => ['coins', 'pp', 'dbl', 'fighter'].indexOf(a.t) - ['coins', 'pp', 'dbl', 'fighter'].indexOf(b.t)), i: -1, phase: 'closed' };
+      BX.hidden = false; drawBox();
+    }
+    function drawBox() {
+      const q = BQ, left = q.items.length - Math.max(0, q.i + 1);
+      if (q.phase === 'closed') BX.innerHTML = `<div class="arBxSt"><div class="arBxCr${q.shake ? ' shake' : ''}">${crate(q.big)}</div><b>${q.big ? 'Большой ящик' : 'Ящик'}</b><span>Коснись, чтобы открыть</span></div>`;
+      else if (q.phase === 'item') {
+        const it = q.items[q.i]; let h = '';
+        if (it.t === 'coins') h = `<div class="arIt"><div class="arItBig">🪙</div><b>+${it.v}</b><span>монет</span></div>`;
+        else if (it.t === 'dbl') h = `<div class="arIt"><div class="arItBig dbl">×2</div><b>Удвоитель жетонов</b><span>следующие ${it.v} жетонов — вдвое</span></div>`;
+        else if (it.t === 'pp') { const Q = SV.f[it.k], nd = Q.lvl >= MAXL ? 0 : PPC[Q.lvl - 1], pr = nd ? Math.min(100, Q.pp / nd * 100) : 100; h = `<div class="arIt"><canvas width="200" height="200" data-k="${it.k}"></canvas><b>+${it.v} очков силы</b><span>${F[it.k].name}</span><div class="arItBar"><i style="width:${pr}%"></i><em>${nd ? (Q.pp >= nd ? 'можно улучшить!' : `${Q.pp}/${nd}`) : 'максимум'}</em></div></div>`; }
+        else { const [rn, rc] = rarOf(it.k); h = `<div class="arIt new" style="--rc:${rc}"><div class="arNewT">НОВЫЙ БОЕЦ!</div><canvas width="260" height="260" data-k="${it.k}"></canvas><b>${F[it.k].name}</b><small>${rn}</small><span>${F[it.k].atk} · супер — ${F[it.k].sup.toLowerCase()}</span></div>`; }
+        BX.innerHTML = `<div class="arBxSt">${h}<div class="arBxLeft">${left ? `ещё ${left}` : 'коснись'}</div></div>`;
+      } else {
+        const rows = q.items.map(it => it.t === 'coins' ? `🪙 +${it.v} монет` : it.t === 'pp' ? `+${it.v} очков силы — ${F[it.k].name}` : it.t === 'dbl' ? `×2 удвоитель на ${it.v} жетонов` : `⭐ Новый боец: ${F[it.k].name}`).map(t => `<div>${t}</div>`).join('');
+        const more = SV.big + SV.boxes;
+        BX.innerHTML = `<div class="arBxSt"><b>${q.big ? 'Большой ящик' : 'Ящик'} открыт</b><div class="arSum">${rows}</div><div class="arBxBtns"><button class="backBtn" data-x="close">Готово</button>${more ? `<button class="hkPlay" data-x="more">Ещё ящик (${more})</button>` : ''}</div></div>`;
+      }
+      BX.querySelectorAll('canvas[data-k]').forEach(cv => icon(cv, cv.dataset.k, 0));
+    }
+    BX.addEventListener('click', e => {
+      const q = BQ; if (!q) return;
+      const b = e.target.closest('[data-x]');
+      if (b) { if (b.dataset.x === 'more') boxFlow(); else { BX.hidden = true; BQ = null; renderLobby(); if (!HUB.hidden) hubRender(); } return; }
+      if (q.phase === 'closed') { if (q.shake) return; q.shake = true; drawBox(); snd(300, 0.12); try { vibrate(20); } catch (er) {} setTimeout(() => { q.phase = 'item'; q.i = 0; snd(880, 0.12); drawBox(); }, 520); return; }
+      if (q.phase === 'item') {
+        q.i++;
+        if (q.i >= q.items.length) { q.phase = 'sum'; drawBox(); return; }
+        const it = q.items[q.i]; if (it.t === 'fighter') { [523, 659, 784, 1047].forEach((f, k) => setTimeout(() => snd(f, k === 3 ? 0.4 : 0.12, 0.07), k * 120)); try { vibrate([30, 40, 60]); } catch (er) {} } else snd(it.t === 'pp' ? 660 : 880, 0.1);
+        drawBox();
+      }
+    });
+
+    // ======================= ЭКРАН АРЕНЫ (3.22) =======================
+    // Свой экран вместо общего окна настроек (оно остаётся под ним: «Играть», «Назад» и выбор соперника жмут его кнопки).
+    // Виды: main — боец и «ИГРАТЬ»; list — все бойцы; info — характеристики бойца; box — ящики и как их получить.
+    const HUB = document.createElement('div'); HUB.className = 'arHub'; HUB.hidden = true; document.body.appendChild(HUB);
+    const HS = { view: 'main', k: 'gun', red: false };
+    const setupEl = G.net.root.querySelector('.pgSetup');
+    const isTwo = () => !!(lobbyOpts && lobbyOpts.opp === 'human');
+    const shots = k => k === 'shot' ? 5 : k === 'heavy' ? 2 : k === 'fire' ? 6 : 1;
+    const bar = (name, val, k01, col) => `<div class="ahStat"><span>${name}</span><div><i style="width:${Math.round(Math.max(0.06, Math.min(1, k01)) * 100)}%;background:${col}"></i></div><b>${val}</b></div>`;
+    const ppBar = Q => Q.lvl >= MAXL ? '<div class="ahPP max"><i style="width:100%"></i><span>МАКС. УРОВЕНЬ</span></div>' : `<div class="ahPP${Q.pp >= PPC[Q.lvl - 1] ? ' ok' : ''}"><i style="width:${Math.min(100, Q.pp / PPC[Q.lvl - 1] * 100)}%"></i><span>очки силы ${Q.pp}/${PPC[Q.lvl - 1]}</span></div>`;
+    const upBtnH = (k) => { const Q = SV.f[k]; if (Q.lvl >= MAXL) return ''; const need = PPC[Q.lvl - 1], cost = COST[Q.lvl - 1]; return Q.pp < need ? `<div class="ahHint">Очки силы выпадают из ящиков</div>` : `<button class="ahBtn green" data-a="up" data-k="${k}" ${SV.coins >= cost ? '' : 'disabled'}>УЛУЧШИТЬ · ${cost} 🪙</button>`; };
+    function hubRender() {
+      const two = isTwo(), first = !two && !SV.played && !total();
+      const k = !two && !open(SV.sel) ? 'gun' : SV.sel, f = F[k], Q = SV.f[k], lvl = two ? 5 : Q.lvl, [rn, rc] = rarOf(k);
+      const nb = SV.boxes + SV.big, top = `<div class="ahTop"><button class="ahBack" data-a="${HS.view === 'main' ? 'exit' : 'main'}" aria-label="Назад">‹</button><b class="ahTitle">${HS.view === 'list' ? (HS.red ? 'БОЕЦ КРАСНОГО' : 'БОЙЦЫ') : HS.view === 'box' ? 'ЯЩИКИ' : HS.view === 'info' ? 'БОЕЦ' : 'АРЕНА'}</b><span class="ahPill">🏆 ${total()}</span><span class="ahPill">🪙 ${SV.coins}</span></div>`;
+      let h = '';
+      if (HS.view === 'main') {
+        h = `${top}
+          <div class="ahMain">
+            ${first ? '' : `<div class="ahSide"><button class="ahSq" data-a="list"><em>🛡️</em>Бойцы<small>${KEYS.filter(open).length}/${KEYS.length}</small></button><button class="ahSq${nb ? ' glow' : ''}" data-a="box"><em>📦</em>Ящики${nb ? `<u>${nb}</u>` : ''}<small>${SV.tok}/100</small></button></div>`}
+            <button class="ahHero" data-a="info" data-k="${k}" style="--rc:${rc}">
+              <small>${rn}</small><b>${f.name}</b>
+              <canvas width="440" height="440" data-k="${k}" data-i="0"></canvas>
+              <span class="ahLv">УР. ${lvl}${two ? '' : ` · 🏆 ${Q.tr}`}</span>
+              ${two ? '' : ppBar(Q)}
+              <i class="ahTap">характеристики ›</i>
+            </button>
+            ${first ? '<div class="ahNote">Первый бой — просто попробуй: слева езда, справа огонь</div>' : ''}
+            ${two ? `<button class="ahRed" data-a="listRed"><canvas width="120" height="120" data-k="${SV.selRed}" data-i="1"></canvas><span>Красный: <b>${F[SV.selRed].name}</b></span><i>сменить ›</i></button>` : ''}
+          </div>
+          <div class="ahBottom">
+            <div class="ahRow">
+              ${first ? '' : `<button class="ahOpt" data-a="mode" ${two ? 'disabled' : ''}><small>Режим</small><b>${two || SV.mode === 'duel' ? '⚔️ Дуэль' : '💥 Столкновение'}</b></button>`}
+              <button class="ahOpt" data-a="opp"><small>Соперник</small><b>${two ? '👥 Вдвоём' : '🤖 Боты'}</b></button>
+            </div>
+            <div class="ahDesc">${two ? 'Один телефон на двоих: все бойцы открыты, уровни равные, без кубков' : SV.mode === 'sd' && !first ? 'Ты и 4 бота. Ломай ящики, собирай кубы силы, выживи последним' : 'Один на один до 2 побед. Через 45 секунд поле сжимает газ'}</div>
+            <button class="ahPlay" data-a="play">ИГРАТЬ</button>
+          </div>`;
+      } else if (HS.view === 'list') {
+        const sel = HS.red ? SV.selRed : k;
+        h = `${top}<div class="ahScroll"><div class="ahGrid">${KEYS.map(q => { const ok = two || open(q), W = SV.f[q], [, c] = rarOf(q); return `<button class="ahCard${q === sel ? ' on' : ''}${ok ? '' : ' lock'}" data-a="${HS.red ? 'pickRed' : 'info'}" data-k="${q}" style="--rc:${c}"><canvas width="240" height="240" data-k="${q}" data-i="${HS.red ? 1 : 0}"></canvas><b>${F[q].name}</b><small>${ok ? (two ? 'ур. 5' : `ур. ${W.lvl} · 🏆 ${W.tr}`) : F[q].box ? '🔒 из ящика' : `🔒 ${F[q].need} 🏆`}</small>${ok && !two ? ppBar(W) : ''}</button>`; }).join('')}</div></div>`;
+      } else if (HS.view === 'info') {
+        const q = HS.k, g = F[q], W = SV.f[q], ok = two || open(q), l = two ? 5 : W.lvl, m = mult(l), [rn2, rc2] = rarOf(q), n = shots(q);
+        h = `${top}<div class="ahScroll"><div class="ahInfo" style="--rc:${rc2}">
+            <small>${rn2}</small><b class="ahName">${g.name}</b>
+            <canvas width="360" height="360" data-k="${q}" data-i="0"></canvas>
+            <span class="ahLv">УР. ${l}${two ? '' : ` · 🏆 ${W.tr}`}</span>
+            ${ok && !two ? ppBar(W) + upBtnH(q) : ''}
+            <div class="ahStats">
+              ${bar('Здоровье', Math.round(g.hp * m), g.hp * m / 7000, '#6fe07c')}
+              ${bar('Урон', Math.round(g.dmg * m) + (n > 1 ? ` ×${n}` : ''), g.dmg * n * m / 2200, '#ff7a6a')}
+              ${bar('Дальность', g.range > 280 ? 'очень далеко' : g.range > 200 ? 'далеко' : g.range > 140 ? 'средне' : 'близко', g.range / 330, '#8fb6ff')}
+              ${bar('Перезарядка', g.rl <= 1.1 ? 'быстро' : g.rl <= 1.6 ? 'средне' : 'медленно', 1.0 / g.rl, '#ffb347')}
+              ${bar('Скорость', g.spd >= 118 ? 'быстрый' : g.spd >= 108 ? 'средний' : 'медленный', (g.spd - 80) / 46, '#c9a6ff')}
+            </div>
+            <div class="ahAb"><em>ОГОНЬ</em><span>${g.atk}${q === 'fire' ? '. Подожжённый горит ещё полторы секунды' : q === 'rocket' ? '. Взрыв задевает рядом стоящих' : ''}</span></div>
+            <div class="ahAb sup"><em>СУПЕР</em><span>${g.sup}</span></div>
+            ${ok ? (q === k && !two ? '<div class="ahHint">Этот боец выбран</div>' : `<button class="ahBtn" data-a="pick" data-k="${q}">ВЫБРАТЬ</button>`) : `<div class="ahHint lock">${g.box ? `🔒 Выпадает только из ящиков. Шанс сейчас: ${Math.round(luckChance() * 100)}%` : `🔒 Откроется, когда наберёшь ${g.need} 🏆 (сейчас ${total()})`}</div>`}
+          </div></div>`;
+      } else {
+        const locked = KEYS.filter(q => F[q].box && !SV.f[q].own);
+        h = `${top}<div class="ahScroll"><div class="ahBoxes">
+            <div class="ahBx"><div class="ahBxPic">${crate(false)}${SV.boxes ? `<u>×${SV.boxes}</u>` : ''}</div><b>Ящик</b>
+              <div class="ahPP tok"><i style="width:${SV.tok}%"></i><span>жетоны ${SV.tok}/100${SV.dbl ? ' · ×2 активен' : ''}</span></div>
+              ${SV.boxes ? '<button class="ahBtn" data-a="open">ОТКРЫТЬ</button>' : `<div class="ahHint">Ещё ${100 - SV.tok} жетонов</div>`}</div>
+            <div class="ahBx big"><div class="ahBxPic">${crate(true)}${SV.big ? `<u>×${SV.big}</u>` : ''}</div><b>Большой ящик</b>
+              <div class="ahPP star"><i style="width:${SV.star * 10}%"></i><span>⭐ ${SV.star}/10</span></div>
+              ${SV.big ? '<button class="ahBtn purple" data-a="open">ОТКРЫТЬ</button>' : '<div class="ahHint">Втрое больше наград</div>'}</div>
+            <div class="ahHow"><b>Как получить</b>
+              <div><em>Жетоны</em><span>Дуэль: победа 20, поражение 8. Столкновение: от 20 за 1-е место до 6 за 5-е</span></div>
+              <div><em>⭐ Звёзды</em><span>Первая победа каждым бойцом за день. Сегодня: ${(() => { const d = new Date().toDateString(); return SV.starDay.d === d ? SV.starDay.w.length : 0; })()} из ${KEYS.filter(open).length}</span></div>
+              <div><em>Внутри</em><span>Монеты, очки силы, иногда удвоитель жетонов${locked.length ? ` и новый боец — шанс <i>${Math.round(luckChance() * 100)}%</i>, растёт с каждым ящиком без бойца` : ''}</span></div>
+            </div>
+          </div></div>`;
+      }
+      HUB.innerHTML = h;
+      HUB.querySelectorAll('canvas[data-k]').forEach(cv => icon(cv, cv.dataset.k, +cv.dataset.i || 0));
+    }
+    const clickOpp = human => { const pk = G.net.root.querySelector('.oppPick'); if (pk && pk.children[human ? 0 : 1]) pk.children[human ? 0 : 1].click(); };
+    HUB.addEventListener('click', e => {
+      const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
+      const a = b.dataset.a, k = b.dataset.k;
+      if (a === 'exit') { const x = G.net.root.querySelector('.pgBack'); if (x) x.click(); return; }
+      if (a === 'play') { if (!isTwo() && !open(SV.sel)) SV.sel = 'gun'; save(); const x = G.net.root.querySelector('.pgStart'); if (x) x.click(); return; }
+      if (a === 'main') { HS.view = HS.view === 'info' ? 'list' : 'main'; HS.red = false; }
+      else if (a === 'list') { HS.view = 'list'; HS.red = false; }
+      else if (a === 'listRed') { HS.view = 'list'; HS.red = true; }
+      else if (a === 'box') HS.view = 'box';
+      else if (a === 'info') { HS.view = 'info'; HS.k = k; }
+      else if (a === 'pick') { SV.sel = k; save(); HS.view = 'main'; snd(660, 0.08); }
+      else if (a === 'pickRed') { SV.selRed = k; save(); HS.view = 'main'; HS.red = false; }
+      else if (a === 'mode') { SV.mode = SV.mode === 'sd' ? 'duel' : 'sd'; save(); }
+      else if (a === 'opp') { clickOpp(!isTwo()); setTimeout(hubRender, 60); return; }
+      else if (a === 'up') { const Q = SV.f[k], cost = COST[Q.lvl - 1], need = PPC[Q.lvl - 1]; if (Q.lvl >= MAXL || SV.coins < cost || Q.pp < need) return; SV.coins -= cost; Q.pp -= need; Q.lvl++; save(); snd(660, 0.1); setTimeout(() => snd(990, 0.14), 90); }
+      else if (a === 'open') { boxFlow(); return; }
+      hubRender(); const sc = HUB.querySelector('.ahScroll'); if (sc) sc.scrollTop = 0;
+    });
+    function hubSync() { const show = !!setupEl && !setupEl.hidden && !G.net.root.hidden; if (show && HUB.hidden) { HS.view = 'main'; HS.red = false; } HUB.hidden = !show; if (show) hubRender(); }
+    if (setupEl) { const mo = new MutationObserver(hubSync); mo.observe(setupEl, { attributes: true, attributeFilter: ['hidden'] }); mo.observe(G.net.root, { attributes: true, attributeFilter: ['hidden'] }); }
+    // окно обновляется при каждом открытии и при смене соперника
+    const tile = document.getElementById('pgTile-arena'); if (tile) tile.addEventListener('click', () => setTimeout(renderLobby, 0));
+    setTimeout(() => { const pk = G.net && G.net.root.querySelector('.oppPick'); if (pk) pk.addEventListener('click', () => setTimeout(() => { if (lobbyOpts) renderLobby(); }, 30)); renderLobby(); }, 0);
+    setTimeout(hubSync, 0);
+    G.arSave = SV; G.arBox = boxFlow; // для проверок
+  })();
+
   // ======================= РЕЗИНКА =======================
   // Двое связаны резинкой и бегут по длинной трассе с препятствиями. Сзади надвигается буря.
   // Кого буря догнала — тот проиграл. Резинкой можно тащить соперника, а можно им «выстрелить» в стену.
@@ -18096,7 +19381,8 @@
       'Горячая бомба': [['💣', 'Коснись — бомба у него'], ['🎯', 'С бомбой: джойстик — бросок'], ['🌬️', 'Без бомбы: джойстик — ветер']],
       'Тающие льдины': [['🕹️', 'Води пальцем — катись'], ['🧊', 'Лёд под тобой тает'], ['🦘', 'Кнопка — прыжок через дыру']],
       'Магнит': [['🧲', 'Держи — собирай железо'], ['💨', 'Отпусти — залп'], ['🎯', 'Сбей с платформы']],
-      'Пятнашки в темноте': [['🔦', 'Охотник светит'], ['🏃', 'Убегай от луча'], ['✨', 'Кнопка — вспышка']],
+      'Арена танков': [['🕹️', 'Слева — езда'], ['🎯', 'Справа: тап или потяни — огонь'], ['📦', 'Побеждай — открывай ящики']],
+      'Прятки в темноте': [['🔦', 'Охотник видит только свет'], ['🌀', 'Телепорт — 1 раз'], ['🪧', 'Табличка-обманка']],
       'Царь горы': [['⭕', 'Стой в круге один'], ['💪', 'Держи кнопку — сильный таран'], ['👑', 'Заполни полосу']],
       'Снежный ком': [['❄️', 'Катайся — ком растёт'], ['⛄', 'Вези домой — лепи снеговика'], ['💥', 'Врежься — снег отлетит']],
       'Флаг': [['🚩', 'Хватай и вези домой'], ['🌬️', 'Джойстик справа — ветер'], ['⚡', 'Кнопка выше — рывок']],
@@ -19493,6 +20779,7 @@
     function pinSound() { try { if (typeof sound === 'function') { sound(880, 0.05, 'triangle', 0.04); setTimeout(() => sound(1320, 0.06, 'triangle', 0.035), 60); } } catch (e) {} }
     function pinShow(i, id) {
       const e = BY[id]; if (!e || e.cat !== 'pin' || (i !== 0 && i !== 1)) return;
+      if (window.PPFX.pinHook && window.PPFX.pinHook(i, id)) { pinSound(); return; } // игра забрала эмоцию себе (Прятки: на табличку)
       L.pins[i] = { e, i, t0: performance.now() }; if (L.B) { L.B[i].key = ''; L.B[i].still = false; }
       pinSound(); loop();
     }
@@ -19600,6 +20887,8 @@
         const g = b.dataset.g, m = o.panel.querySelector('.pinMore'); m.textContent = `«${BY[g].name}» — подарок ${GIFT_FOR[GIFT[g]]}: ${GIFT_HOW[GIFT[g]]}`; m.classList.remove('hey'); void m.offsetWidth; m.classList.add('hey');
       };
       const under = (o, x, y) => { const el = document.elementFromPoint(x, y); const b = el && el.closest && el.closest('.pinPanel button'); return b && o.panel.contains(b) ? b : null; };
+      // открыть свою панель эмоций из игры (Прятки: касание своей таблички)
+      L.openMine = () => { const o = L.btn[0]; if (!o || !L.live) return; fill(o); o.panel.hidden = false; o.panel.querySelectorAll('canvas[data-p]').forEach(cv => icon(cv, cv.dataset.p, +o.k.dataset.i)); };
       L.btn.forEach(o => {
         let drag = null; // { id, x, y, moved, opened }
         o.b.addEventListener('pointerdown', e => {
@@ -19667,6 +20956,14 @@
     window.PPFX.pinNet = id => { if (!BY[id] || BY[id].cat !== 'pin' || !L.live) return; pinShow(1 - L.live.me, id); };
     window.PPFX.pinSend = (i, id) => pinSend(i, id);
     window.PPFX.anchor = anchor;
+    window.PPFX.pinOpen = () => { if (!L.el && document.body) build(); if (L.openMine) setTimeout(L.openMine, 0); };
+    // эмоция одним кадром прямо на холсте игры (центр — в текущей точке, size — ширина в единицах поля)
+    window.PPFX.pinDraw = (c, id, i, size) => {
+      const e = BY[id]; if (!e || e.cat !== 'pin' || (e.ready && !e.ready())) return false;
+      const fz = FREEZE[id] == null ? 0.6 : FREEZE[id], sc = size / 84;
+      c.save(); c.scale(sc, sc); try { e.draw(c, fz, PG_COL[i], PG_DARK[i], 1000 + fz * LOOP_T); } catch (er) {} c.restore();
+      return true;
+    };
     // живой значок эмоции на холсте (для подсказки о подарке): крутится, пока холст на экране
     window.PPFX.pinPreview = (cv, id, once) => {
       const e = BY[id]; if (!e || !cv || cv._pv) return; cv._pv = 1;
@@ -19963,11 +21260,12 @@
     const svg = (k, cls) => `<svg class="${cls || 'li'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.target}</svg>`;
     const GICO = { 'Танки': 'target', 'Танки: джойстик': 'pad', 'Аэрохоккей': 'hockey', 'Аэрохоккей · тест': 'hockey', 'Неон': 'route', 'Гравитация': 'planet', 'Сумо': 'snow', 'Пинбол': 'pin', 'Лава': 'flame', 'Мини-гольф': 'golf', 'Футбол': 'ball', 'Бомбы': 'target', 'Блок-битва': 'tower', 'Кёрлинг': 'disc', 'Армии': 'sword' };
     // какие игры где есть (по названию на плитке)
-    const BOT = ['Танки', 'Танки: джойстик', 'Аэрохоккей', 'Неон', 'Гравитация', 'Сумо', 'Лава', 'Пинбол', 'Мини-гольф', 'Бомбы', 'Стрелы', 'Кистень', 'Горячая бомба', 'Тающие льдины', 'Магнит', 'Пятнашки в темноте', 'Царь горы', 'Снежный ком'];
-    const NETG = ['Танки', 'Танки: джойстик', 'Гравитация', 'Сумо', 'Лава', 'Неон', 'Мини-гольф', 'Футбол', 'Кёрлинг'];
-    const BOT_IDS = ['quickTanksTile', 'quickStickTile', 'hockeyTile', 'tronTile', 'gravTile', 'pgTile-sumo', 'pgTile-lava', 'pgTile-pinball', 'pgTile-golf', 'pgTile-bombs', 'pgTile-arrows', 'pgTile-flail', 'pgTile-hotbomb', 'pgTile-ice', 'pgTile-magnet', 'pgTile-dark', 'pgTile-hill', 'pgTile-snowball'];
+    const BOT = ['Танки', 'Танки: джойстик', 'Аэрохоккей', 'Неон', 'Гравитация', 'Сумо', 'Лава', 'Пинбол', 'Мини-гольф', 'Бомбы', 'Стрелы', 'Кистень', 'Горячая бомба', 'Тающие льдины', 'Магнит', 'Царь горы', 'Снежный ком', 'Прятки в темноте', 'Арена танков'];
+    const NETG = ['Танки', 'Танки: джойстик', 'Гравитация', 'Сумо', 'Лава', 'Неон', 'Мини-гольф', 'Футбол', 'Кёрлинг', 'Прятки в темноте'];
+    const NO_TWO = ['Прятки в темноте']; // вдвоём на одном телефоне нельзя
+    const BOT_IDS = ['quickTanksTile', 'quickStickTile', 'hockeyTile', 'tronTile', 'gravTile', 'pgTile-sumo', 'pgTile-lava', 'pgTile-pinball', 'pgTile-golf', 'pgTile-bombs', 'pgTile-arrows', 'pgTile-flail', 'pgTile-hotbomb', 'pgTile-ice', 'pgTile-magnet', 'pgTile-hill', 'pgTile-snowball', 'pgTile-hide', 'pgTile-arena'];
     const nameOf = t => { const s = t.querySelector(':scope > span'); return (s ? s.textContent : t.textContent).trim(); };
-    const icons = n => `<span class="modeIcons">${svg('users', 'mi')}${BOT.includes(n) ? svg('robot', 'mi') : ''}${NETG.includes(n) ? svg('world', 'mi') : ''}</span>`;
+    const icons = n => `<span class="modeIcons">${NO_TWO.includes(n) ? '' : svg('users', 'mi')}${BOT.includes(n) ? svg('robot', 'mi') : ''}${NETG.includes(n) ? svg('world', 'mi') : ''}</span>`;
     const addIcons = t => {
       if (t.dataset.lined) return; t.dataset.lined = '1';
       const n = nameOf(t);
@@ -20125,7 +21423,7 @@
     }
 
     // значки режимов на плитках
-    document.querySelectorAll('#tilesMini .tile, #tilesTanks .tile, #tilesNet .tile').forEach(addIcons);
+    document.querySelectorAll('#tilesMini .tile, #tilesTanks .tile, #tilesNet .tile, #netOnlyTiles .tile').forEach(addIcons);
     home.classList.add('lineHome');
     // плитки, которые появляются позже (например, игры Элит)
     new MutationObserver(() => home.querySelectorAll('.tiles .tile:not([data-lined])').forEach(t => { if (t.closest('#botGridX')) return; addIcons(t); })).observe(home, { childList: true, subtree: true });
@@ -20141,6 +21439,421 @@
     }
     if (window.PPINV) PPINV.mount(invBox);
     window.pgHome = { setMode, render };
+  })();
+
+  // ======================= ТУРНИР (3.13) =======================
+  // Серия случайных игр «Вдвоём» или «С ботом»: рулетка выбирает игру, победа в матче — очко турнира,
+  // кто первым наберёт нужное число очков — чемпион (кубок записывается на этом телефоне).
+  // У каждого игрока на турнир две карты: «×2» (победа в этой игре даст 2 очка) и «🎲» (перекрутить рулетку).
+  // Игры не меняются: запуск — как «Продолжить» в home.js (клик по плитке → соперник → «Играть»),
+  // конец матча ловим через PPCHEST.end (его зовут все игры), выход в меню — кнопками самих игр.
+  // «Быстрые матчи» на время турнира ставят «до скольки» ближе к 3, после матча настройка игры возвращается.
+  (function () {
+    const home = document.getElementById('homeScreen'), menuEl = document.getElementById('menu'), quick = document.getElementById('quickSetup');
+    if (!home || !menuEl || !window.PPCHEST) return;
+    const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+    const jGet = (k, d) => { try { return Object.assign(d, JSON.parse(lsGet(k, 'null')) || {}); } catch (e) { return d; } };
+    const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+    const seen = e => !!e && e.getClientRects().length > 0 && !e.closest('[hidden]');
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const snd = (f, d, t, v) => { try { sound(f, d, t || 'triangle', v || 0.05); } catch (e) {} };
+    const buzz = p => { try { vibrate(p); } catch (e) {} };
+    const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+    const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+    // игры, где есть бот (как в home.js)
+    const BOT_IDS = ['quickTanksTile', 'quickStickTile', 'hockeyTile', 'tronTile', 'gravTile', 'pgTile-sumo', 'pgTile-lava', 'pgTile-pinball', 'pgTile-golf', 'pgTile-bombs', 'pgTile-arrows', 'pgTile-flail', 'pgTile-hotbomb', 'pgTile-ice', 'pgTile-magnet', 'pgTile-hill', 'pgTile-snowball', 'pgTile-hide'];
+    const BOT_ONLY = ['pgTile-hide']; // их нет во «Вдвоём» (Прятки: на одном телефоне вы бы видели друг друга) — только в турнире с ботом
+    const nameOf = id => { const t = document.getElementById(id); if (!t) return '?'; const s = t.querySelector(':scope > span'); return (s ? s.textContent : t.textContent).trim(); };
+    const poolFor = m => [...document.querySelectorAll('#tilesMini .tile')].map(t => t.id).filter(id => id && id !== 'pgTile-arena' && (m === 'two' || BOT_IDS.includes(id))).concat(m === 'bot' ? BOT_ONLY.filter(id => document.getElementById(id)) : []);
+    const LV = ['лёгкий', 'средний', 'злой'];
+    const COL = ['var(--tank1)', 'var(--tank2)'];
+    const TROPHY = '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>';
+    const ico = (p, cls) => `<svg class="${cls || ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+
+    // ---------- состояние ----------
+    const CFG = jGet('cup-cfg', { m: 'two', lv: 1, goal: 3, fast: true });
+    const NEW = () => ({ on: false, m: CFG.m, lv: CFG.lv, goal: CFG.goal, fast: CFG.fast, sc: [0, 0], x2: [1, 1], re: [1, 1], bet: [0, 0], bag: [], cur: null, last: null, n: 0, hist: [] });
+    let S = NEW();
+    { const s = jGet('cup-state', {}); if (s.on && Array.isArray(s.sc)) S = Object.assign(NEW(), s); }
+    const save = () => lsSet('cup-state', JSON.stringify(S.on ? S : { on: false }));
+    const CUPS = jGet('cup-cups', { b: 0, r: 0, me: 0, bot: 0 });
+    let phase = 'off', playAt = 0, restore = null, botDone = false, spinId = 0;
+    const who = p => S.m === 'bot' ? (p === 0 ? 'Ты' : 'Бот') : (p === 0 ? 'Синий' : 'Красный');
+
+    // ---------- окно ----------
+    const L = el('div', 'cupL'); L.id = 'cupLayer'; L.hidden = true;
+    const side = p => `<div class="cupSide" data-p="${p}">
+        <div class="cupWho"><b class="cupName"></b><span class="cupPips"></span></div>
+        <div class="cupCards"><button class="cupCard" data-c="x2"><b>×2</b><small>двойная победа</small></button><button class="cupCard" data-c="re"><b>🎲</b><small>перекрутить</small></button></div>
+        <div class="cupFlash"></div>
+      </div>`;
+    L.innerHTML = `
+      <div class="hkOverlay cupSetup" hidden>
+        <div class="hkCard">
+          <h1 class="menuTitle cupH">${ico(TROPHY, 'cupHi')}Турнир</h1>
+          <p>Рулетка сама выбирает игру. Победил — очко. Кто первым наберёт нужное число очков — чемпион и забирает кубок.</p>
+          <div class="cupRules">
+            <div><b>×2</b><span>поставь перед игрой — победа в ней даст 2 очка</span></div>
+            <div><b>🎲</b><span>не нравится игра — перекрути рулетку</span></div>
+            <small>У каждого по одной карте каждого вида на весь турнир.</small>
+          </div>
+          <div><h2 class="groupTitle">Соперник</h2>
+            <div class="segmented cupOpp"><button data-v="two">👥 Вдвоём</button><button data-v="bot">🤖 С ботом</button></div>
+            <div class="segmented cupLv"><button data-v="0">Лёгкий</button><button data-v="1">Средний</button><button data-v="2">Злой</button></div>
+          </div>
+          <div class="segInline"><h2 class="groupTitle">Очков до победы</h2>
+            <div class="segmented cupGoal"><button data-v="3">3</button><button data-v="5">5</button><button data-v="7">7</button></div>
+          </div>
+          <div class="settingRow"><div class="label">Быстрые матчи<small>Каждая игра короче — примерно до 3. Твои настройки игр потом вернутся</small></div><button class="switch cupFast" role="switch" aria-label="Быстрые матчи"><span></span></button></div>
+          <div class="hkRow"><button class="backBtn cupBack">← Назад</button><button class="hkPlay cupGo">Начать</button></div>
+        </div>
+      </div>
+      <div class="cupBoard" hidden>
+        ${side(1)}
+        <div class="cupMid">
+          <div class="cupTop"><button class="cupX" aria-label="Выйти из турнира">✕</button><span class="cupTitle">${ico(TROPHY)}Турнир</span><span class="cupSub"></span></div>
+          <div class="cupScore"><b class="cs0"></b><i>:</i><b class="cs1"></b></div>
+          <div class="cupReel"><div class="cupStrip"></div><div class="cupMark"></div></div>
+          <div class="cupNote"></div>
+          <button class="hkPlay cupPlay">Играть</button>
+          <div class="cupAsk" hidden><span>Выйти из турнира? Счёт пропадёт.</span><div class="hkRow"><button class="backBtn cupNo">Остаться</button><button class="hkPlay cupYes">Выйти</button></div></div>
+        </div>
+        ${side(0)}
+      </div>
+      <div class="cupRes" hidden><div class="cupSheet">
+        <div class="cupResT"></div>
+        <div class="cupPts"></div>
+        <div class="cupResS"></div>
+        <button class="hkPlay cupNext">Дальше ›</button>
+      </div></div>
+      <div class="cupChamp" hidden><div class="cupChCard">
+        <div class="cupBig">${ico(TROPHY)}</div>
+        <div class="cupChT"></div>
+        <div class="cupChS"></div>
+        <div class="cupHist"></div>
+        <div class="cupCups"></div>
+        <div class="hkRow"><button class="backBtn cupHome">В меню</button><button class="hkPlay cupAgain">Ещё турнир</button></div>
+      </div></div>`;
+    document.body.appendChild(L);
+    const $ = s => L.querySelector(s);
+    const setupEl = $('.cupSetup'), board = $('.cupBoard'), resEl = $('.cupRes'), champEl = $('.cupChamp');
+    const reel = $('.cupReel'), strip = $('.cupStrip');
+    const show = part => { L.hidden = !part; [setupEl, board, resEl, champEl].forEach(x => x.hidden = x !== part); };
+
+    // ---------- настройки турнира ----------
+    function renderSetup() {
+      const pr = (sel, v) => setupEl.querySelectorAll(sel + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(v))));
+      pr('.cupOpp', CFG.m); pr('.cupLv', CFG.lv); pr('.cupGoal', CFG.goal);
+      $('.cupLv').hidden = CFG.m !== 'bot';
+      $('.cupFast').setAttribute('aria-checked', String(!!CFG.fast));
+    }
+    setupEl.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      const g = b.parentNode;
+      if (g.classList.contains('cupOpp')) CFG.m = b.dataset.v;
+      else if (g.classList.contains('cupLv')) CFG.lv = +b.dataset.v;
+      else if (g.classList.contains('cupGoal')) CFG.goal = +b.dataset.v;
+      else if (b.classList.contains('cupFast')) CFG.fast = !CFG.fast;
+      else return;
+      lsSet('cup-cfg', JSON.stringify(CFG)); renderSetup();
+    });
+    $('.cupBack').addEventListener('click', () => { show(null); phase = 'off'; });
+    $('.cupGo').addEventListener('click', () => {
+      S = NEW(); S.on = true; save();
+      if (window.pgHome) pgHome.setMode(S.m); // плитки и подсказки — в том же режиме, что турнир
+      snd(523, 0.1); setTimeout(() => snd(784, 0.14), 90);
+      openBoard(true);
+    });
+
+    // ---------- табло ----------
+    function pips(p) { let h = ''; for (let k = 0; k < S.goal; k++) h += `<i class="${k < S.sc[p] ? 'on' : ''}"></i>`; return h; }
+    function renderBoard() {
+      L.classList.toggle('two', S.m === 'two');
+      for (const p of [0, 1]) {
+        const sd = board.querySelector(`.cupSide[data-p="${p}"]`);
+        sd.querySelector('.cupName').textContent = S.m === 'bot' && p === 1 ? `Бот · ${LV[S.lv]}` : who(p);
+        sd.querySelector('.cupPips').innerHTML = pips(p);
+        const x2 = sd.querySelector('[data-c="x2"]'), re = sd.querySelector('[data-c="re"]');
+        const mine = !(S.m === 'bot' && p === 1);
+        x2.classList.toggle('on', !!S.bet[p]); x2.classList.toggle('used', !S.x2[p] && !S.bet[p]);
+        re.classList.toggle('used', !S.re[p]);
+        x2.disabled = !mine || phase !== 'pick' || (!S.x2[p] && !S.bet[p]);
+        re.disabled = !mine || phase !== 'pick' || !S.re[p];
+        x2.querySelector('small').textContent = S.bet[p] ? 'поставлено!' : !S.x2[p] ? 'потрачена' : 'двойная победа';
+        re.querySelector('small').textContent = !S.re[p] ? 'потрачена' : 'перекрутить';
+        sd.classList.toggle('bot', !mine);
+      }
+      $('.cs0').textContent = S.sc[0]; $('.cs1').textContent = S.sc[1];
+      $('.cupSub').textContent = `игра ${S.n + 1} · до ${S.goal}`;
+      const mp = [0, 1].filter(p => S.sc[p] >= S.goal - 1 || (S.bet[p] && S.sc[p] >= S.goal - 2));
+      let note = '';
+      if (phase === 'spin') note = 'Крутим рулетку…';
+      else if (phase === 'pick') {
+        const bets = [0, 1].filter(p => S.bet[p]).map(p => `<b style="color:${COL[p]}">${who(p)}: ×2</b>`);
+        note = mp.length === 2 ? '<b class="cupHot">Решающая игра!</b>' : mp.length ? `<b class="cupHot">Матч-пойнт: ${who(mp[0])}</b>` : '';
+        if (bets.length) note += (note ? ' · ' : '') + bets.join(' · ');
+        if (!note) note = 'Можно поставить ×2 или перекрутить — или сразу играть';
+      }
+      $('.cupNote').innerHTML = note;
+      const pl = $('.cupPlay'); pl.disabled = phase !== 'pick';
+      pl.textContent = phase === 'pick' && S.cur ? `Играть: ${nameOf(S.cur)}` : 'Играть';
+    }
+    const IW = 116;
+    function item(id) {
+      const t = document.getElementById(id), ic = t && t.querySelector('.tileIcon');
+      return `<div class="cupItem" data-id="${id}"><div class="cupIco">${ic ? ic.outerHTML : ''}</div><span>${nameOf(id)}</span></div>`;
+    }
+    function fillStrip(ids, fin) {
+      strip.innerHTML = ids.map(item).join('');
+      strip.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
+      return -(fin * IW - reel.clientWidth / 2 + IW / 2);
+    }
+    function staticReel() { // показать уже выбранную игру без прокрутки
+      const pool = poolFor(S.m), r = () => pool[Math.floor(Math.random() * pool.length)];
+      strip.style.transition = 'none';
+      strip.style.transform = `translateX(${fillStrip([r(), r(), S.cur, r(), r()], 2)}px)`;
+      strip.children[2].classList.add('on');
+    }
+    function draw(not) { // мешок: все игры по разу, потом заново; не та же, что только что
+      const pool = poolFor(S.m);
+      const ok = id => pool.includes(id) && id !== not && id !== S.last;
+      S.bag = (S.bag || []).filter(id => pool.includes(id));
+      if (!S.bag.some(ok)) S.bag = shuffle(pool.slice());
+      const id = S.bag.find(ok) || pool.find(id => id !== not) || pool[0];
+      S.bag.splice(S.bag.indexOf(id), 1);
+      return id;
+    }
+    function spin(not) {
+      const my = ++spinId;
+      phase = 'spin'; botDone = false;
+      S.cur = draw(not); save(); renderBoard();
+      const pool = poolFor(S.m), N = 28, fin = N - 3, ids = [];
+      for (let k = 0; k < N; k++) ids.push(k === fin ? S.cur : pool[Math.floor(Math.random() * pool.length)]);
+      const x = fillStrip(ids, fin), T = calm() ? 250 : 2700, rw = reel.clientWidth;
+      strip.style.transition = 'none'; strip.style.transform = 'translateX(0px)'; void strip.offsetWidth;
+      strip.style.transition = `transform ${T}ms cubic-bezier(.12,.72,.16,1)`; strip.style.transform = `translateX(${x}px)`;
+      let lastK = -1;
+      const tick = () => {
+        if (my !== spinId || phase !== 'spin') return;
+        let m41 = 0; try { m41 = new DOMMatrix(getComputedStyle(strip).transform).m41; } catch (e) {}
+        const k = Math.floor((-m41 + rw / 2) / IW);
+        if (k !== lastK) { if (lastK >= 0) snd(1100 + (k % 3) * 90, 0.025, 'square', 0.018); lastK = k; }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+      setTimeout(() => {
+        if (my !== spinId) return;
+        const it = strip.children[fin]; if (it) it.classList.add('on');
+        snd(660, 0.1); setTimeout(() => snd(990, 0.18), 110); buzz(30);
+        phase = 'pick'; renderBoard(); botThink();
+      }, T + 80);
+    }
+    function flash(p, text) {
+      const f = board.querySelector(`.cupSide[data-p="${p}"] .cupFlash`);
+      f.textContent = text; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+    }
+    function useCard(p, c) {
+      if (phase !== 'pick') return;
+      if (c === 'x2') {
+        if (S.bet[p]) { S.bet[p] = 0; S.x2[p] = 1; snd(330, 0.08); }
+        else if (S.x2[p]) { S.bet[p] = 1; S.x2[p] = 0; snd(784, 0.08); setTimeout(() => snd(1175, 0.14), 80); buzz(20); flash(p, '×2'); }
+      } else if (c === 're' && S.re[p]) {
+        S.re[p] = 0;
+        [0, 1].forEach(q => { if (S.bet[q]) { S.bet[q] = 0; S.x2[q] = 1; } }); // игра сменилась — ставки возвращаются
+        flash(p, '🎲'); buzz(20);
+        spin(S.cur); return;
+      }
+      save(); renderBoard();
+    }
+    board.addEventListener('click', e => {
+      const b = e.target.closest('.cupCard'); if (!b || b.disabled) return;
+      const p = +b.closest('.cupSide').dataset.p; if (S.m === 'bot' && p === 1) return;
+      useCard(p, b.dataset.c);
+    });
+    // бот сам решает про свои карты
+    function botThink() {
+      if (S.m !== 'bot' || botDone) return; botDone = true;
+      const my = spinId;
+      setTimeout(() => {
+        if (my !== spinId || phase !== 'pick') return;
+        if (S.re[1] && Math.random() < 0.28) { useCard(1, 're'); return; }
+        const behind = S.sc[1] < S.sc[0], close = S.sc[0] >= S.goal - 1;
+        if (S.x2[1] && !S.bet[1] && (behind || close || Math.random() < 0.2)) useCard(1, 'x2');
+      }, 700 + Math.random() * 500);
+    }
+    $('.cupPlay').addEventListener('click', play);
+    $('.cupX').addEventListener('click', () => { $('.cupAsk').hidden = false; });
+    $('.cupNo').addEventListener('click', () => { $('.cupAsk').hidden = true; });
+    $('.cupYes').addEventListener('click', () => { $('.cupAsk').hidden = true; quit(); });
+    function quit() { S = NEW(); save(); spinId++; phase = 'off'; show(null); renderBanner(); }
+    function openBoard(fresh) {
+      $('.cupAsk').hidden = true;
+      show(board); renderBoard();
+      if (fresh || !S.cur) { phase = 'board'; requestAnimationFrame(() => spin()); }
+      else { phase = 'pick'; renderBoard(); requestAnimationFrame(staticReel); }
+    }
+
+    // ---------- запуск игры ----------
+    const visCard = () => [...document.querySelectorAll('.hkOverlay .hkCard')].find(c => seen(c) && !L.contains(c));
+    function setOpp(card) {
+      const pick = card && card.querySelector('.oppPick'); if (!pick || !seen(pick)) return;
+      const pressed = b => b && b.getAttribute('aria-pressed') === 'true';
+      if (S.m === 'two') { if (!pressed(pick.children[0])) pick.children[0].click(); return; }
+      if (!pressed(pick.children[1])) pick.children[1].click();
+      const lv = card.querySelectorAll('.botLv button'), b = lv.length === 2 ? lv[S.lv >= 2 ? 1 : 0] : lv[Math.min(lv.length - 1, S.lv)]; // два уровня (Прятки): лёгкий и средний — обычный, злой — умный
+      if (b && !pressed(b)) b.click();
+    }
+    function setFast(card) { // «до скольки» — ближе к 3 (на время матча)
+      if (!card) return;
+      const seg = [...card.querySelectorAll('.segmented')].find(s => !s.classList.contains('uxHidden') && seen(s) && s.children.length > 1 && [...s.children].every(b => /^\d+$/.test(b.textContent.trim())));
+      if (!seg) return;
+      const bs = [...seg.children], v = b => +b.textContent.trim();
+      const cur = bs.find(b => b.getAttribute('aria-pressed') === 'true');
+      const best = bs.slice().sort((a, b) => Math.abs(v(a) - 3) - Math.abs(v(b) - 3) || v(b) - v(a))[0];
+      if (best && cur && best !== cur) { restore = cur; best.click(); }
+    }
+    function undoFast() { if (restore) { try { restore.click(); } catch (e) {} restore = null; } }
+    async function play() {
+      if (phase !== 'pick' || !S.cur) return;
+      const t = document.getElementById(S.cur);
+      if (!t) { spin(S.cur); return; }
+      phase = 'launch'; spinId++;
+      S.on = true; save();
+      await goHome();
+      show(null);
+      t.click();
+      await wait(120);
+      const card = visCard();
+      setOpp(card);
+      if (S.fast) setFast(card);
+      await wait(80);
+      const pl = [...document.querySelectorAll('.hkOverlay .hkPlay')].find(b => seen(b) && !L.contains(b));
+      if (pl) pl.click();
+      phase = 'play'; playAt = performance.now();
+      renderBanner();
+    }
+
+    // ---------- конец матча ----------
+    const end0 = PPCHEST.end;
+    PPCHEST.end = function (won) {
+      try { if (phase === 'play' && !(window.NET && NET.on) && performance.now() - playAt > 800) onEnd(won ? 0 : 1); } catch (e) {}
+      return end0.apply(this, arguments);
+    };
+    function onEnd(w) {
+      phase = 'res';
+      const pts = S.bet[w] ? 2 : 1;
+      S.sc[w] += pts; S.n++;
+      S.hist.push([S.cur, w, pts]);
+      S.last = S.cur; S.cur = null; S.bet = [0, 0];
+      save();
+      const done = S.sc[w] >= S.goal;
+      $('.cupResT').innerHTML = `<b style="color:${COL[w]}">${who(w)}</b> ${S.m === 'bot' && w === 0 ? 'выиграл' : 'выигрывает'} «${nameOf(S.last)}»`;
+      $('.cupPts').innerHTML = pts === 2 ? '+2 <small>×2 сработала!</small>' : '+1';
+      $('.cupPts').style.color = COL[w];
+      $('.cupResS').innerHTML = `<span style="color:${COL[0]}">${who(0)} ${S.sc[0]}</span> : <span style="color:${COL[1]}">${S.sc[1]} ${who(1)}</span>`;
+      $('.cupNext').textContent = done ? 'К награждению 🏆' : 'Дальше ›';
+      $('.cupNext').style.background = COL[w];
+      setTimeout(() => { if (phase !== 'res') return; show(resEl); resEl.classList.remove('in'); void resEl.offsetWidth; resEl.classList.add('in'); snd(880, 0.08); }, 1500);
+    }
+    $('.cupNext').addEventListener('click', async () => {
+      if (phase !== 'res') return;
+      phase = 'board';
+      const done = S.sc[0] >= S.goal || S.sc[1] >= S.goal;
+      show(board); renderBoard();
+      strip.innerHTML = ''; // пока уходим из игры — табло закрывает экран
+      await goHome();
+      undoFast();
+      if (done) champ(); else { await wait(250); spin(); }
+    });
+
+    // выйти из игры на главный экран теми же кнопками, что и игрок
+    const STEPS = ['#victory:not([hidden]) #toLevelsBtn', '#hkToSetup', '#trToSetup', '#gvToSetup', '.pg:not([hidden]) .pgToMenu',
+      '#hkBack', '#trBack', '#gvBack', '.pg:not([hidden]) .pgBack', '#quickBack', '#backBtn'];
+    const inGame = () => !!document.querySelector('#hockey:not([hidden]), #tron:not([hidden]), #grav:not([hidden]), .pg:not([hidden])') || menuEl.hidden;
+    const atHome = () => !inGame() && seen(home) && (!quick || quick.hidden);
+    async function goHome() {
+      for (let k = 0; k < 10 && !atHome(); k++) {
+        const b = STEPS.map(s => document.querySelector(s)).find(seen);
+        if (!b) break;
+        b.click(); await wait(70);
+      }
+    }
+    // игрок сам вышел из игры в меню — турнир ждёт на табло, эту игру можно сыграть заново
+    setInterval(() => {
+      if (phase !== 'play' || performance.now() - playAt < 1200 || !atHome()) return;
+      undoFast();
+      openBoard(false);
+      $('.cupNote').innerHTML = 'Игра прервана — очко никому. Сыграйте её снова или перекрутите';
+    }, 500);
+
+    // ---------- чемпион ----------
+    function champ() {
+      phase = 'champ';
+      const w = S.sc[0] >= S.goal ? 0 : 1;
+      if (S.m === 'two') CUPS[w ? 'r' : 'b']++; else CUPS[w ? 'bot' : 'me']++;
+      lsSet('cup-cups', JSON.stringify(CUPS));
+      const c = $('.cupChCard');
+      c.style.setProperty('--cc', w ? '#e04f3f' : '#3f7fe0');
+      $('.cupChT').textContent = S.m === 'bot' ? (w ? 'Бот забрал кубок' : 'Ты — чемпион!') : `${who(w)} — чемпион!`;
+      $('.cupChS').innerHTML = `<span style="color:${COL[0]}">${S.sc[0]}</span> : <span style="color:${COL[1]}">${S.sc[1]}</span>`;
+      $('.cupHist').innerHTML = S.hist.map(([id, p, pts]) => `<div><i style="background:${COL[p]}"></i><span>${nameOf(id)}</span><b style="color:${COL[p]}">${who(p)}${pts > 1 ? ' ×2' : ''}</b></div>`).join('');
+      $('.cupCups').innerHTML = cupsLine(S.m);
+      champEl.querySelectorAll('.confetti').forEach(x => x.remove());
+      if (!(S.m === 'bot' && w === 1)) {
+        const cols = [w ? '#e04f3f' : '#3f7fe0', '#ffd23f', '#ffffff', '#ffb02e'];
+        for (let k = 0; k < 60; k++) {
+          const x = el('div', 'confetti'); x.style.left = Math.random() * 100 + '%'; x.style.background = cols[k % cols.length];
+          x.style.animationDuration = (2 + Math.random() * 2) + 's'; x.style.animationDelay = (-Math.random() * 3) + 's'; champEl.appendChild(x);
+        }
+        [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => snd(f, i === 3 ? 0.5 : 0.14, 'triangle', 0.07), i * 140));
+        buzz([40, 60, 40, 60, 120]);
+      } else { snd(392, 0.2); setTimeout(() => snd(294, 0.35), 200); }
+      show(champEl);
+      champEl.classList.remove('in'); void champEl.offsetWidth; champEl.classList.add('in');
+      S.on = false; save();
+      renderBanner();
+    }
+    function cupsLine(m) {
+      return m === 'bot' ? `Кубков: <b style="color:${COL[0]}">ты ${CUPS.me}</b> · <b style="color:${COL[1]}">бот ${CUPS.bot}</b>`
+        : `Кубков: <b style="color:${COL[0]}">синий ${CUPS.b}</b> · <b style="color:${COL[1]}">красный ${CUPS.r}</b>`;
+    }
+    $('.cupHome').addEventListener('click', () => { phase = 'off'; show(null); S = NEW(); renderBanner(); });
+    $('.cupAgain').addEventListener('click', () => { S = NEW(); S.on = true; save(); openBoard(true); });
+
+    // ---------- плашка на главной ----------
+    const banner = el('button', 'cupBanner');
+    const cont = home.querySelector('.contCard');
+    if (cont) cont.parentNode.insertBefore(banner, cont); else home.appendChild(banner);
+    const homeMode = () => { const b = document.querySelector('.modeBar button[aria-pressed="true"]'); return b ? b.dataset.m : 'two'; };
+    function renderBanner() {
+      const m = homeMode();
+      banner.hidden = !(m === 'two' || m === 'bot');
+      if (banner.hidden) return;
+      const cups = m === 'bot' ? CUPS.me + CUPS.bot : CUPS.b + CUPS.r;
+      const sub = S.on ? `${S.m === 'bot' ? 'С ботом' : 'Вдвоём'} · игра ${S.n + 1} · до ${S.goal} — продолжить`
+        : cups ? cupsLine(m).replace(/<[^>]+>/g, '') : 'Рулетка выбирает игры, кто первым наберёт очки — чемпион';
+      banner.classList.toggle('live', S.on);
+      banner.innerHTML = `<span class="cupBIco">${ico(TROPHY)}</span><span class="cupBTxt"><b>${S.on ? `Турнир · ${S.sc[0]} : ${S.sc[1]}` : 'Турнир'}</b><small>${sub}</small></span><span class="cupBArr">›</span>`;
+    }
+    banner.addEventListener('click', () => {
+      if (S.on) { if (window.pgHome && homeMode() !== S.m) pgHome.setMode(S.m); openBoard(false); return; }
+      CFG.m = homeMode() === 'bot' ? 'bot' : 'two'; lsSet('cup-cfg', JSON.stringify(CFG));
+      renderSetup(); show(setupEl); phase = 'setup';
+      setupEl.scrollTop = 0;
+    });
+    const bar = document.querySelector('.modeBar');
+    if (bar) new MutationObserver(renderBanner).observe(bar, { attributes: true, subtree: true, attributeFilter: ['aria-pressed'] });
+    renderBanner();
+
+    // клавиатура: Enter / Пробел — «Играть» / «Дальше»
+    document.addEventListener('keydown', e => {
+      if (L.hidden || (e.key !== 'Enter' && e.key !== ' ')) return;
+      const b = phase === 'pick' ? $('.cupPlay') : phase === 'res' ? $('.cupNext') : null;
+      if (b && seen(b)) { e.preventDefault(); b.click(); }
+    });
+    window.PPCUP = { state: () => S, phase: () => phase };
   })();
 
   let last = performance.now();
