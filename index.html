@@ -2258,7 +2258,6 @@
   .stSub .stCard.stOne, .stSub .stCard.stNear, .stSub .stCard.stFar { min-height: 118px; }
   .duoPanel { display: flex; flex-direction: column; gap: 10px; background: #191b21; border-radius: 20px; padding: 16px; }
   .duoPanel[hidden] { display: none; }
-  .duoNear .duoPanel { background: none; padding: 4px 2px; }
   .duoPanel p { margin: 0; }
   .duoBig { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; border: none; border-radius: 18px; padding: 18px; background: #3f7fe0; color: #fff; text-align: left; font-family: inherit; }
   .duoBig b { font-size: 1.35rem; font-weight: 800; }
@@ -2281,6 +2280,7 @@
   .duoVpn .duoBtn { background: #ffd84a; color: #2a1c00; margin-top: 4px; }
   .duoLink { border: none; background: none; color: #8fb6ff; font-size: 0.95rem; font-weight: 600; padding: 4px 0; text-align: left; font-family: inherit; }
   /* в «Далеко» старые плашки сетей не видны — вместо них .duoPanel; игры — только когда друг подключился */
+  .duoNear .duoPanel { background: none; padding: 4px 2px; }
   .duoFar #netPanel, .duoFar #elitePanel, .duoFar .cupBanner, .duoFar .contCard, .duoNear .cupBanner, .duoNear .contCard { display: none !important; }
   .duoFar:not(.duoReady) .tiles, .duoNear:not(.duoReady) .tiles { display: none !important; }
   .duoNear .duoPanel { order: 5; }
@@ -2294,6 +2294,39 @@
   .qrAskIcon { font-size: 56px; }
   .qrAskT { font-size: 1.05rem; line-height: 1.45; max-width: 340px; }
   .qrStep { text-align: left; margin: 8px 0 2px; }
+  /* 3.53: «игра с другом — на сайте» и «выключи VPN» */
+  .ppGate { position: fixed; inset: 0; z-index: 9999; background: rgba(8,10,16,0.82); display: flex; align-items: center; justify-content: center; padding: 18px; }
+  .ppGateCard { background: #1f2330; color: #fff; border-radius: 22px; padding: 22px 20px 18px; max-width: 360px; width: 100%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  .ppGateIco { font-size: 44px; margin-bottom: 4px; }
+  .ppGateT { display: block; font-size: 1.3rem; margin-bottom: 8px; }
+  .ppGateCard p { margin: 6px 0; color: #c9d0de; line-height: 1.4; }
+  .ppGateSteps { text-align: left; margin: 10px 0; padding-left: 22px; color: #e8ebf2; line-height: 1.45; }
+  .ppGateSteps li { margin: 4px 0; }
+  .ppGateSmall { font-size: 0.85rem; }
+  .ppGateBtns { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  /* 3.54: «На двух телефонах» — ⚡ Быстро / 📶 Стабильно */
+  .stCard[hidden] { display: none !important; }
+  .duoQ { font-size: 1.05rem; font-weight: 800; color: #fff; margin-bottom: 2px; }
+  .duoFast { background: #3f7fe0; }
+  .duoStable { background: #2f8a5a; margin-top: 4px; }
+  .duoStable small { color: #d4f5e2; }
+  .duoNote { margin: 2px 2px 0; font-size: 0.85rem; color: #ffd98a; line-height: 1.35; }
+  .duoTbl { margin: 0 2px; font-size: 0.85rem; color: #b8c2d6; }
+  .duoTbl summary { cursor: pointer; color: #9fbbe8; padding: 4px 0; }
+  .duoTbl table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 0.78rem; }
+  .duoTbl th { text-align: left; color: #8a93a8; font-weight: 700; padding: 2px 3px; }
+  .duoTbl td { padding: 3px; border-top: 1px solid rgba(255,255,255,0.07); color: #e3e8f2; }
+  .duoTbl td.y { color: #ffd23f; font-weight: 800; white-space: nowrap; }
+  .duoTbl p { margin: 4px 0 2px; font-size: 0.78rem; }
+  .duoConn { margin: 4px 0 6px; font-weight: 700; color: #ffd98a; }
+  .duoConn.ok { color: #7ee8a0; }
+  .duoRelay { background: rgba(255,210,63,0.08); border: 1px solid rgba(255,210,63,0.35); border-radius: 14px; padding: 10px 12px; margin: 6px 0 8px; display: flex; flex-direction: column; gap: 4px; color: #e8ebf2; font-size: 0.9rem; }
+  .duoRelay b { color: #ffd23f; }
+  .duoRelay ol { margin: 2px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+  .duoRelay .duoSub { font-size: 0.78rem; color: #aab3c5; }
+  .duoSmall { padding: 5px 10px !important; font-size: 0.85rem !important; display: inline-block !important; width: auto !important; margin: 0 !important; }
+  #netBadge.duoMini { opacity: 0.8; }
+  .duoTbl td:last-child { white-space: nowrap; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -8742,7 +8775,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '3.48';
+  const NET_BUILD = '3.54';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -8819,7 +8852,8 @@
   const PEER_OPTS = { debug: 0, config: { iceServers: [
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
     { urls: 'stun:stun.cloudflare.com:3478' },
-    { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' },
+    // 3.49: пересылающие серверы peerjs (Европа/США) убраны — они отключены и не работают, только тянули время.
+    // Не вышло напрямую — дальше наш сервер в Москве (Сеть++ / облегчённая сеть)
   ], sdpSemantics: 'unified-plan' } };
   // переключатель «Только напрямую»: без пересылающих серверов (TURN). Не получилось напрямую — честно
   // говорим об этом, а не играем с большой задержкой через пересылку
@@ -9221,6 +9255,12 @@
   const badgeEl = document.createElement('div');
   badgeEl.id = 'netBadge'; badgeEl.hidden = true;
   document.body.appendChild(badgeEl);
+  // 3.54: «Игра тормозит — выключи VPN»: задержка дольше 150 мс 5 секунд подряд (сброс — когда 3 с подряд меньше 120)
+  function slowCheck() {
+    const r = NET.rttLast == null ? NET.rtt : NET.rttLast, t = performance.now();
+    if (r > 150) { NT.fastSince = 0; if (!NT.slowSince) NT.slowSince = t; if (t - NT.slowSince > 5000) NT.slow = true; }
+    else { NT.slowSince = 0; if (r < 120) { if (!NT.fastSince) NT.fastSince = t; if (t - NT.fastSince > 3000) NT.slow = false; } }
+  }
   function netBadge() {
     if (!NET.on || NET_TEST) { badgeEl.hidden = true; return; }
     badgeEl.hidden = false;
@@ -9238,8 +9278,11 @@
     }
     // 3.25: игра начата из «С другом» — путь не показываем; плашка только при плохой связи
     if (NET.duoQuiet && !NT.reconnSince && !NT.peerWait) {
-      if (cls === 'ok') { badgeEl.hidden = true; return; }
-      txt = (cls === 'bad' ? 'Слабая связь · ' : 'Связь так себе · ') + Math.round(NET.rttLast == null ? NET.rtt : NET.rttLast) + ' мс';
+      // 3.54: значок для игрока — ⚡ напрямую · 📶 стабильно · через сервер; тормозит — «выключи VPN»
+      const ms = Math.round(NET.rttLast == null ? NET.rtt : NET.rttLast);
+      const lab = NT.via === 'elite' ? '📶 Стабильно' : rtcOk && NT.via === 'qr' ? '⚡ Рядом' : rtcOk ? '⚡ Напрямую' : 'Через сервер';
+      if (NT.slow) { txt = '🐢 Игра тормозит — выключи VPN · ' + ms + ' мс'; cls = 'bad'; }
+      else { txt = lab + (cls === 'ok' ? '' : ' · ' + ms + ' мс'); cls = cls === 'ok' ? 'ok duoMini' : cls; }
     }
     badgeEl.textContent = txt; badgeEl.className = cls;
   }
@@ -9381,6 +9424,8 @@
       case '_ice': if (NT.rtc) NT.rtc.theirs++; rtcOnIce(m.c); return;
       case '_rtcfail': rtcClose(); netError('Напрямую соединиться не получилось. ' + (m.why || '') + ' Попробуйте другую сеть (например, Wi-Fi) или другой способ связи.'); return;
       case '_rtconly': NET.rtcOnlyPeer = true; return;
+      case '_rtcretry': if (NET.role === 'host') { NT.rtcTries = 0; setTimeout(rtcStart, 200); } return; // 3.54: гость сменил сеть / нажал «Ещё раз напрямую»
+      case '_goElite': if (NET.onGoElite) NET.onGoElite(String(m.code || '')); return; // 3.54: создатель позвал в «Стабильно»
       case '_ev':
         if (m.of === 's') { for (const e of m.ev || []) guestEvent(e); }
         else if (m.of === 'ns') { if (trActive && NET.game === 'neon') for (const e of m.ev || []) neonEvent(e); }
@@ -9449,7 +9494,9 @@
   // Оба уже в комнате на сервере Москва (он доступен без VPN). Через него телефоны обмениваются
   // «адресами» (WebRTC), и дальше игра идёт напрямую: надёжный канал + быстрый (как UDP).
   // Пробиться напрямую не вышло или прямой канал оборвался — тихо продолжаем через сервер.
-  const RU_ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.sipnet.ru:3478' }, { urls: 'stun:stun.cloudflare.com:3478' }];
+  // 3.54: ③ четыре службы STUN (не больше — иначе браузер собирает адреса медленнее); ④ IPv6-адреса браузер
+  // добавляет сам, а мы пересылаем все адреса как есть (ничего не отбрасываем) — у кого IPv6, соединяются почти всегда
+  const RU_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.sipnet.ru:3478' }, { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:stun.nextcloud.com:443' }];
   const wsSend = m => { if (NT.ws && NT.ws.readyState === 1) { try { NT.ws.send(JSON.stringify(m)); } catch (e) {} } };
   function rtcClose() {
     const R = NT.rtc; NT.rtc = null;
@@ -9476,7 +9523,7 @@
     const was = R.ok;
     if (was && (NET.rtcOnly || NT.via === 'rtc' || NT.via === 'qr') && NET.on) { rtcClose(); return netLost('Прямая связь с соперником оборвалась.'); }
     rtcClose();
-    if (was) { netBadge(); if (NET.lobby === 'connected') setLobby('connected'); }
+    if (was) { NT.rtcTries = 0; NT.rtcTryAt = performance.now() - 26000; netBadge(); if (NET.lobby === 'connected') setLobby('connected'); } // ② через ~4 с снова напрямую
   }
   function rtcRecv(R, fastCh) {
     return e => {
@@ -9748,6 +9795,8 @@
   async function rtcStart() {
     if (NT.via !== 'relay' || !NET.on || NET.role !== 'host') return;
     if (typeof RTCPeerConnection === 'undefined') return;
+    if (NT.rtc && NT.rtc.ok) return; // уже напрямую
+    NT.rtcTryAt = performance.now(); NT.rtcTries = (NT.rtcTries || 0) + 1;
     const R = rtcMake();
     try {
       await R.pc.setLocalDescription(await R.pc.createOffer());
@@ -9788,6 +9837,12 @@
       rawSend({ t: '_ping', ts: performance.now() });
       if (NT.via === 'elite') rawSend({ t: '_st', rtt: Math.round(NET.rtt), jd: Math.round(NET.interpDelay(performance.now())) });
       if (!(NT.routeAt > performance.now() - 5000)) { NT.routeAt = performance.now(); checkRoute(); }
+      // 3.54: ① через сервер — время от времени снова пробуем напрямую (30 с, потом 45, потом раз в минуту)
+      if (NT.via === 'relay' && NET.rtcWanted && NET.role === 'host' && !NT.rtc && !NT.reconnSince && !NT.peerWait) {
+        const gap = NET.rtcGapTest || [30000, 45000][(NT.rtcTries || 1) - 1] || 60000;
+        if (performance.now() - (NT.rtcTryAt || 0) > gap) rtcStart();
+      }
+      slowCheck();
       const waiting = NT.via === 'relay' && (NT.reconnSince || NT.peerWait) && !(NT.rtc && NT.rtc.ok);
       if (performance.now() - NT.alive > (waiting ? RELAY_HOLD + 4000 : 8000)) netLost();
       netBadge();
@@ -9795,7 +9850,7 @@
     document.body.classList.add('netOn');
     NT.route = null; NT.routeAt = performance.now(); setTimeout(checkRoute, 600);
     if (!NET_TEST && NT.via === 'p2p') setupFast();
-    NET.rtcOnlyPeer = false;
+    NET.rtcOnlyPeer = false; NT.rtcTries = 0; NT.rtcTryAt = 0; NT.slowSince = 0; NT.slow = false; NT.fastSince = 0;
     if (NT.via === 'relay' && NET.rtcWanted && NET.role === 'host') { if (NET.rtcOnly) wsSend({ t: '_rtconly' }); setTimeout(rtcStart, 300); }
     setLobby('connected');
     vibrate([20, 40, 20]);
@@ -11037,7 +11092,7 @@
     const raw = String(sp || qs.get('room') || '').trim();
     const mm = raw.match(/^(\d{5})(?:-(\w+))?$/), code = mm ? mm[1] : '';
     if (mm && mm[2] && SERVERS[mm[2]]) { NET.srvSel = mm[2]; NET.directOnly = false; } // друг прислал комнату на сервере — заходим туда же
-    if (code) setTimeout(() => { applySrv(); openLobby(); joinRoom(code); }, 300);
+    if (code && !(tg && tg.initData)) setTimeout(() => { applySrv(); openLobby(); joinRoom(code); }, 300); // 3.53: в Telegram — на сайт (duo.js)
   }
   NET.openLobby = openLobby;
   // для «Друзей»: k = 'ru' (Wi‑Fi или 4G) или '' (Telegram + VPN); cb(номер комнаты), когда комната готова
@@ -11059,7 +11114,15 @@
   NET.duoQrJoin = t => { const v = ppFrom(t); if (v) qrGuestOffer(v); };
   NET.duoQr = () => { if (!NET.on) { netClose(true); NET.qrStatus = ''; setLobby('qrmenu'); } };
   NET.linkFor = linkFor;
-  NET.viaInfo = () => ({ via: NT.via || '', rtc: !!(NT.rtc && NT.rtc.ok) });
+  NET.viaInfo = () => ({ via: NT.via || '', rtc: !!(NT.rtc && NT.rtc.ok), trying: !!(NT.rtc && !NT.rtc.ok), tries: NT.rtcTries || 0, wanted: !!NET.rtcWanted, slow: !!NT.slow });
+  // 3.54: «Ещё раз напрямую» — сразу новая попытка (у гостя — просьба создателю)
+  NET.rtcRetry = () => { if (!NET.on || NT.via !== 'relay' || !NET.rtcWanted) return; if (NET.role === 'host') { NT.rtcTries = 0; rtcStart(); } else wsSend({ t: '_rtcretry' }); };
+  // ② сменилась сеть (Wi‑Fi ↔ мобильный, снова появился интернет) — пробуем напрямую заново
+  {
+    const onNet = () => { if (!NET.on || NT.via !== 'relay' || !NET.rtcWanted) return; setTimeout(() => NET.rtcRetry(), 2500); };
+    window.addEventListener('online', onNet);
+    try { const c = navigator.connection; if (c && c.addEventListener) c.addEventListener('change', onNet); } catch (e) {}
+  }
   NET.cancelHost = () => { if (!NET.on && NET.role === 'host') { netClose(true); setLobby('idle'); } };
   NET.inviteJoin = code => { if (NET.on) return false; NET.showNetTab(); applySrv(); openLobby(); joinRoom(String(code)); return true; };
 
@@ -12238,8 +12301,8 @@
       statusUrl: STATUS_URL,
       leave() { closeWs(); endPick(); E.st = 'idle'; E.err = ''; E.again = false; render(); },
       clearErr() { E.err = ''; render(); },
-      async create(cb) {
-        if (!toElite()) return;
+      async create(cb, force) { // force — 3.54: переезд из «Быстро» в «Стабильно» (обычная сеть ещё открыта, закроется сразу после)
+        if (!force && !toElite()) return;
         if (E.st === 'waiting' && E.code) return cb(E.code);
         if (E.st !== 'idle' && E.st !== 'full') { hint('Сначала закончи текущий матч'); return; }
         if (window.PPACC) await PPACC.ensure();
@@ -20394,9 +20457,12 @@
     const PHRASES = ['Привет!', 'Хорошая игра 👍', 'Реванш?', 'Ещё одну?', 'Классно!', 'Мне пора', '😂', '🔥', 'GG'];
     // ---------- чистка текста: ссылки, телефоны и мат — звёздочками ----------
     const LOOK = { a: 'а', e: 'е', o: 'о', p: 'р', c: 'с', x: 'х', y: 'у', k: 'к', m: 'м', t: 'т', b: 'в', h: 'н', '3': 'з', '0': 'о', '6': 'б', 'ё': 'е' };
+    // 3.50: БЕЗ «просмотра назад» в выражениях — старые iPhone (iOS до 16.4) их не понимают, и из-за одной
+    // этой строки вся игра не запускалась. «Не после буквы» теперь проверяется в цикле (метка nb).
+    const nb = re => (re.nb = true, re);
     const BAD = [
-      /(?<![а-яё])ху[йеяи](?!ст|рг)/g, /пизд/g, /(?<![а-яё])(?:за|вы|по|на|от|у|раз|до|пере|при|об|съ|въ|подъ|долбо|долба)?еб(?:а[лнтш]|ан|ал|ну|ут|ет|ёт|л[аои]|уч|ыр|ись|ищ|ош)/g,
-      /(?<![а-яё])бл[яэ](?=д|т|[^а-яё]|$)/g, /(?<![а-яё])(?:[ао]|на|по|за|от|вы)ху[еяйи]/g, /(?<![а-яё])сук(?:а|и|у|ой)(?![а-яё])/g, /муда[кч]|мудил/g, /пид[оа]р/g, /гандон|гондон/g, /залуп/g, /шлюх/g, /долбо[её]б/g, /(?<![а-яё])еблан/g
+      nb(/ху[йеяи](?!ст|рг)/g), /пизд/g, nb(/(?:за|вы|по|на|от|у|раз|до|пере|при|об|съ|въ|подъ|долбо|долба)?еб(?:а[лнтш]|ан|ал|ну|ут|ет|ёт|л[аои]|уч|ыр|ись|ищ|ош)/g),
+      nb(/бл[яэ](?=д|т|[^а-яё]|$)/g), nb(/(?:[ао]|на|по|за|от|вы)ху[еяйи]/g), nb(/сук(?:а|и|у|ой)(?![а-яё])/g), /муда[кч]|мудил/g, /пид[оа]р/g, /гандон|гондон/g, /залуп/g, /шлюх/g, /долбо[её]б/g, nb(/еблан/g)
     ];
     function cleanText(s) {
       s = String(s || '').normalize('NFC').replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
@@ -20409,7 +20475,7 @@
       if (arr.length !== [...norm].length) return s;
       const hit = new Array(arr.length).fill(false);
       const nArr = [...norm], nStr = nArr.join('');
-      for (const re of BAD) { re.lastIndex = 0; let m; while ((m = re.exec(nStr))) { let a = [...nStr.slice(0, m.index)].length, b = a + [...m[0]].length; while (a > 0 && /[а-яёa-z0-9]/.test(nArr[a - 1])) a--; while (b < nArr.length && /[а-яёa-z0-9]/.test(nArr[b])) b++; for (let i = a; i < b; i++) hit[i] = true; if (m[0].length === 0) re.lastIndex++; } }
+      for (const re of BAD) { re.lastIndex = 0; let m; while ((m = re.exec(nStr))) { if (re.nb && m.index > 0 && /[а-яё]/.test(nStr[m.index - 1])) { re.lastIndex = m.index + 1; continue; } let a = [...nStr.slice(0, m.index)].length, b = a + [...m[0]].length; while (a > 0 && /[а-яёa-z0-9]/.test(nArr[a - 1])) a--; while (b < nArr.length && /[а-яёa-z0-9]/.test(nArr[b])) b++; for (let i = a; i < b; i++) hit[i] = true; if (m[0].length === 0) re.lastIndex++; } }
       return arr.map((c, i) => (hit[i] && c !== ' ' ? '*' : c)).join('');
     }
 
@@ -22655,7 +22721,12 @@
     }
 
     function setMode(m) { mode = m; lsSet('home-mode', m); render(); }
+    let gatePrev = 'two', gateReady = false; setTimeout(() => { gateReady = true; }, 1500);
     function render() {
+      // 3.53: сетевые вкладки — в Telegram сразу на сайт, на сайте сначала «выключи VPN»
+      // (при запуске игры сохранённая вкладка «Сеть» не открывается сама — просто мини-игры)
+      if (mode === 'net' && window.PPGate && (PPGate.tg || gateReady)) { if (!gateReady) mode = 'two'; else if (!PPGate.net(netSub, () => { mode = 'net'; render(); })) mode = gatePrev === 'net' ? 'two' : gatePrev; }
+      if (mode !== 'net') gatePrev = mode;
       if (window.__homeView) __homeView.before(); // экран выбора «Мини-игры / Арена» (3.23) решает, видна ли полоса
       bar.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode && (!b.dataset.s || b.dataset.s === netSub))));
       lab.setAttribute('aria-pressed', String(mode === 'lab'));
@@ -22745,8 +22816,8 @@
       friend.innerHTML = `
         <div class="stHead"><button class="stBack" data-v="mini" aria-label="Назад">‹</button><b>С другом</b></div>
         <button class="stCard stOne" data-v="two">${svg('pad', 'stBig')}<span class="stTxt"><b>На одном телефоне</b><small>Держите телефон вдвоём</small></span><span class="stArr">›</span></button>
-        <button class="stCard stNear" data-v="near">${svg('users', 'stBig')}<span class="stTxt"><b>Рядом</b><small>У каждого свой телефон, вы рядом</small></span><span class="stArr">›</span></button>
-        <button class="stCard stFar" data-v="far">${svg('world', 'stBig')}<span class="stTxt"><b>Далеко</b><small>Друг в другом месте</small></span><span class="stArr">›</span></button>`;
+        <button class="stCard stNear" data-v="near" hidden>${svg('users', 'stBig')}<span class="stTxt"><b>Рядом</b><small>У каждого свой телефон, вы рядом</small></span><span class="stArr">›</span></button>
+        <button class="stCard stFar" data-v="far">${svg('world', 'stBig')}<span class="stTxt"><b>На двух телефонах</b><small>У каждого свой телефон — рядом или далеко</small></span><span class="stArr">›</span></button>`; // 3.54: «Рядом» (QR) спрятан — один путь через интернет
       const sub = el('div', 'stHead stGridHead', '<button class="stBack" aria-label="Назад">‹</button><b></b>');
       head0.after(start, mini, friend, sub);
       let view = 'start', booted = false;
@@ -22770,7 +22841,7 @@
         lay.classList.toggle('noSide', !more);
         lab.hidden = !more;
         home.classList.toggle('stOn', sv || sm);
-        sub.querySelector('b').textContent = view === 'two' ? 'На одном телефоне' : view === 'bot' ? 'С ботом' : view === 'near' ? 'Рядом' : view === 'far' ? 'Далеко' : 'Ещё';
+        sub.querySelector('b').textContent = view === 'two' ? 'На одном телефоне' : view === 'bot' ? 'С ботом' : view === 'near' ? 'Рядом' : view === 'far' ? 'На двух телефонах' : 'Ещё';
         sub.querySelector('.stBack').dataset.v = more ? 'start' : view === 'bot' ? 'mini' : isDuo(view) ? 'duoBack' : 'friend';
         if (window.PPDuo) PPDuo.sync(view);
         const c = arenaCups(), as = start.querySelector('.stArSub');
@@ -23240,7 +23311,7 @@
     const panel = document.createElement('div'); panel.className = 'duoPanel'; panel.hidden = true;
     main.prepend(panel);
     // via: '' — ещё не подключались, 'elite' — Сеть++, 'net' — обычная сеть, 'qr' — рядом
-    const D = { view: '', via: '', busy: '', err: '', net: false, joinCode: '', sig: '' };
+    const D = { view: '', via: '', busy: '', err: '', net: false, joinCode: '', sig: '', kind: '', full: false, note: '' };
     const NETLIKE = /не отвечает|не получил|подключиться|пропала|нет связи|недоступ|не удалось|не найден/i;
     const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
@@ -23253,7 +23324,7 @@
     function siteLink(code) { return location.origin + location.pathname + (code ? '?room=' + code : ''); }
     function share(code) {
       const link = linkOf(code);
-      const text = `Сыграем в PifPaf? Код ${code}. Открой ссылку или введи код: Мини-игры → С другом → Далеко. Если не подключается — выключи VPN.`;
+      const text = `Сыграем в PifPaf? Код ${code}. Открой ссылку или введи код: Мини-игры → С другом → На двух телефонах. VPN выключи.`;
       if (inTg && tgA.openTelegramLink) { tgA.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text)); return; }
       if (navigator.share) { navigator.share({ title: 'PifPaf', text, url: link }).catch(() => {}); return; }
       copy(link);
@@ -23266,6 +23337,7 @@
     // ---------- состояние: читаем у модулей связи ----------
     function state() {
       if (D.busy) return { st: 'busy', text: D.busy };
+      if (D.full) return { st: 'full' };
       if (D.err) return { st: 'error', text: D.err };
       if (D.via === 'elite') {
         const S = PPElite.state();
@@ -23288,32 +23360,59 @@
       return { st: 'idle' };
     }
 
-    // ---------- «Далеко»: позвать друга ----------
-    async function create() {
-      D.err = ''; D.busy = 'Создаём комнату…'; D.joinCode = ''; draw();
-      let s = null;
+    // ---------- 3.54: «На двух телефонах» — ⚡ Быстро или 📶 Стабильно ----------
+    // ⚡ Быстро — комната на сервере Москва только для знакомства, дальше телефоны соединяются напрямую
+    //   (не вышло — игра идёт через сервер и время от времени снова пробует напрямую); код из 5 цифр.
+    // 📶 Стабильно — Сеть++: игру ведёт сервер, задержка у обоих одинаковая; код из 4 цифр.
+    async function serverOk() {
       try {
         const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 6000);
         const r = await fetch(PPElite.statusUrl + '?t=' + Date.now(), { cache: 'no-store', signal: ctl.signal });
         clearTimeout(to);
-        if (r.ok) { const j = await r.json(); if (typeof j.busy === 'number') s = j; }
+        if (r.ok) { const j = await r.json(); if (typeof j.busy === 'number') return j; }
       } catch (e) {}
+      return null;
+    }
+    async function create(kind) {
+      D.err = ''; D.full = false; D.note = ''; D.kind = kind; D.busy = 'Создаём комнату…'; D.joinCode = ''; draw();
+      const s = await serverOk();
       if (D.view !== 'far' || !D.busy) return; // ушли с экрана
       D.busy = '';
-      if (!s) { D.err = 'Не получилось связаться с сервером.'; D.net = true; draw(); return; }
+      if (!s) { D.err = 'Нет связи с игрой. Проверь интернет и выключи VPN.'; D.net = true; draw(); return; }
       NET.duoQuiet = true;
-      if (s.busy < s.max) { D.via = 'elite'; PPElite.create(() => draw()); }
+      if (kind === 'stable') { if (s.busy < s.max) { D.via = 'elite'; PPElite.create(() => draw()); } else D.full = true; }
       else viaNet();
       draw();
     }
-    // Сеть++ занят — облегчённая сеть: игру считает телефон того, кто позвал (знакомство через Москву, дальше — напрямую, если выйдет)
     function viaNet() {
       if (PPElite.state().st !== 'idle') PPElite.leave();
-      D.via = 'net';
+      D.via = 'net'; D.kind = 'fast'; D.full = false;
       NET.inviteHost('ru', () => draw(), why => { if (D.view === 'far' && D.via === 'net') { D.err = why || 'Не получилось создать комнату.'; D.net = true; draw(); } });
     }
+    // «Через сервер» → [Играть «Стабильно»]: создатель открывает Сеть++ и зовёт туда друга по текущей связи
+    async function toStable() {
+      if (!(D.via === 'net' && NET.on && NET.role === 'host')) return;
+      D.busy = 'Переходим в «Стабильно»…'; D.note = ''; draw();
+      const s = await serverOk();
+      if (!s || s.busy >= s.max) { D.busy = ''; D.note = 'Сервер «Стабильно» сейчас занят — играем дальше «Быстро».'; draw(); return; }
+      let done = false;
+      PPElite.create(code => {
+        if (done) return; done = true;
+        NET.send({ t: '_goElite', code }); // друг сам перейдёт по этому коду
+        NET.duoLeave(); D.via = 'elite'; D.kind = 'stable'; D.busy = ''; eliteTab(); draw();
+      }, true);
+      setTimeout(() => { if (done) return; done = true; if (PPElite.state().st !== 'idle') PPElite.leave(); D.busy = ''; D.note = 'Не получилось перейти в «Стабильно» — играем дальше «Быстро».'; draw(); }, 8000);
+    }
+    // после переезда показать список игр «Стабильно» (закрытие старой связи может переключить вкладку чуть позже)
+    function eliteTab() { NET.showEliteTab(); [300, 900].forEach(t => setTimeout(() => { if (D.via === 'elite' && D.view) NET.showEliteTab(); }, t)); }
+    // друг (создатель) позвал в «Стабильно»
+    NET.onGoElite = code => {
+      if (!/^\d{4}$/.test(code)) return;
+      NET.duoLeave(); D.via = 'elite'; D.kind = 'stable'; D.joinCode = code; D.err = ''; D.note = '';
+      setTimeout(() => { PPElite.join(code); eliteTab(); draw(); }, 150);
+    };
     function join(code) {
-      D.err = ''; D.joinCode = code;
+      D.err = ''; D.full = false; D.note = ''; D.joinCode = code; D.kind = code.length === 4 ? 'stable' : 'fast';
       NET.duoQuiet = true;
       if (code.length === 4) { D.via = 'elite'; PPElite.join(code); }
       else { D.via = 'net'; if (!NET.inviteJoin(code)) { D.err = 'Сначала закончи текущую сетевую игру.'; } }
@@ -23323,7 +23422,7 @@
     function reset() {
       if (D.via === 'elite' || PPElite.state().st !== 'idle') PPElite.leave();
       if (D.via === 'net' || D.via === 'qr' || NET.on || (NET.lobby && NET.lobby !== 'idle')) NET.duoLeave();
-      D.via = ''; D.busy = ''; D.err = ''; D.net = false; D.joinCode = ''; D.sig = ''; NET.duoQuiet = false;
+      D.via = ''; D.busy = ''; D.err = ''; D.net = false; D.joinCode = ''; D.sig = ''; D.kind = ''; D.full = false; D.note = ''; NET.duoQuiet = false;
     }
 
     // ---------- рисуем ----------
@@ -23331,6 +23430,25 @@
       return `<div class="duoVpn"><b>Не подключается? Выключите VPN у обоих</b>
         <span>С включённым VPN игра в России не соединяется с сервером.${inTg ? ' Без VPN Телеграм может не работать — тогда откройте игру в браузере.' : ''}</span>
         ${inTg ? `<button class="duoBtn duoSite" data-code="${esc(code || '')}">Открыть в браузере</button>` : ''}</div>`;
+    }
+    // 3.54: как сейчас связаны и как сделать быстрее
+    const LAT_ROWS = [['Один Wi‑Fi / раздача', 'почти всегда', '2–10', '60–100'], ['Дом ↔ дом, один город', 'почти всегда', '10–30', '60–100'],
+      ['Дом ↔ дом, разные города', 'почти всегда', '30–70', '70–120'], ['Дом ↔ мобильный', 'обычно да', '30–70', '80–130'],
+      ['Мобильный ↔ мобильный', 'как повезёт', '40–90', '90–150'], ['Школа, работа, кафе', 'часто нет', '20–60', '70–130'], ['Включён VPN', 'почти никогда', '—', '150–400']];
+    const LAT_TABLE = `<table><tr><th>Сеть</th><th>Напрямую</th><th>мс</th><th>Иначе</th></tr>${LAT_ROWS.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="y">${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table>
+      <p>«Иначе» — если напрямую не вышло и игра идёт через сервер. До 50 мс не чувствуется, больше 150 — тормозит.</p>`;
+    function connLine(host) {
+      if (D.via === 'elite') return `<p class="duoConn ok">📶 Связь: стабильная — у обоих одинаково</p>`;
+      if (D.via !== 'net' || !NET.on) return '';
+      const v = NET.viaInfo();
+      if (v.rtc) return `<p class="duoConn ok">⚡ Связь: напрямую — самая быстрая игра</p>`;
+      if (v.via !== 'relay') return '';
+      if (v.trying && (v.tries || 0) <= 1) return `<p class="duoConn">⚡ Соединяем телефоны напрямую…</p>`;
+      return `<div class="duoRelay"><b>Связь: через сервер</b><span>Играть можно, но с задержкой. Сделай быстрее:</span>
+        <ol><li>Выключите VPN у обоих → <button class="duoBtn duoSmall" data-a="direct">${v.trying ? 'Пробуем…' : 'Ещё раз напрямую'}</button></li>
+        <li>Смени сеть: Wi‑Fi ↔ мобильный — игра сама попробует снова</li>
+        <li>${host ? `<button class="duoBtn duoSmall" data-a="toStable">Играть «📶 Стабильно»</button>` : 'Попроси друга нажать «Играть Стабильно»'}</li></ol>
+        <span class="duoSub">Игра сама пробует напрямую каждые 30–60 секунд.</span></div>`;
     }
     function draw() {
       if (!D.view) { panel.hidden = true; return; }
@@ -23342,27 +23460,37 @@
           <button class="duoLink" data-a="toFar">Не получается — играть через интернет ›</button>`;
       } else {
         const S = state();
-        if (S.st === 'full') { viaNet(); return draw(); }
+        if (S.st === 'full' && D.via === 'elite' && !D.full) { PPElite.leave(); D.via = ''; D.full = true; return draw(); } // заняли, пока подключались
         ready = S.st === 'ready' && S.host; // гостю список игр не нужен — выбирает тот, кто позвал
         if (S.st === 'idle') {
-          h = `<button class="duoBig" data-a="create"><b>Позвать друга</b><small>Получишь код и ссылку, чтобы отправить другу</small></button>
-            <div class="duoLabel">Друг уже позвал? Введи его код</div>
+          h = `<div class="duoLabel duoQ">Как играем?</div>
+            <button class="duoBig duoFast" data-a="fast"><b>⚡ Быстро</b><small>Телефоны соединяются друг с другом — задержка меньше всего</small></button>
+            <p class="duoNote">Вы рядом? Один включает раздачу интернета, второй подключается к ней — так быстрее всего.</p>
+            <details class="duoTbl"><summary>Какая будет задержка ⓘ</summary>${LAT_TABLE}</details>
+            <button class="duoBig duoStable" data-a="stable"><b>📶 Стабильно</b><small>Игру ведёт сервер — задержка у обоих одинаковая</small></button>
+            <div class="duoLabel">Друг уже создал комнату? Введи его код</div>
             <div class="duoRow"><input class="duoCode" maxlength="5" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="код друга"><button class="duoBtn duoMain" data-a="join">Войти</button></div>
-            <p class="duoTip">Интернет нужен обоим. VPN лучше выключить.</p>`;
+            <p class="duoTip">Интернет нужен обоим. VPN выключите.</p>`;
+        } else if (S.st === 'full') {
+          h = `<p class="duoErr">«Стабильно» сейчас занято — на сервере все места заняты.</p>
+            <p class="duoTip">Сыграть ⚡ Быстро? Телефоны соединятся друг с другом.</p>
+            <button class="duoBtn duoMain" data-a="fast">Играть ⚡ Быстро</button><button class="duoBtn" data-a="cancel">Отмена</button>`;
         } else if (S.st === 'busy') {
           h = `<p class="duoWait">${esc(S.text)}</p><button class="duoBtn" data-a="cancel">Отмена</button>`;
         } else if (S.st === 'waiting') {
-          h = `<div class="duoLabel">Код комнаты</div><div class="duoBigCode">${esc(S.code)}</div>
+          h = `<div class="duoLabel">${D.via === 'elite' ? '📶 Стабильно' : '⚡ Быстро'} · код комнаты</div><div class="duoBigCode">${esc(S.code)}</div>
             <button class="duoBtn duoMain" data-a="share">Отправить ссылку другу</button>
             <button class="duoBtn duoCopy" data-a="copy">Скопировать ссылку</button>
             <p class="duoWait">Ждём друга…</p>
-            <p class="duoTip">Друг открывает ссылку или вводит код: Мини-игры → С другом → Далеко. Если у него не открывается — пусть выключит VPN. Ссылку удобно отправить, пока VPN ещё включён.</p>
+            <p class="duoTip">Друг открывает ссылку или вводит код: Мини-игры → С другом → На двух телефонах. VPN выключите оба. Ссылку удобно отправить, пока VPN ещё включён.</p>
             <button class="duoBtn" data-a="cancel">Отмена</button>`;
           D.code = S.code;
         } else if (S.st === 'ready') {
           h = S.host
             ? `<div class="duoOk">Друг подключился!</div><p class="duoTip">Выбери игру ниже — она начнётся у обоих.</p>`
             : `<div class="duoOk">Ты в комнате</div><p class="duoTip">${S.again ? 'Друг выбирает другую игру…' : 'Друг выбирает игру — подожди. Твоя сторона всегда снизу.'}</p>`;
+          h += connLine(S.host);
+          if (D.note) h += `<p class="duoTip">${esc(D.note)}</p>`;
           h += `<button class="duoBtn" data-a="cancel">Отключиться</button>`;
         } else if (S.st === 'error') {
           const netErr = D.net || NETLIKE.test(S.text);
@@ -23387,16 +23515,66 @@
       const a = b.dataset.a;
       try { audioBus(); } catch (er) {}
       if (b.classList.contains('duoSite')) { const u = siteLink(b.dataset.code); try { tgA.openLink(u); } catch (er) { location.href = u; } return; }
-      if (a === 'create') create();
+      if (a === 'fast') { if (D.full) { D.full = false; D.err = ''; NET.duoQuiet = true; viaNet(); draw(); } else create('fast'); }
+      else if (a === 'stable') create('stable');
+      else if (a === 'direct') { NET.rtcRetry(); setTimeout(draw, 300); }
+      else if (a === 'toStable') toStable();
       else if (a === 'join') { const i = panel.querySelector('.duoCode'), c = (i.value || '').trim(); if (/^\d{4,5}$/.test(c)) join(c); else { i.classList.add('bad'); i.focus(); } }
       else if (a === 'share') share(D.code);
       else if (a === 'copy') copy(linkOf(D.code));
       else if (a === 'cancel' || a === 'retry') { reset(); draw(); }
+      else if (a === 'create') create('fast');
       else if (a === 'toFar') { reset(); enter('far'); }
     });
 
+
+    // ===== 3.53: ИГРА НА ДВУХ ТЕЛЕФОНАХ — ТОЛЬКО НА САЙТЕ, VPN — ВЫКЛЮЧИТЬ =====
+    // В Telegram всё, что не на одном телефоне («Рядом», «Далеко», «Сеть», «Сеть++», ссылки-приглашения), сразу
+    // открывается в браузере на сайте: в Telegram часто включён VPN, а с ним связь между телефонами не работает.
+    // На сайте перед игрой с другом — просьба выключить VPN (один раз за открытие сайта).
+    const SITE = location.origin && location.origin !== 'null' && !/^file:/.test(location.protocol) ? location.origin + location.pathname : 'https://pifpafgame.ru/';
+    const GATE_NAME = { near: 'Рядом', far: 'На двух телефонах', net: 'Сеть', elite: 'Сеть++', room: 'Комната друга' };
+    let gateEl = null;
+    function gateClose() { if (gateEl) { gateEl.remove(); gateEl = null; } }
+    function gateShow(html, btns) {
+      gateClose();
+      gateEl = document.createElement('div'); gateEl.className = 'ppGate';
+      gateEl.innerHTML = `<div class="ppGateCard">${html}<div class="ppGateBtns">${btns}</div></div>`;
+      document.body.appendChild(gateEl);
+      return gateEl;
+    }
+    const vpnSteps = `<ol class="ppGateSteps"><li><b>Выключи VPN</b> на этом телефоне. С ним игра с другом не соединяется.</li><li>Друг тоже выключает VPN.</li></ol>`;
+    // в Telegram: сразу на сайт
+    function gateTg(what, code) {
+      const u = SITE + '?go=' + what + (code ? '&room=' + encodeURIComponent(code) : '');
+      const el = gateShow(`<div class="ppGateIco">🌐</div><b class="ppGateT">Игра с другом — в браузере</b>
+        <p>Открываем «${GATE_NAME[what] || 'игру'}» на сайте pifpafgame.ru.</p>${vpnSteps}
+        <p class="ppGateSmall">Браузер не открылся? Нажми кнопку ниже.</p>`,
+        `<button class="hkPlay ppGateGo">Открыть сайт</button><button class="backBtn ppGateNo">Назад</button>`);
+      const open = () => { try { tgA.openLink(u); } catch (e) { location.href = u; } };
+      el.querySelector('.ppGateGo').onclick = open;
+      el.querySelector('.ppGateNo').onclick = gateClose;
+      open();
+    }
+    // на сайте: попросить выключить VPN, потом продолжить
+    let vpnOk = false; try { vpnOk = sessionStorage.getItem('pp-vpn-ok') === '1'; } catch (e) {}
+    function vpnAsk(then) {
+      if (vpnOk) { then(); return; }
+      const el = gateShow(`<div class="ppGateIco">🔌</div><b class="ppGateT">Выключи VPN</b>
+        <p>Игра на двух телефонах идёт по сети. С включённым VPN телефоны не соединятся или игра будет тормозить.</p>${vpnSteps}`,
+        `<button class="hkPlay ppGateGo">VPN выключен — играть</button><button class="backBtn ppGateNo">Назад</button>`);
+      el.querySelector('.ppGateGo').onclick = () => { vpnOk = true; try { sessionStorage.setItem('pp-vpn-ok', '1'); } catch (e) {} gateClose(); then(); };
+      el.querySelector('.ppGateNo').onclick = () => { gateClose(); if (window.pgHome) try { HV.go('friend'); } catch (e) {} };
+    }
+    // для home.js: вкладки «Сеть» / «Сеть++» в «Ещё»; true — можно показывать сразу
+    window.PPGate = {
+      net(sub, then) { if (inTg) { gateTg(sub === 'elite' ? 'elite' : 'net'); return false; } if (vpnOk) return true; vpnAsk(then); return false; },
+      tg: inTg
+    };
     // ---------- вход в «Рядом» / «Далеко» и выход ----------
-    function enter(v) {
+    function enter(v, sure) {
+      if (inTg) { gateTg(v); return; } // 3.53: в Telegram — сразу на сайт
+      if (!sure && !vpnOk) { vpnAsk(() => enter(v, true)); return; }
       D.view = v; D.sig = '';
       HV.set(v);
       if (v === 'near') {
@@ -23425,19 +23603,24 @@
       if (D.view === 'near' && !NET.on && document.querySelector('#netPanel .ncBox')) { back(); return; }
       draw();
     }
-    window.PPDuo = { enter, back, sync, state: () => ({ view: D.view, via: D.via, lobby: NET.lobby, on: !!NET.on, s: state() }) };
+    window.PPDuo = { enter, back, sync, state: () => ({ view: D.view, via: D.via, lobby: NET.lobby, on: !!NET.on, s: state(), vi: NET.viaInfo ? NET.viaInfo() : null }), net: NET }; // net — для проверок
 
     // ---------- вход по ссылке с кодом из 4 цифр (Сеть++) и показ «Далеко» для 5 цифр ----------
     {
       const sp = inTg && tgA.initDataUnsafe && tgA.initDataUnsafe.start_param;
       const raw = String(sp || new URLSearchParams(location.search).get('room') || '').trim();
       // 3.35: друг навёл обычную камеру на QR создателя — открылся сайт с ?pp=… → сразу «Рядом» и ответный код
-      const pp = new URLSearchParams(location.search).get('pp');
-      if (pp && NET.ppFrom && NET.ppFrom(pp)) {
+      const pp = new URLSearchParams(location.search).get('pp'), go0 = new URLSearchParams(location.search).get('go');
+      if (inTg && (raw && /^\d{4,5}(-\w+)?$/.test(raw) || pp)) { // 3.53: приглашение открыли в Telegram — на сайт
+        setTimeout(() => { if (pp) { const u = SITE + '?pp=' + encodeURIComponent(pp); gateTg('near'); try { tgA.openLink(u); } catch (e) {} } else gateTg('room', raw); }, 300);
+      } else if (go0 && !raw && !pp) { // пришли с Telegram: ?go=near|far|net|elite — сразу просим выключить VPN и открываем
+        try { history.replaceState(null, '', location.pathname); } catch (e) {}
+        setTimeout(() => vpnAsk(() => { if (go0 === 'near' || go0 === 'far') { HV.set(go0); enter(go0, true); } else if (go0 === 'elite') NET.showEliteTab(); else NET.showNetTab(); }), 400);
+      } else if (pp && NET.ppFrom && NET.ppFrom(pp)) {
         try { history.replaceState(null, '', location.pathname + location.search.replace(/[?&]pp=[^&]*/, '').replace(/^&/, '?')); } catch (e) {}
-        setTimeout(() => { enter('near'); setTimeout(() => NET.duoQrJoin(pp), 50); }, 400);
-      } else if (/^\d{4}$/.test(raw)) setTimeout(() => { enter('far'); join(raw); }, 400);
-      else if (/^\d{5}(-\w+)?$/.test(raw)) setTimeout(() => { D.via = 'net'; NET.duoQuiet = true; D.joinCode = raw.slice(0, 5); enter('far'); }, 500); // net.js уже входит в комнату сам
+        setTimeout(() => { enter('near', true); setTimeout(() => NET.duoQrJoin(pp), 50); vpnAsk(() => {}); }, 400);
+      } else if (/^\d{4}$/.test(raw)) setTimeout(() => vpnAsk(() => { enter('far', true); join(raw); }), 400);
+      else if (/^\d{5}(-\w+)?$/.test(raw)) setTimeout(() => { D.via = 'net'; NET.duoQuiet = true; D.joinCode = raw.slice(0, 5); enter('far', true); vpnAsk(() => {}); }, 500); // net.js уже входит в комнату сам
     }
     lsSet('duo-seen', '1');
   })();
