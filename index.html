@@ -2327,6 +2327,111 @@
   .duoSmall { padding: 5px 10px !important; font-size: 0.85rem !important; display: inline-block !important; width: auto !important; margin: 0 !important; }
   #netBadge.duoMini { opacity: 0.8; }
   .duoTbl td:last-child { white-space: nowrap; }
+  /* 3.55: рамка вокруг эмоции в панели — тоньше и ближе к самой эмоции */
+  .pinPanel button { border-radius: 12px; box-shadow: inset 0 0 0 1.5px #1b1b22, inset 0 -3px 0 #e6eaf2; outline: none; -webkit-tap-highlight-color: transparent; }
+  .pinPanel button canvas { border-radius: 12px; }
+  .pinPanel button.hov { box-shadow: inset 0 0 0 1.5px #1b1b22, inset 0 -3px 0 #e6eaf2, 0 0 0 2px #2fe0c8; }
+  .duoGolf { display: block; margin: 4px 0 2px; padding: 7px 10px; border-radius: 12px; background: rgba(47,224,140,0.10); color: #c9f5da; font-size: 0.86rem; line-height: 1.35; }
+  .duoGolf b, .duoNote b { color: #fff; }
+  .tilesDivider.labFix { grid-column: 1 / -1; }
+  .fixTile { opacity: 0.85; }
+  /* ===== 3.55: «Инвентарь» компактнее: витрина сбоку, сетка по 4, группы по редкости / наборам ===== */
+  .invBox { gap: 10px; }
+  .invTitle { align-items: center; }
+  .invTok { margin-left: auto; margin-right: 10px; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 99px; background: rgba(255,210,63,.12); color: #ffd23f; white-space: nowrap; }
+  .invTok b { font-weight: 900; }
+  .invShow { flex-direction: row; align-items: stretch; gap: 10px; padding: 8px; border-radius: 18px; }
+  .invStage { flex: 0 0 44%; align-self: center; border-radius: 12px; }
+  .invStage canvas { aspect-ratio: 1 / 1; }
+  .invInfo { flex: 1; min-width: 0; padding: 2px 2px 0; justify-content: center; }
+  .invRow { flex-wrap: wrap; gap: 4px 8px; }
+  .invBig { font-size: 15.5px; line-height: 1.15; }
+  .invRar { font-size: 10.5px; padding: 2px 7px; }
+  .invDesc { font-size: 12px; line-height: 1.3; }
+  .invState { font-size: 11.5px; line-height: 1.3; }
+  .invEq { margin-top: 4px; padding: 7px 12px; font-size: 13px; border-radius: 10px; }
+  .invEq.buy { background: #e0a91c; color: #1b1405; }
+  .invEq.buy.poor { background: rgba(255,210,63,.18); color: #ffd23f; }
+  .invGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .invItem { padding: 4px 4px 6px; gap: 3px; border-radius: 12px; }
+  .invItem canvas { border-radius: 9px; }
+  .invName { font-size: 10.5px; min-height: 2.1em; line-height: 1.1; }
+  .invDot { top: 7px; left: 7px; width: 6px; height: 6px; }
+  .invMiniLock, .invWorn { top: 6px; right: 6px; width: 17px; height: 17px; font-size: 10px; }
+  .invPrice { position: absolute; top: 6px; right: 5px; padding: 1px 5px; border-radius: 99px; background: rgba(0,0,0,.6); color: #ffd23f; font-size: 9.5px; font-weight: 900; display: none; }
+  .invItem.locked .invPrice { display: block; }
+  .invItem.locked:has(.invPrice) .invMiniLock { display: none; }
+  .invGH { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 6px 2px 0; font-size: 12px; }
+  .invGH b { font-weight: 900; color: var(--rc, #e8ebf2); }
+  .invGH small { opacity: .5; font-weight: 800; }
+  .invGH::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08); }
+  .invChest { padding: 10px; gap: 6px; }
+  .icOdds { font-size: 11px !important; opacity: .55; line-height: 1.3; }
+  .chTok { color: #ffd23f; }
+
+  /* ===== 3.55: вход через Telegram ===== */
+  .accGate, .accGiftWin { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(12,14,20,.96); overflow-y: auto; }
+  .accGate[hidden] { display: none; }
+  .accGiftWin { z-index: 9500; background: rgba(12,14,20,.8); }
+  .agCard { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; padding: 20px 18px; border-radius: 22px; background: #1b1f2a; box-shadow: 0 10px 40px rgba(0,0,0,.5); color: #e8ebf2; }
+  .agT { font-size: 1.3rem; font-weight: 900; line-height: 1.2; }
+  .agP { margin: 0; font-size: .92rem; line-height: 1.4; color: #c3cad8; }
+  .agSmall { margin: 0; font-size: .8rem; color: #8f99ae; }
+  .agWait { margin: 0; text-align: center; color: #ffd98a; font-size: .9rem; }
+  .agCard .hkPlay, .agCard .backBtn { width: 100%; margin: 0; text-align: center; text-decoration: none; box-sizing: border-box; }
+  .agCard .hkPlay[disabled] { opacity: .45; }
+  .agGifts { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 16px; background: rgba(47,224,200,.08); }
+  .agGT { font-weight: 900; color: #2fe0c8; font-size: .9rem; }
+  .agGRow { display: flex; gap: 8px; justify-content: space-between; }
+  .agG { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .agG canvas { width: 72px; height: 72px; }
+  .agG small { font-size: .78rem; font-weight: 800; }
+  .agGSub { font-size: .78rem; color: #9fb3c8; text-align: center; }
+  .agPick { display: flex; flex-direction: column; gap: 6px; text-align: left; padding: 12px; border-radius: 16px; border: 2px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); color: inherit; font: inherit; cursor: pointer; }
+  .agPick:active { transform: scale(.98); border-color: #4fa3ff; }
+  .agPT { font-weight: 900; font-size: .95rem; }
+  .agStats { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .88rem; color: #c3cad8; }
+  .agStats b { width: 100%; color: #fff; font-size: 1rem; }
+  .agStats b i { font-style: normal; font-weight: 700; font-size: .8rem; color: #8f99ae; }
+  .agMore { font-size: .78rem; color: #8f99ae; }
+  .agGiftCv { width: 140px; height: 140px; align-self: center; }
+  body.accGateOn #homeScreen { visibility: hidden; }
+  .accBak { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; padding: 10px; border-radius: 14px; background: rgba(255,255,255,.05); }
+  .accBak small { color: #9fb3c8; }
+  .hFr { position: relative; }
+  .invEq { white-space: nowrap; }
+  .agRow2 { display: flex; gap: 8px; } .agRow2 .backBtn { flex: 1; }
+  .agSkip { background: none; border: 0; color: #9fb3c8; font: inherit; font-size: .9rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; padding: 4px; cursor: pointer; }
+  .agSkipNote { text-align: center; margin-top: -6px; }
+  /* ===== 3.59: турнир — 3 игры ===== */
+  .cupPickBox { margin-top: 8px; display: grid; gap: 8px; }
+  .cupPickBox[hidden] { display: none; }
+  .cupPickN { font-weight: 800; color: #ffd98a; font-size: .85rem; }
+  .cupPickN.ok { color: #7ee8a0; }
+  .cupPickN.shake { animation: cupShake .35s; }
+  @keyframes cupShake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .cupGames { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-height: 42vh; overflow-y: auto; padding: 2px; }
+  .cupG { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border: 2px solid transparent; border-radius: 14px; background: #262a34; color: #e8ebf2; font: inherit; cursor: pointer; }
+  .cupG[aria-pressed="true"] { border-color: #ffc53d; background: rgba(255,197,61,.12); }
+  .cupGI { width: 44px; height: 44px; display: grid; place-items: center; overflow: hidden; }
+  .cupGI .tileIcon { transform: scale(.72); }
+  .cupGN { font-size: .72rem; font-weight: 800; line-height: 1.1; text-align: center; }
+  .cupGNum { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; background: #ffc53d; color: #1b1405; font-style: normal; font-weight: 900; font-size: .72rem; display: grid; place-items: center; }
+  .cupGNum:empty { display: none; }
+  .cupGo:disabled { opacity: .45; }
+  .cupSlots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .cupSlot { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 14px; background: #1b1e26; border: 2px solid #2a2f3b; text-align: center; }
+  .cupSlot small { font-size: .7rem; font-weight: 800; color: #c9cfdb; line-height: 1.1; }
+  .cupSlot b { font-size: .7rem; color: var(--wc); }
+  .cupSlot.done { border-color: var(--wc); opacity: .85; }
+  .cupSlot.cur { border-color: #ffc53d; box-shadow: 0 0 0 3px rgba(255,197,61,.25); }
+  .cupLost .cupPts { font-size: 2.6rem; }
+  .cupLostS { font-size: .95rem !important; font-weight: 600 !important; color: #c9cfdb; }
+  /* 3.61: проверочное число для входа через Telegram */
+  .accPin { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px; border-radius: 16px; background: rgba(79,163,255,.12); border: 2px solid rgba(79,163,255,.45); }
+  .accPin b { font-size: 2.6rem; font-weight: 900; line-height: 1.05; color: #fff; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+  .accPin small { font-size: .75rem; color: #9fbbe8; font-weight: 700; }
+  .pinBtn { display: grid; place-items: center; } .pinBtn svg { display: block; }
   .tileIcon .joyMini::after {
     content: ''; position: absolute; left: 3px; top: 3px;
     width: 8px; height: 8px; border-radius: 50%; background: #fff;
@@ -8775,7 +8880,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '3.54';
+  const NET_BUILD = '3.63';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -8799,7 +8904,7 @@
   { const q = new URLSearchParams(location.search).get('srv'); if (q && SERVERS[q]) NET.srvSel = q; }
   function applySrv() {
     const sv = SERVERS[NET.srvSel];
-    const qr = new URLSearchParams(location.search).get('relay'); // для проверки: свой адрес сервера
+    const qr = devRelay(); // для проверки: свой адрес сервера (3.61: только localhost)
     NET.rtcWanted = NET.srvSel === 'ru' || NET.srvSel === 'ruw';
     NET.rtcOnly = NET.srvSel === 'ruw'; // сервер — только посредник: игра строго напрямую
     if (sv) { RELAY_NAME = sv[0]; RELAY_HOST = sv[1]; RELAY_URL = qr || 'wss://' + sv[1] + '/'; NET.mode = 'relay'; }
@@ -8809,13 +8914,16 @@
   // строчка внизу плашки: через что идёт связь и какая версия — чтобы было видно, обновилась ли игра
   const netInfo = () => 'версия ' + NET_BUILD;
   setTimeout(applySrv, 0);
-  function qs_relay() { const q = new URLSearchParams(location.search).get('relay'); return q || (RELAY_HOST ? 'wss://' + RELAY_HOST + '/' : ''); }
+  function devRelay() { return (v => { try { return v && /^(127\.0\.0\.1|localhost|\[::1\])$/.test(new URL(v).hostname) ? v : ''; } catch (e) { return ''; } })(new URLSearchParams(location.search).get('relay')); }
+  function qs_relay() { const q = devRelay(); return q || (RELAY_HOST ? 'wss://' + RELAY_HOST + '/' : ''); }
   const OLD_VER_GUEST = 'У тебя старая версия игры. Закрой игру полностью (смахни Telegram из недавних приложений) и открой ссылку снова.';
   const OLD_VER_HOST = 'У соперника другая версия игры. Пусть он полностью закроет Telegram и снова откроет ссылку — а ты тоже перезапусти игру.';
   const qs = new URLSearchParams(location.search);
-  const NET_TEST = qs.get('nettest') === '1';
-  const NET_LAG = +(qs.get('lag') || 0); // искусственная задержка для проверки, мс
-  const NET_JIT = +(qs.get('jit') || 0); // для проверки: случайные опоздания пакетов, мс
+  // 3.61: проверочные параметры (задержка, тест) — только на этом компьютере; иначе ссылкой с ?lag=3000 можно было испортить игру другому
+  const DEV_PAGE = /^(127\.0\.0\.1|localhost)$/.test(location.hostname);
+  const NET_TEST = DEV_PAGE && qs.get('nettest') === '1';
+  const NET_LAG = DEV_PAGE ? Math.min(5000, +(qs.get('lag') || 0) || 0) : 0; // искусственная задержка для проверки, мс
+  const NET_JIT = DEV_PAGE ? Math.min(5000, +(qs.get('jit') || 0) || 0) : 0; // для проверки: случайные опоздания пакетов, мс
   const tg = window.Telegram && window.Telegram.WebApp;
   const GAME_NAMES = { tanks: 'Танки', grav: 'Гравитация', hockey: 'Аэрохоккей' };
 
@@ -10223,7 +10331,7 @@
   const tilesNet = document.getElementById('tilesNet');
   // плитки Сумо и Лавы появляются чуть позже — поэтому собираем вкладку после загрузки всех игр
   setTimeout(() => { const miniOrder = id => { const el = document.getElementById(id), box = document.getElementById('tilesMini'); const i = el && box ? [...box.children].indexOf(el) : -1; return i < 0 ? 1e4 : i; }; // порядок — как во «Вдвоём»
-  NET_GAMES.slice().sort((a, b) => miniOrder(a[1]) - miniOrder(b[1])).forEach(([g, src, name]) => {
+  NET_GAMES.filter(x => { const o = document.getElementById(x[1]); return !(o && o.closest && o.closest('#tilesTanks')); }).sort((a, b) => miniOrder(a[1]) - miniOrder(b[1])).forEach(([g, src, name]) => { // 3.55: игры из Лаборатории — не по сети
     const t = document.createElement('button');
     t.className = 'tile';
     t.dataset.netgame = g;
@@ -12057,7 +12165,7 @@
     const tab = document.getElementById('eliteTab');
     if (!tab) return;
     const HOST = 'pifpaf-m3ivan.msk1.amvera.tech';
-    const qsE = new URLSearchParams(location.search).get('elite'); // для проверки: ws://127.0.0.1:8787/elite
+    const qsE = (v => { try { return v && /^(127\.0\.0\.1|localhost|\[::1\])$/.test(new URL(v).hostname) ? v : ''; } catch (e) { return ''; } })(new URLSearchParams(location.search).get('elite')); // для проверки: ws://127.0.0.1:8787/elite (3.61: только localhost)
     const WS_URL = qsE || 'wss://' + HOST + '/elite';
     const STATUS_URL = qsE ? qsE.replace(/^ws/, 'http').replace(/\/elite.*$/, '/elite/status') : 'https://' + HOST + '/elite/status';
     const panel = document.getElementById('elitePanel');
@@ -12160,7 +12268,7 @@
     tab.appendChild(tiles);
     setTimeout(() => {
       const miniOrder = id => { const el = document.getElementById(id), box = document.getElementById('tilesMini'); const i = el && box ? [...box.children].indexOf(el) : -1; return i < 0 ? 1e4 : i; }; // порядок — как во «Вдвоём»
-      ELITE_GAMES.slice().sort((a, b) => miniOrder(a[1]) - miniOrder(b[1])).forEach(([g, src, name]) => {
+      ELITE_GAMES.filter(x => { const o = document.getElementById(x[1]); return !(o && o.closest && o.closest('#tilesTanks')); }).sort((a, b) => miniOrder(a[1]) - miniOrder(b[1])).forEach(([g, src, name]) => { // 3.55: игры из Лаборатории — не по сети
         const t = document.createElement('button');
         t.className = 'tile';
         t.dataset.elitegame = g;
@@ -14664,6 +14772,32 @@
       { name: 'Полублоки', tee: [6, 1.5], hole: [6, 16.5], bumps: [[11.15, 3.85]], blocks: [[5.5, 6.5, 's'], [1.5, 11.5, 's'], [9.5, 11.5, 's'], [2.5, 3.5, 'B']], rows: [
         W4, W4, W4, '............', '............', 'TTTTTTTTT...', '............', '............',
         '...BBBBBBBBB', '............', '....L..R....', '....L..R....', '............', 'TTTTTTTTT...', '............', '...BBB..BBB.',
+        '............', '............', '............', W4, W4, W4] },
+      // ---- 3.55: пять трасс, где лунка спрятана — с одного удара не попасть (2–4 удара) ----
+      // лунка в подкове, вход снизу: спуститься по краю и зайти снизу
+      { name: 'Подкова', tee: [6, 1.5], hole: [6, 7.5], bumps: [[0.85, 18.15], [11.15, 18.15]], stars: [[6, 16.5]], rows: [
+        W4, W4, W4, '............', '............', '..########..', '..#......#..', '..#......#..',
+        '..#......#..', '..#......#..', '..#......#..', '..##....##..', '............', '............', '....ssss....', '............',
+        '............', '............', '............', W4, W4, W4] },
+      // песочные часы: через узкое горлышко, потом змейкой к лунке в углу
+      { name: 'Песочные часы', tee: [6, 1.5], hole: [2, 17.5], bumps: [[11.15, 3.85], [0.85, 3.85]], rows: [
+        W4, W4, W4, '............', '............', '............', '.##......##.', '...##..##...',
+        '.....ss.....', '...##..##...', '.##......##.', '............', '............', '#######.....', '............', '............',
+        '.....#######', '............', '............', W4, W4, W4] },
+      // мостики над водой — узкие, по краям; лунка в кармане, вход снизу
+      { name: 'Мостики', tee: [6, 1.5], hole: [6, 15], bumps: [[0.85, 18.15], [11.15, 18.15]], stars: [[6, 7.5]], rows: [
+        W4, W4, W4, '............', '............', '............', '...######...', '............',
+        '............', 'w..wwwwww..w', 'w..wwwwww..w', 'w..wwwwww..w', '............', '....####....', '....#..#....', '....#..#....',
+        '............', '..s......s..', '............', W4, W4, W4] },
+      // ветряк в проходе, лунка в домике со входом снизу
+      { name: 'Ветряк', tee: [6, 1.5], hole: [6, 13.6], bumps: [[0.85, 3.85], [11.15, 3.85], [0.85, 18.15], [11.15, 18.15]], mills: [{ x: 6, y: 6.5, len: 2.3, spd: 1.5 }], rows: [
+        W4, W4, W4, '............', '............', '............', '#####..#####', '............',
+        '............', '.ss......ss.', '............', '............', '...######...', '...#....#...', '...#....#...', '............',
+        '............', '............', '............', W4, W4, W4] },
+      // тайник: нижняя комната закрыта стеной — попасть можно только через портал
+      { name: 'Тайник', tee: [6, 1.5], hole: [6, 17], bumps: [[0.85, 3.85]], portals: [{ a: [10.4, 8.4], b: [1.5, 11.8] }], stars: [[10.5, 16]], rows: [
+        W4, W4, W4, '............', '............', '............', '....ssss....', '............',
+        '............', '............', '############', '............', '............', '............', '..########..', '............',
         '............', '............', '............', W4, W4, W4] },
     ];
 
@@ -18812,8 +18946,15 @@
     const COST = [10, 15, 30, 55, 110, 180, 300, 470], PPC = [10, 15, 25, 40, 65, 105, 170, 275];
     const mult = l => 1 + 0.06 * (l - 1);
     // --- прогресс ---
-    const SV = (() => { let s = {}; try { s = JSON.parse(localStorage.getItem('arena-v1') || '{}') || {}; } catch (e) {} s.coins = s.coins || 0; s.f = s.f || {}; KEYS.forEach(k => { s.f[k] = Object.assign({ lvl: 1, tr: 0, pp: 0, own: false }, s.f[k]); }); ['tok', 'star', 'boxes', 'big', 'dbl', 'luck', 'played'].forEach(q => { s[q] = s[q] || 0; }); s.starDay = s.starDay || { d: '', w: [] }; if (!F[s.sel]) s.sel = 'gun'; if (!F[s.selRed]) s.selRed = 'gun'; if (s.mode !== 'sd') s.mode = 'duel'; return s; })();
-    const save = () => { try { localStorage.setItem('arena-v1', JSON.stringify(SV)); } catch (e) {} };
+    // 3.55: прогресс приводится к полному виду одной функцией — им же пользуется синхронизация с аккаунтом (acct.js)
+    const svNorm = s => { s = s && typeof s === 'object' ? s : {}; s.coins = s.coins || 0; s.f = s.f || {}; KEYS.forEach(k => { s.f[k] = Object.assign({ lvl: 1, tr: 0, pp: 0, own: false }, s.f[k]); }); ['tok', 'star', 'boxes', 'big', 'dbl', 'luck', 'played'].forEach(q => { s[q] = s[q] || 0; }); s.starDay = s.starDay || { d: '', w: [] }; if (!F[s.sel]) s.sel = 'gun'; if (!F[s.selRed]) s.selRed = 'gun'; if (s.mode !== 'sd') s.mode = 'duel'; return s; };
+    const SV = svNorm((() => { try { return JSON.parse(localStorage.getItem('arena-v1') || '{}') || {}; } catch (e) { return {}; } })());
+    const save = () => { try { localStorage.setItem('arena-v1', JSON.stringify(SV)); } catch (e) {} if (window.PPArena && PPArena.onSave) PPArena.onSave(); };
+    // 3.55: Арена в аккаунте — общий прогресс на сайте и в Telegram
+    window.PPArena = window.PPArena || {};
+    PPArena.get = () => JSON.parse(JSON.stringify(SV));
+    PPArena.set = d => { const n = svNorm(JSON.parse(JSON.stringify(d || {}))); Object.keys(SV).forEach(k => delete SV[k]); Object.assign(SV, n); try { localStorage.setItem('arena-v1', JSON.stringify(SV)); } catch (e) {} try { if (typeof hubRender === 'function' && !HUB.hidden) hubRender(); } catch (e) {} };
+    PPArena.stats = d => { const n = svNorm(JSON.parse(JSON.stringify(d || SV))); return { cups: KEYS.reduce((a, k) => a + Math.max(0, n.f[k].tr), 0), played: n.played || 0, boxes: (n.boxes || 0) + (n.big || 0), coins: n.coins || 0 }; };
     const total = () => KEYS.reduce((a, k) => a + SV.f[k].tr, 0);
     const open = k => F[k].box ? SV.f[k].own : total() >= F[k].need;
     const luckChance = () => Math.min(0.6, 0.06 + 0.03 * SV.luck); // шанс бойца в ящике: растёт с каждым ящиком без бойца
@@ -19741,6 +19882,7 @@
           if (P.burn) G.circle(P.x + Math.sin(now / 60) * 4, P.y - 6, 4, 'rgba(255,138,61,0.85)');
           if (P.k !== 'mort' && now - P.shotAt < 160 && !P.jump) { const t = (now - P.shotAt) / 160, sc = t < 0.4 ? 0.6 + t / 0.4 * 0.5 : 1.1 + (t - 0.4) / 0.6 * 0.2, mx = P.x + Math.cos(P.ba) * (R + 2 * TS), my = P.y + Math.sin(P.ba) * (R + 2 * TS), rad = 6 * TS * sc, g = c.createRadialGradient(mx, my, 0, mx, my, rad); g.addColorStop(0, '#fffbe0'); g.addColorStop(0.33, '#fffbe0'); g.addColorStop(0.59, '#ffd23f'); g.addColorStop(0.82, '#ff9a1a'); g.addColorStop(1, 'rgba(255,140,0,0)'); c.globalAlpha = t < 0.4 ? 1 : 1 - (t - 0.4) / 0.6; c.fillStyle = g; c.beginPath(); c.arc(mx, my, rad, 0, 7); c.fill(); c.globalAlpha = 1; } // вспышка, как в «Танках: джойстик»
           else if (now - P.shotAt < 90 && !P.jump && P.k !== 'mort') { const k = 1 - (now - P.shotAt) / 90, mx = P.x + P.ax * (R + 7), my = P.y + P.ay * (R + 7); c.globalAlpha = 0.9 * k; G.circle(mx, my, 7 + 3 * k, '#ffd27a'); G.circle(mx, my, 4, '#fffbe6'); c.globalAlpha = 1; } // вспышка у дула
+          if (P.i === 0 || P.i === 1) { const jh = P.jump ? Math.sin(Math.min(1, P.jump.t / P.jump.T) * Math.PI) * 40 : 0; if (window.PPFX && PPFX.anchor) PPFX.anchor(c, P.i, P.x, P.y - jh, R); } // 3.55: облачко эмоции — над самим бойцом (с камерой)
           if (!P.jump) c.restore();
           c.globalAlpha = 1;
         }]);
@@ -20442,9 +20584,12 @@
   // привязанный Telegram входит сам. ID — порядковый номер (1, 2, 3…). «Позвать» создаёт матч в «Сеть++».
   (function () {
     const Q = new URLSearchParams(location.search);
+    // 3.61: свой адрес сервера из ссылки (?api=, ?elite=) — ТОЛЬКО для проверок на этом компьютере (localhost).
+    // Раньше ссылка вида pifpafgame.ru/?api=чужой-сайт отправляла туда ключ входа и пароль.
+    const devOnly = (v => { try { return v && /^(127\.0\.0\.1|localhost|\[::1\])$/.test(new URL(v).hostname) ? v : ''; } catch (e) { return ''; } });
     const API = (() => {
-      if (Q.get('api')) return Q.get('api').replace(/\/$/, '');
-      if (Q.get('elite')) return Q.get('elite').replace(/^ws/, 'http').replace(/\/elite.*$/, '');
+      if (devOnly(Q.get('api'))) return Q.get('api').replace(/\/$/, '');
+      if (devOnly(Q.get('elite'))) return Q.get('elite').replace(/^ws/, 'http').replace(/\/elite.*$/, '');
       return 'https://pifpaf-m3ivan.msk1.amvera.tech';
     })();
     const tgApp = window.Telegram && window.Telegram.WebApp;
@@ -20511,13 +20656,16 @@
     function apply(j) {
       if (!j) return;
       if (j.token) setToken(j.token);
-      if (j.me) { A.me = j.me; A.needLogin = false; if (['login', 'reg', 'forgot', 'reset'].includes(A.pwMode)) A.pwMode = null; }
+      if (j.pick) { A.pick = j.pick; } // 3.55: Telegram у другого аккаунта — выбрать прогресс
+      if (j.me) { A.me = j.me; A.needLogin = false; if (['login', 'reg', 'forgot', 'reset'].includes(A.pwMode)) A.pwMode = null; A.gateLogin = false; if (A.me.tg) ls.set('pp-tgok', '1'); } // вошёл — дальше окно само решит, нужно ли подтвердить Telegram
+      if (j.me) arOnServer(j);
       if (A.me && A.pendFriend) { const f = A.pendFriend; A.pendFriend = null; if (f !== A.me.id) setTimeout(() => addById(f), 0); }
       ['friends', 'inq', 'outq', 'recent', 'invites'].forEach(k => { if (Array.isArray(j[k])) A[k] = j[k]; });
       (j.news || []).forEach(t => toast(t));
       if (A.opp && A.friends.some(f => f.id === A.opp.id)) A.opp.fr = true;
       showInvites();
       changed();
+      if (A.me && A.me.tg) giftClaim();
     }
     let ensuring = null;
     // аккаунт появляется только после входа. В Telegram-приложении вход происходит сам.
@@ -20525,6 +20673,7 @@
       if (ensuring) return ensuring;
       ensuring = (async () => {
         if (!A.cfg) A.cfg = await api('config', null, true).catch(() => null);
+        A.cfgFail = !A.cfg;
         if (inTg && A.cfg && A.cfg.tg && !(A.me && A.me.tg)) {
           try {
             const j = await api('tg/webapp', { initData: tgApp.initData });
@@ -20532,7 +20681,7 @@
             else { apply(j); if (j.linked) A.msg = 'Telegram привязан к аккаунту'; changed(); return; }
           } catch (e) {}
         }
-        if (A.token) { apply(await api('sync', { busy: busy() })); if (A.token) return; }
+        if (A.token) { apply(await api('sync', { busy: busy(), arv: arKnown() })); if (A.token) return; }
         // без входа аккаунта нет: ID появляется только после входа (Telegram, логин, VK, Яндекс)
         A.me = null; A.needLogin = true; changed();
       })().catch(e => { A.err = e.message; changed(); }).finally(() => { ensuring = null; });
@@ -20543,7 +20692,7 @@
     async function sync() {
       if (!A.token || document.hidden) return;
       lastSync = Date.now();
-      try { apply(await api('sync', { busy: busy() })); A.err = ''; } catch (e) { /* тихо: попробуем позже */ }
+      try { apply(await api('sync', { busy: busy(), arv: arKnown() })); A.err = ''; } catch (e) { /* тихо: попробуем позже */ }
     }
     // пока открыт главный экран — раз в 8 с (чтобы приглашение пришло быстро), в игре — раз в 30 с
     function loop() {
@@ -20559,6 +20708,8 @@
     const toastBox = document.createElement('div');
     toastBox.className = 'accToasts';
     document.body.appendChild(toastBox);
+    // 3.61: проверочное число входа через Telegram (бот спрашивает его — защита от угона по присланной ссылке)
+    const pinBox = w => (w && w.pin ? `<div class="accPin"><small>Число для бота</small><b>${esc(w.pin)}</b><small>Никому не говори</small></div>` : '');
     function toast(text, btns, ms) {
       const t = document.createElement('div');
       t.className = 'accToast';
@@ -20617,7 +20768,7 @@
     }
     async function tgStart() {
       await ensure();
-      try { const j = await api('tg/start', {}); A.tgWait = { code: j.code, link: j.link, at: Date.now() }; ls.set('pp-tgwait', JSON.stringify(A.tgWait)); A.err = ''; changed(); render(true); tgPoll(); }
+      try { const j = await api('tg/start', {}); A.tgWait = { code: j.code, link: j.link, pin: j.pin || 0, at: Date.now() }; ls.set('pp-tgwait', JSON.stringify(A.tgWait)); A.err = ''; changed(); render(true); tgPoll(); }
       catch (e) { A.err = e.message; changed(); }
     }
     async function tgPoll() {
@@ -20627,7 +20778,7 @@
       try {
         const j = await api('tg/check', { code: w.code });
         if (j.wait) { setTimeout(tgPoll, 2000); return; }
-        stop(); apply(j); A.msg = j.linked ? 'Telegram привязан к аккаунту' : 'Ты вошёл через Telegram'; changed(); render(true);
+        stop(); apply(j); A.msg = j.pick ? '' : j.created ? 'Аккаунт создан — ты вошёл через Telegram' : j.linked ? 'Telegram подтверждён' : 'Ты вошёл через Telegram'; changed(); render(true);
       } catch (e) { stop(); A.err = e.message; changed(); render(true); }
     }
 
@@ -20700,9 +20851,9 @@
       const via = [me.login && 'логин ' + me.login, me.tg && 'Telegram', me.vk && 'VK', me.ya && 'Яндекс'].filter(Boolean).join(', ');
       let h = out ? `<div class="panel accCard"><div class="accOutHead"><b>${A.pwMode === 'reg' ? 'Регистрация' : A.pwMode === 'login' ? 'Вход' : 'Восстановление пароля'}</b><span class="accSmall">Аккаунт нужен, чтобы получить ID, добавлять друзей и звать их в игру. Аккаунт один — на сайте и в Telegram.</span><span class="accGiftLine">🎁 За регистрацию — эмоция «Портал»${c.tg ? ', за Telegram — «Лайк» и «Дизлайк»' : ''}</span></div>` : `<div class="panel accCard">
         <div class="accMe">${av(me)}
-          ${A.edit ? `<input class="netCode accName" maxlength="12" value="${esc(me.name)}" autocomplete="off"><button class="hkPlay accSave">OK</button>`
+          ${A.edit ? `<input class="netCode accName" maxlength="12" value="${esc(me.name)}" autocomplete="off"><button class="hkPlay accSave">${me.namePrice ? `OK · ${me.namePrice} 🎟` : 'OK'}</button>`
             : `<div class="accWho"><b>${esc(me.name)}</b>${idLine(me)}</div><button class="backBtn accEdit" aria-label="Изменить имя">✎</button><button class="backBtn accCopy" aria-label="Скопировать ID"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>`}
-        </div>`;
+        </div>${A.edit ? `<p class="accSmall accNameNote">${me.namePrice ? `Смена имени — ${me.namePrice} 🎟 жетонов. У тебя: ${me.tokens || 0}. Жетоны выпадают из сундучков вместо повторок.` : 'Первая смена имени — бесплатно, дальше — 10 🎟 жетонов.'}</p>` : ''}`;
       const pwForm = () => {
         const eye = `<button class="backBtn accEye" type="button" aria-label="Показать пароль">${A.pwShow ? 'Скрыть' : 'Показать'}</button>`;
         const t = A.pwShow ? 'text' : 'password';
@@ -20732,7 +20883,7 @@
           <div class="accRow"><button class="hkPlay accOutGo">Выйти здесь</button><button class="backBtn accOutAll">Выйти везде</button></div><button class="backBtn accPwCancel">Отмена</button></div>`;
         return '';
       };
-      if (A.tgWait) h += `<div class="accLogin"><p class="accSmall">Открой Telegram, нажми «Запустить», а потом «Да, это я». Бот спрашивает, чтобы никто не вошёл в твой аккаунт по присланной ссылке.</p><a class="hkPlay accTgGo" href="${esc(A.tgWait.link)}" target="_blank" rel="noopener">Открыть Telegram</a><button class="backBtn accTgCancel">Отмена</button></div>`;
+      if (A.tgWait) h += `<div class="accLogin">${pinBox(A.tgWait)}<p class="accSmall">Открой Telegram, нажми «Запустить», а потом ${A.tgWait.pin ? 'это число' : '«Да, это я»'}. Никому его не говори — так никто не войдёт в твой аккаунт по присланной ссылке.</p><a class="hkPlay accTgGo" href="${esc(A.tgWait.link)}" target="_blank" rel="noopener">Открыть Telegram</a><button class="backBtn accTgCancel">Отмена</button></div>`;
       else if (A.pwMode) {
         h += pwForm();
         // вход в один клик — только если Telegram / VK / Яндекс уже привязан к аккаунту
@@ -20984,6 +21135,171 @@
     // ---------- открыть «Друзья» ----------
     function openFriends() { if (window.pgHome && window.pgHome.setMode) window.pgHome.setMode('friends'); }
 
+    // ======================= 3.55: ВХОД ЧЕРЕЗ TELEGRAM ОБЯЗАТЕЛЕН, ОБЩИЙ ПРОГРЕСС =======================
+    // ---------- Арена в аккаунте ----------
+    // Прогресс Арены лежит и на телефоне (arena-v1), и в аккаунте. arena-owner — чей аккаунт у прогресса на этом телефоне.
+    window.PPArena = window.PPArena || {};
+    const AR = { v: +(ls.get('arena-v') || 0), owner: ls.get('arena-owner') || '', t: null, busy: false, again: false, adopting: false, ask: null, fresh: false };
+    const arOk = () => !!(window.PPArena && PPArena.get && PPArena.set);
+    const arStat = d => (arOk() ? PPArena.stats(d) : { cups: 0, played: 0 });
+    const arEmpty = d => { const x = arStat(d); return !x.cups && !x.played; };
+    const arKnown = () => (A.me && AR.owner === A.me.id ? AR.v : -1);
+    function arMine(v) { AR.v = v || 0; AR.owner = A.me.id; ls.set('arena-v', String(AR.v)); ls.set('arena-owner', AR.owner); }
+    function arAdopt(ar) { if (!arOk()) return; AR.adopting = true; try { PPArena.set(ar ? ar.d : {}); } finally { AR.adopting = false; } arMine(ar ? ar.v : 0); }
+    async function arPush(force) {
+      if (!A.token || !A.me || !arOk() || (AR.owner !== A.me.id && !force)) return;
+      if (AR.busy) { AR.again = true; return; }
+      AR.busy = true; const sent = PPArena.get(), who = A.me.id;
+      try {
+        const j = await api('arena/save', { base: AR.v, d: sent, force: !!force });
+        if (!A.me || A.me.id !== who) return;
+        if (j.conflict) { arAdopt(j.ar); return; } // прогресс поменялся на другом устройстве — берём из аккаунта
+        if (j.ar) { if (JSON.stringify(j.ar.d) !== JSON.stringify(sent) && !AR.again) arAdopt(j.ar); else arMine(j.ar.v); }
+        if (A.me.arGift) A.me.arGift = false;
+      } catch (e) { /* нет связи — отправим со следующим изменением */ }
+      finally { AR.busy = false; if (AR.again) { AR.again = false; arPush(); } }
+    }
+    PPArena.onSave = () => { if (AR.adopting) return; clearTimeout(AR.t); AR.t = setTimeout(() => arPush(), 1200); };
+    function arOnServer(j) {
+      if (!A.me || !arOk() || A.pick) return;
+      if (AR.owner === A.me.id) { if (j.ar && j.ar.v > AR.v) arAdopt(j.ar); if (A.me.arGift) arPush(); return; }
+      if (j.ar === undefined) return; // сервер не прислал — спросим при следующей сверке
+      const local = PPArena.get(), srv = j.ar;
+      if (AR.fresh) { AR.fresh = false; if (srv && !arEmpty(srv.d)) { arAdopt(srv); return; } }
+      if (arEmpty(local)) { arAdopt(srv); return; }
+      if (!srv || arEmpty(srv.d)) { arMine(srv ? srv.v : 0); arPush(); return; }
+      if (JSON.stringify(srv.d) === JSON.stringify(local)) { arMine(srv.v); return; }
+      if (!AR.ask) { AR.ask = { local, srv }; gateCheck(); }
+    }
+
+    // ---------- окно: вход / подтверждение Telegram / выбор прогресса ----------
+    const gate = document.createElement('div'); gate.className = 'accGate'; gate.hidden = true; document.body.appendChild(gate);
+    let gateSig = '';
+    const gateOff = () => ls.get('pp-gate-off') === '1'; // только для проверок
+    const pl = (n, a, b, c) => { n = Math.abs(n) % 100; const k = n % 10; return n > 10 && n < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
+    const st = (x, cls) => { const c = x.cups || 0, p = x.pins || 0, t = x.tokens || 0; return `<div class="agStats ${cls || ''}"><b>${esc(x.name || 'Игрок')}${x.num ? ` <i>ID ${esc(x.num)}</i>` : ''}</b><span>🏆 ${c} ${pl(c, 'кубок', 'кубка', 'кубков')}</span><span>😊 ${p} ${pl(p, 'эмоция', 'эмоции', 'эмоций')}</span><span>🎟 ${t} ${pl(t, 'жетон', 'жетона', 'жетонов')}</span></div>`; };
+    function gateState() {
+      if (gateOff()) return '';
+      if (A.pick) return 'pick';
+      if (AR.ask) return 'arena';
+      if (A.me && A.me.tg) return '';
+      if (A.me && !A.me.tg) return A.gateLogin ? '' : 'confirm'; // вошёл, а Telegram не подтверждён — обязательно
+      if (!A.token) return A.gateLogin || A.gateSkip ? '' : 'login'; // 3.57: без аккаунта играть можно — регистрацию предлагаем при каждом заходе
+      return ''; // вход есть, сервер ещё не ответил (или нет интернета) — играем
+    }
+    function gateCheck() {
+      const k = gateState(), c = A.cfg || {};
+      const sig = JSON.stringify([k, A.tgWait && A.tgWait.link, A.err, A.msg, !!c.tg, A.pick && A.pick.ticket, !!AR.ask, A.gateBusy, !!A.cfgFail]);
+      if (sig === gateSig) return; gateSig = sig;
+      gate.hidden = !k; document.body.classList.toggle('accGateOn', !!k);
+      if (!k) { gate.innerHTML = ''; return; }
+      const gifts = `<div class="agGifts"><span class="agGT">🎁 Сразу получишь</span><div class="agGRow">${['portal', 'like', 'dislike'].map(id => `<div class="agG"><canvas data-pin="${id}"></canvas><small>${esc((window.PPFX && PPFX.by[id] || {}).name || id)}</small></div>`).join('')}</div><span class="agGSub">и сундучки за победы, ящики Арены и друзей</span></div>`;
+      const err = A.err ? `<p class="netErr">${esc(A.err)}</p>` : '';
+      let h = '';
+      if (k === 'wait') h = `<b class="agT">PifPaf</b><p class="agP">Загружаем аккаунт…</p>${err}${A.err ? '<button class="hkPlay agRetry">Ещё раз</button>' : ''}`;
+      else if (A.tgWait) h = `<b class="agT">Подтверди в Telegram</b>${pinBox(A.tgWait)}<p class="agP">Открой Telegram, нажми «Запустить», потом ${A.tgWait.pin ? 'это число' : '«Да, это я»'}. Потом вернись сюда — всё случится само.</p><a class="hkPlay agTgGo" href="${esc(A.tgWait.link)}" target="_blank" rel="noopener">Открыть Telegram</a><p class="agWait">Ждём подтверждения…</p><button class="backBtn agCancel">Отмена</button>`;
+      else if (k === 'login') h = `<b class="agT">Добро пожаловать в PifPaf!</b><p class="agP">Войди через Telegram — аккаунт один на сайте и в Telegram, прогресс не потеряется.</p>${gifts}${err}
+        ${inTg ? '<button class="hkPlay agReg">Создать аккаунт</button><button class="backBtn agHave" data-m="login">Войти по логину и паролю</button>'
+          : `<button class="hkPlay agTg"${c.tg ? '' : ' disabled'}>Войти через Telegram</button><p class="agSmall">Аккаунт уже привязан к Telegram — сразу войдёшь. Нет аккаунта — он создастся.</p>
+        <div class="agRow2"><button class="backBtn agHave" data-m="reg">Создать аккаунт</button><button class="backBtn agHave" data-m="login">Войти по логину</button></div><p class="agSmall">С логином и паролем — после входа нужно будет один раз подтвердить Telegram.</p>`}
+        <button class="agSkip">Играть без аккаунта</button><p class="agSmall agSkipNote">Без аккаунта нет подарков, сундучков, друзей, а прогресс останется только на этом телефоне.</p>${A.cfgFail ? '<p class="netErr">Нет связи с игрой. Проверь интернет и выключи VPN.</p><button class="backBtn agRetry">Ещё раз</button>' : !inTg && !c.tg && A.cfg ? '<p class="agSmall">Вход через Telegram сейчас недоступен — попробуй чуть позже.</p>' : ''}`;
+      else if (k === 'confirm') h = `<b class="agT">Подтверди аккаунт в Telegram</b><p class="agP">Аккаунт <b>${esc(A.me.name)}</b> (ID ${esc(A.me.num)}) ещё не подтверждён. Это один раз — потом вход на сайте и в Telegram общий, а прогресс не потеряется.</p>${err}
+        ${inTg ? '<button class="hkPlay agLink">Подтвердить</button>' : `<button class="hkPlay agTg"${c.tg ? '' : ' disabled'}>Подтвердить в Telegram</button>`}<button class="agSkip agOut">Выйти и играть без аккаунта</button>`;
+      else if (k === 'pick') { const P = A.pick, loc = AR.owner === (A.me && A.me.id) || !AR.owner ? arStat(arOk() ? PPArena.get() : null) : null, cur = Object.assign({}, P.cur, loc && loc.cups > (P.cur.cups || 0) ? { cups: loc.cups } : {});
+        h = `<b class="agT">Какой прогресс оставить?</b><p class="agP">Этот Telegram уже привязан к другому аккаунту. Выбери, с чем играть дальше — второй вариант сохранится на 30 дней, его можно будет вернуть в настройках.</p>
+        <button class="agPick" data-k="cur"><span class="agPT">📱 На этом телефоне</span>${st(cur)}</button>
+        <button class="agPick" data-k="old"><span class="agPT">✈️ В аккаунте с Telegram</span>${st(P.old)}</button>${err}`; }
+      else if (k === 'arena') { const a = arStat(AR.ask.local), b = arStat(AR.ask.srv.d), me = A.me;
+        h = `<b class="agT">Какой прогресс Арены оставить?</b><p class="agP">На этом телефоне и в аккаунте разный прогресс Арены. Второй вариант сохранится на 30 дней — его можно вернуть в настройках.</p>
+        <button class="agPick" data-a="local"><span class="agPT">📱 На этом телефоне</span>${st({ name: me.name, cups: a.cups, pins: (me.items || []).length ? me.items.filter(i => window.PPFX && PPFX.by[i] && PPFX.by[i].cat === 'pin').length : 0, tokens: me.tokens })}<small class="agMore">боёв: ${a.played}, ящиков: ${a.boxes}</small></button>
+        <button class="agPick" data-a="srv"><span class="agPT">☁️ В аккаунте</span>${st({ name: me.name, cups: b.cups, pins: (me.items || []).filter(i => window.PPFX && PPFX.by[i] && PPFX.by[i].cat === 'pin').length, tokens: me.tokens })}<small class="agMore">боёв: ${b.played}, ящиков: ${b.boxes}</small></button>`; }
+      gate.innerHTML = `<div class="agCard">${h}</div>`;
+      gate.querySelectorAll('canvas[data-pin]').forEach(cv => window.PPFX && PPFX.pinPreview && PPFX.pinPreview(cv, cv.dataset.pin, true));
+      const on = (q, f) => { const e = gate.querySelector(q); if (e) e.onclick = f; };
+      on('.agTg', () => { A.err = ''; tgStart(); });
+      on('.agCancel', () => { A.tgWait = null; ls.set('pp-tgwait', null); gateSig = ''; gateCheck(); });
+      on('.agRetry', () => { A.err = ''; gateSig = ''; ensure(); });
+      on('.agSkip', () => { A.gateSkip = true; gateSig = ''; gateCheck(); }); // до следующего захода
+      gate.querySelectorAll('.agHave').forEach(b => b.onclick = () => { A.gateLogin = true; A.pwMode = b.dataset.m || 'login'; A.err = ''; openFriends(); gateSig = ''; gateCheck(); setTimeout(() => render(true), 50); });
+      on('.agOut', async () => { try { await api('logout', {}); } catch (e) {} setToken(null); A.needLogin = true; A.gateLogin = false; A.gateSkip = true; gateSig = ''; changed(); });
+      on('.agLink', () => { A.err = ''; ensure(); });
+      on('.agReg', async () => {
+        if (A.gateBusy) return; A.gateBusy = true; A.err = ''; gateCheck();
+        try { const j = await api('tg/register', { initData: tgApp.initData, name: A.tgName || '' }); apply(j); A.msg = j.created ? 'Аккаунт создан!' : 'Ты вошёл'; }
+        catch (e) { A.err = e.message; }
+        A.gateBusy = false; gateSig = ''; changed();
+      });
+      gate.querySelectorAll('.agPick[data-k]').forEach(b => b.onclick = async () => {
+        const P = A.pick; if (!P || A.gateBusy) return; A.gateBusy = true; gateCheck();
+        try {
+          // прогресс Арены этого телефона сначала кладём в текущий аккаунт — чтобы он переехал (или сохранился на 30 дней) целиком
+          const local = arOk() ? PPArena.get() : null;
+          if (local && !arEmpty(local) && (!AR.owner || AR.owner === A.me.id)) await api('arena/save', { d: local, force: true }).catch(() => {});
+          const j = await api('progress/pick', { ticket: P.ticket, keep: b.dataset.k });
+          A.pick = null; AR.fresh = true; apply(j);
+          A.msg = b.dataset.k === 'cur' ? 'Прогресс с этого телефона перенесён в аккаунт' : 'Ты в аккаунте с Telegram. Прогресс телефона сохранён на 30 дней';
+        } catch (e) { A.err = e.message; A.pick = null; }
+        A.gateBusy = false; gateSig = ''; changed();
+      });
+      gate.querySelectorAll('.agPick[data-a]').forEach(b => b.onclick = async () => {
+        const Q2 = AR.ask; if (!Q2 || A.gateBusy) return; A.gateBusy = true; gateCheck();
+        try {
+          if (b.dataset.a === 'local') { arMine(Q2.srv.v); AR.ask = null; await arPush(true); }
+          else { await api('progress/stash', { ar: Q2.local }).catch(() => {}); AR.ask = null; arAdopt(Q2.srv); }
+          A.msg = 'Готово — прогресс Арены выбран';
+        } catch (e) { A.err = e.message; }
+        A.gateBusy = false; gateSig = ''; changed();
+      });
+    }
+    listeners.push(gateCheck);
+    // игра не идёт без входа: если окно закрыли (вход по логину), но ушли с «Друзей» — показываем снова
+    setInterval(() => { if (A.gateLogin && !A.me && !(box && box.offsetParent)) { A.gateLogin = false; A.gateSkip = true; gateSig = ''; gateCheck(); } }, 1500); // ушёл с формы входа, не войдя, — играет без аккаунта
+
+    // ---------- «Вернуть прежний прогресс» (в настройках, 30 дней) ----------
+    function bakRow() {
+      const host = document.getElementById('appNetSettings'); if (!host) return;
+      let r = document.getElementById('accBakRow');
+      const bk = A.me && A.me.bakAt && Date.now() - A.me.bakAt < 30 * 86400000 ? A.me.bakStats : null;
+      if (!bk) { if (r) r.remove(); return; }
+      if (!r) { r = document.createElement('div'); r.id = 'accBakRow'; r.className = 'accBak'; host.before(r); }
+      const left = Math.max(1, Math.ceil((A.me.bakAt + 30 * 86400000 - Date.now()) / 86400000));
+      const sig = JSON.stringify(bk) + left; if (r.dataset.sig === sig) return; r.dataset.sig = sig;
+      r.innerHTML = `<div class="label">Прежний прогресс</div><small>Хранится ещё ${left} дн.: «${esc(bk.name || '')}», 🏆 ${bk.cups}, 🎟 ${bk.tokens}</small><button class="backBtn accBakGo">Вернуть прежний прогресс</button>`;
+      r.querySelector('.accBakGo').onclick = async () => {
+        if (!confirm2(r)) return;
+        try { const j = await api('progress/restore', {}); apply(j); if (j.ar !== undefined) arAdopt(j.ar); toast('Прежний прогресс вернулся. Тот, что был, теперь хранится 30 дней'); r.dataset.sig = ''; bakRow(); }
+        catch (e) { toast(e.message); }
+      };
+    }
+    function confirm2(r) { const b = r.querySelector('.accBakGo'); if (b.dataset.sure) return true; b.dataset.sure = '1'; b.textContent = 'Точно? Нажми ещё раз'; setTimeout(() => { if (b.isConnected) { delete b.dataset.sure; b.textContent = 'Вернуть прежний прогресс'; } }, 4000); return false; }
+    listeners.push(bakRow);
+
+    // ---------- эмоция по ссылке (?gift=КОД или Telegram startapp=gКОД) ----------
+    (() => {
+      const g = Q.get('gift'), sp = tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.start_param;
+      const code = g && /^[A-Za-z0-9]{8,12}$/.test(g) ? g : sp && /^g[A-Za-z0-9]{8,12}$/.test(sp) ? sp.slice(1) : '';
+      if (g) { const u = new URL(location.href); u.searchParams.delete('gift'); history.replaceState(null, '', u.toString()); }
+      if (code) ls.set('pp-gift', code);
+    })();
+    let giftBusy = false;
+    async function giftClaim() {
+      const code = ls.get('pp-gift'); if (!code || giftBusy || !A.me || !A.me.tg) return;
+      giftBusy = true;
+      try {
+        const j = await api('gift/claim', { code }); ls.set('pp-gift', null); apply(j);
+        giftWin(j.item, j.got ? 'new' : 'have');
+      } catch (e) { ls.set('pp-gift', null); giftWin(null, 'err', e.message); }
+      giftBusy = false;
+    }
+    function giftWin(id, kind, msg) {
+      const e = id && window.PPFX && PPFX.by[id];
+      const w = document.createElement('div'); w.className = 'accGiftWin';
+      w.innerHTML = `<div class="agCard">${e ? '<canvas class="agGiftCv"></canvas>' : ''}<b class="agT">${kind === 'new' ? `🎁 Новая эмоция: «${esc(e.name)}»` : kind === 'have' ? `Эмоция «${esc(e ? e.name : '')}» у тебя уже есть` : 'Не получилось'}</b><p class="agP">${kind === 'new' ? 'Уже в «Инвентаре» — кидай в игре кнопкой 😊' : kind === 'have' ? 'Место по ссылке не потрачено — можно отдать ссылку другу.' : esc(msg || '')}</p><button class="hkPlay agOk">Круто!</button></div>`;
+      document.body.appendChild(w);
+      if (e) PPFX.pinPreview(w.querySelector('.agGiftCv'), id, true);
+      w.querySelector('.agOk').onclick = () => w.remove();
+    }
+
     // ---------- для других модулей ----------
     window.PPACC = {
       mount,
@@ -21008,9 +21324,15 @@
       },
       openChest() {
         if (!A.token || !A.me) return Promise.resolve({ err: 'Войди в аккаунт' });
-        return api('chest/open', {}).then(j => { apply(j); changed(); const d = j.drop; return { drop: d, dup: !!j.dup, n: (j.me && j.me.dups && j.me.dups[d]) || 0 }; }).catch(e => ({ err: e.message || 'Нет связи' }));
+        return api('chest/open', {}).then(j => { apply(j); changed(); const d = j.drop; return { drop: d, dup: !!j.dup, tok: j.tok || 0, tokens: (j.me && j.me.tokens) || 0, left: (j.me && j.me.chests) || 0 }; }).catch(e => ({ err: e.message || 'Нет связи' }));
       },
-      chestInfo: () => (A.me ? { chests: A.me.chests || 0, cw: A.me.cw || 0, cycEnd: A.me.cycEnd || 0, dups: A.me.dups || {} } : null),
+      chestInfo: () => (A.me ? { chests: A.me.chests || 0, cw: A.me.cw || 0, cycEnd: A.me.cycEnd || 0, dups: {}, tokens: A.me.tokens || 0, prices: A.me.prices || null } : null),
+      // 3.55: открыть след / образ / победу за жетоны
+      buy(id) {
+        if (!A.me) return Promise.reject(new Error('Войди в аккаунт'));
+        return api('buy', { id }).then(j => { apply(j); changed(); return j; });
+      },
+      openFriends,
 
       // инвентарь: надеть (id) или снять (null) предмет вида cat
       equip(cat, id) {
@@ -21048,8 +21370,9 @@
       if (ej && /^\d{4}$/.test(ej)) setTimeout(() => window.PPElite && window.PPElite.join(ej), 300);
       // вернулись из Telegram, а страница перезагрузилась — продолжаем ждать подтверждения
       try { const w = JSON.parse(ls.get('pp-tgwait') || 'null'); if (w && w.code && Date.now() - w.at < 600000) { A.tgWait = w; tgPoll(); } } catch (e) {}
-      if (!back && (A.token || inTg)) { if (A.token) sync(); else ensure(); }
+      if (!back) ensure(); // 3.55: без входа игра не открывается — сразу узнаём, есть ли аккаунт
       loop();
+      setTimeout(gateCheck, 0);
     })();
   })();
 
@@ -21171,6 +21494,30 @@
         c.restore();
         for (let n = 0; n < 3; n++) { const p = T[Math.floor(hash(j, 72 + n) * T.length)]; if (!p) continue; const f = 1 - age(now, p[2]); if (f <= 0) continue; const a = hash(j, 75 + n) * 6.28, d = R * (1 + hash(j, 78 + n)); c.globalAlpha = f; dot(c, p[0] + Math.cos(a) * d, p[1] + Math.sin(a) * d, 1.6, '#e6faff'); }
         c.globalAlpha = 1;
+      } },
+      // ---- 3.58: мифический ----
+      { id: 'galaxy', name: 'Галактика', draw(c, T, now, R) {
+        // переливающаяся туманность (фиолетовый → розовый → голубой), мерцающие звёзды, вокруг мяча кружат две планетки
+        if (T.length < 2) return;
+        c.save(); c.lineCap = 'round';
+        for (let k = 1; k < T.length; k++) {
+          const [x0, y0] = T[k - 1], [x1, y1, t] = T[k], f = 1 - age(now, t); if (f <= 0) continue;
+          const hue = 275 + 45 * Math.sin(t / 90 + now / 420);
+          c.strokeStyle = `hsla(${hue},80%,28%,${0.75 * f})`; c.lineWidth = R * 3 * f; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+          c.strokeStyle = `hsla(${hue + 35},95%,62%,${0.85 * f})`; c.lineWidth = R * 1.5 * f + 0.5; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+          c.strokeStyle = `rgba(255,235,255,${0.7 * f})`; c.lineWidth = R * 0.35 * f; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+        }
+        for (const [x, y, t] of T) {
+          const h = hash(t, 91); if (h > 0.5) continue;
+          const f = 1 - age(now, t); if (f <= 0) continue;
+          const a = hash(t, 92) * 6.28, d = R * (0.4 + hash(t, 93) * 1.7);
+          c.globalAlpha = f * (0.5 + 0.5 * Math.sin(now / 60 + h * 50));
+          star(c, x + Math.cos(a) * d, y + Math.sin(a) * d, 1.5 + 3 * f, h < 0.2 ? '#ffffff' : h < 0.35 ? '#ffd6ff' : '#bfe3ff');
+        }
+        c.globalAlpha = 1;
+        const [hx, hy] = T[T.length - 1];
+        for (let n = 0; n < 2; n++) { const a = now / (n ? 260 : 380) + n * 3.1, rr = R * (n ? 2 : 2.6), px = hx + Math.cos(a) * rr, py = hy + Math.sin(a) * rr * 0.55; dot(c, px, py, R * (n ? 0.24 : 0.32), n ? '#7fe4ff' : '#ff8ad0'); dot(c, px - R * 0.08, py - R * 0.08, R * 0.1, 'rgba(255,255,255,0.8)'); }
+        c.restore();
       } }
     ];
     // ================= ОБРАЗЫ: что надето на шарик =================
@@ -21274,6 +21621,24 @@
         c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(-r * 0.6, -r * 0.8); c.lineTo(r * 0.6, -r * 0.8); c.lineTo(r * 0.55, -r * 0.98); c.lineTo(-r * 0.54, -r * 0.98); c.closePath(); c.fill();
         star(c, -r * 0.12, -r * 1.25, r * 0.13, '#fff6c0'); star(c, r * 0.12, -r * 1.55, r * 0.09, '#fff6c0');
         for (let n = 0; n < 3; n++) { const a = now / 520 + n * 2.09, z = Math.sin(a); c.globalAlpha = 0.55 + 0.45 * z; star(c, Math.cos(a) * r * 0.95, -r * 1.3 + z * r * 0.22, r * (0.13 + 0.05 * z), n === 1 ? '#bfe3ff' : '#fff6c0'); }
+        c.globalAlpha = 1;
+      } },
+      // ---- 3.58: мифический ----
+      { id: 'phoenix', name: 'Феникс', draw(c, r, now) {
+        // огненный гребень из пяти перьев: колышется и мерцает, золотой обруч с камнем, вверх летят искры
+        const t = now / 1000;
+        for (const n of [-2, 2, -1, 1, 0]) {
+          const a = n * 0.34 + Math.sin(t * 3 + n) * 0.06, L = r * (1.3 - Math.abs(n) * 0.2) * (1 + 0.09 * Math.sin(t * 9 + n * 2));
+          c.save(); c.translate(Math.sin(a) * r * 0.66, -Math.cos(a) * r * 0.66); c.rotate(a);
+          const g = c.createLinearGradient(0, 0, 0, -L); g.addColorStop(0, '#e8261a'); g.addColorStop(0.45, '#ff8a1a'); g.addColorStop(1, '#fff08c');
+          c.fillStyle = g; c.beginPath(); c.moveTo(-r * 0.22, 0); c.quadraticCurveTo(-r * 0.3, -L * 0.55, 0, -L); c.quadraticCurveTo(r * 0.3, -L * 0.55, r * 0.22, 0); c.closePath(); c.fill();
+          c.fillStyle = 'rgba(255,250,210,0.85)'; c.beginPath(); c.moveTo(-r * 0.07, -L * 0.12); c.quadraticCurveTo(-r * 0.1, -L * 0.5, 0, -L * 0.78); c.quadraticCurveTo(r * 0.1, -L * 0.5, r * 0.07, -L * 0.12); c.closePath(); c.fill();
+          c.restore();
+        }
+        c.save(); c.shadowColor = 'rgba(255,170,60,0.9)'; c.shadowBlur = 8;
+        c.strokeStyle = '#ffc53d'; c.lineWidth = Math.max(1.5, r * 0.17); c.beginPath(); c.arc(0, 0, r * 0.8, Math.PI * 1.15, Math.PI * 1.85); c.stroke(); c.restore();
+        dot(c, 0, -r * 0.8, r * 0.14, '#ff2f5a'); dot(c, -r * 0.04, -r * 0.84, r * 0.05, 'rgba(255,255,255,0.8)');
+        for (let n = 0; n < 5; n++) { const p = (now / 700 + n * 0.2) % 1, x = Math.sin(n * 2.3 + now / 300) * r * 0.65, y = -r * (1.15 + p * 1.2); c.globalAlpha = (1 - p) * 0.9; dot(c, x, y, r * 0.08 * (1 - p) + 0.6, n % 2 ? '#ffd27a' : '#ff8a3d'); }
         c.globalAlpha = 1;
       } }
     ];
@@ -21401,6 +21766,21 @@
         c.restore();
         if (land >= 1) for (let n = 0; n < 6; n++) { const a = n / 6 * 6.28 + k * 3, d = (34 + 10 * Math.sin(k * 20 + n)) * S; c.globalAlpha = fade * (0.5 + 0.5 * Math.sin(k * 30 + n * 2)); star(c, x + Math.cos(a) * d, cy + Math.sin(a) * d, 4 * S, '#fff6c0'); }
         c.globalAlpha = 1;
+      } },
+      // ---- 3.58: мифическая ----
+      { id: 'nova', name: 'Сверхновая', draw(c, x, y, k, S) {
+        // вспышка → разноцветные ударные волны → лучи крутятся → осколки-звёзды разлетаются
+        const fade = k > 0.82 ? (1 - k) / 0.18 : 1, fl = k < 0.12 ? k / 0.12 : Math.max(0, 1 - (k - 0.12) / 0.55);
+        c.save(); c.globalCompositeOperation = 'lighter';
+        const R0 = (30 + 55 * fl) * S, g = c.createRadialGradient(x, y, 0, x, y, R0);
+        g.addColorStop(0, `rgba(255,255,255,${0.95 * fl * fade})`); g.addColorStop(0.4, `rgba(255,140,220,${0.6 * fl * fade})`); g.addColorStop(1, 'rgba(120,80,255,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(x, y, R0, 0, Math.PI * 2); c.fill();
+        c.save(); c.translate(x, y); c.rotate(k * 1.6);
+        for (let n = 0; n < 16; n++) { c.rotate(Math.PI / 8); const L = (60 + 40 * Math.sin(n * 1.7 + k * 10)) * S * Math.min(1, k * 5); c.fillStyle = `hsla(${(n * 22 + k * 300) % 360},100%,70%,${0.22 * fade})`; c.beginPath(); c.moveTo(0, 0); c.lineTo(L, -4 * S); c.lineTo(L, 4 * S); c.closePath(); c.fill(); }
+        c.restore();
+        for (let i = 0; i < 3; i++) { const p = Math.max(0, (k - i * 0.1) / 0.7); if (p <= 0 || p >= 1) continue; c.strokeStyle = `hsla(${280 - i * 70},100%,65%,${(1 - p) * 0.9 * fade})`; c.lineWidth = (6 - i * 1.5) * S * (1 - p) + 1; c.beginPath(); c.arc(x, y, (20 + 130 * ease(p)) * S, 0, Math.PI * 2); c.stroke(); }
+        for (let n = 0; n < 24; n++) { const a = n / 24 * 6.283 + hash(n, 201) * 0.4, sp = (70 + hash(n, 202) * 90) * S, p = ease(Math.min(1, k / 0.75)), d = sp * p; c.globalAlpha = fade * (1 - p * 0.6) * (0.6 + 0.4 * Math.sin(k * 40 + n)); star(c, x + Math.cos(a) * d, y + Math.sin(a) * d - k * 10 * S, (2.5 + hash(n, 203) * 3) * S, n % 3 ? '#fff6c0' : '#ffc2f0'); }
+        c.restore(); c.globalAlpha = 1;
       } }
     ];
 
@@ -21928,8 +22308,8 @@
       pin: { name: 'Эмоции', items: PINS, sub: 'Кидай во время игры — кнопка 😊 в углу твоей половины' }
     };
     const INFO = {
-      comet: ['c', 'Яркий хвост, как у падающей звезды'], bubbles: ['c', 'Шарик будто летит под водой'], rainbow: ['r', 'Переливается всеми цветами'],
-      fire: ['e', 'Горит и сыплет искрами'], stars: ['l', 'Оставляет мерцающую звёздную пыль'],
+      comet: ['c', 'Яркий хвост, как у падающей звезды'], bubbles: ['c', 'Шарик будто летит под водой'], rainbow: ['e', 'Переливается всеми цветами'],
+      fire: ['r', 'Горит и сыплет искрами'], stars: ['l', 'Оставляет мерцающую звёздную пыль'],
       beanie: ['c', 'Тёплая шапка с помпоном'], bow: ['c', 'Розовый бантик набок'], horns: ['r', 'Маленькие хитрые рожки'], ninja: ['r', 'Повязка, хвостики развеваются на ходу'],
       halo: ['e', 'Светящийся нимб над головой'], crown: ['l', 'Золотая корона с камнями'],
       confetti: ['c', 'Взрыв разноцветного конфетти'], hearts: ['c', 'Сердечки поднимаются вверх'], fireworks: ['r', 'Три залпа салюта'],
@@ -21944,13 +22324,14 @@
       lidoff: ['m', 'Макушку сорвало и унесло вверх, шарик смотрит ей вслед. Картинка без анимации'],
       smoke: ['e', 'Мозг перегрелся — из головы валит дым. Картинка без анимации'],
       gg: ['sr', 'Хорошая игра!'], lol: ['c', 'Трясётся от смеха до слёз'], angry: ['r', 'Краснеет от злости, стиснул зубы'], cry: ['r', 'Ручьи слёз'],
-      snow: ['c', 'Падают и кружатся снежинки'], neon: ['r', 'Светится, как неоновая вывеска, и мерцает'], notes: ['sr', 'Разноцветные ноты всплывают и пританцовывают'], electric: ['l', 'Трещит молния, сыплются искры'],
+      snow: ['e', 'Падают и кружатся снежинки'], neon: ['e', 'Светится, как неоновая вывеска, и мерцает'], notes: ['sr', 'Разноцветные ноты всплывают и пританцовывают'], electric: ['l', 'Трещит молния, сыплются искры'],
       cap: ['c', 'Красная кепка с козырьком'], cat: ['r', 'Ушки, которые иногда дёргаются'], prop: ['sr', 'Разноцветная шапочка, пропеллер крутится'], wizard: ['e', 'Высокая шляпа, вокруг летают искры'],
-      starfall: ['c', 'Вспышка — и разлёт звёзд'], balloons: ['r', 'Улетают воздушные шарики'], rainarc: ['sr', 'Вырастает радуга с облачками'], trophy: ['l', 'Падает золотой кубок и сверкает'],
+      starfall: ['e', 'Вспышка — и разлёт звёзд'], balloons: ['r', 'Улетают воздушные шарики'], rainarc: ['sr', 'Вырастает радуга с облачками'], trophy: ['l', 'Падает золотой кубок и сверкает'],
       cool: ['e', 'Очки падают сверху — и блик'], rocket: ['e', 'Ракета влетает и покачивается на огне'],
       oops: ['c', 'Подпрыгивает от испуга: огромные глаза и капля пота'], kot: ['sr', 'Недовольный кот хмурит брови — и «дизлайк»'],
       kotlike: ['c', 'Кот довольно жмурится — и «лайк»'], kotlol: ['c', 'Кот ржёт до слёз и трясётся'], kotcry: ['r', 'Кот рыдает в два ручья'],
-      kotshock: ['r', 'Кот в шоке: глаза-блюдца, шерсть дыбом'], kotlove: ['sr', 'Кот влюблён: глаза-сердечки'], kotsleep: ['r', 'Кот уснул с пузырём из носа'], avtor: ['s', 'Лицо автора игры: бровь вверх, ухмылка и кивок. Только от самого автора'], again: ['r', 'Стрелка бежит по кругу — давай ещё раз!']
+      kotshock: ['r', 'Кот в шоке: глаза-блюдца, шерсть дыбом'], kotlove: ['sr', 'Кот влюблён: глаза-сердечки'], kotsleep: ['r', 'Кот уснул с пузырём из носа'], avtor: ['s', 'Лицо автора игры: бровь вверх, ухмылка и кивок. Только от самого автора'], again: ['r', 'Стрелка бежит по кругу — давай ещё раз!'],
+      galaxy: ['m', 'Туманность переливается, мерцают звёзды, вокруг мяча кружат планетки'], phoenix: ['m', 'Огненный гребень феникса: перья колышутся, летят искры'], nova: ['m', 'Вспышка сверхновой: ударные волны, лучи и звёздный дождь']
     };
     const BY = {}; for (const k in CAT) for (const e of CAT[k].items) BY[e.id] = Object.assign(e, { cat: k });
     const RORD = { s: -1, c: 0, r: 1, sr: 1.5, e: 2, l: 3, m: 4 }; // в инвентаре — от обычных к мифическим
@@ -22059,10 +22440,12 @@
       const D = G.d || {}, t = performance.now();
       for (const i of [0, 1]) {
         if (!L.pins[i] || L.A[i] && L.A[i].src !== 'guess' && t - L.A[i].t < 80) continue; // герой уже сам сообщил, где он
-        let x = G.W / 2, y = i === 0 ? G.H * 0.78 : G.H * 0.22, r = 16;
+        let x = G.W / 2, y = i === 0 ? G.H * 0.78 : G.H * 0.22, r = 16, found = false;
+        const FW = D.W > G.W ? D.W : G.W, FH = D.H > G.H ? D.H : G.H; // 3.55: поле может быть больше экрана (Арена)
         for (const f of SPOTS) { let P = D[f] && D[f][i]; if (!P || P.B) continue; // P.B — доска тетриса: героя нет
           if (f === 'pl' && D.cs) P = { x: D.ox + P.x * D.cs, y: D.oy + P.y * D.cs, r: D.cs * 0.45 }; // бомбер: клетки → точки
-          if (P && typeof P.x === 'number' && typeof P.y === 'number' && P.x > -20 && P.x < G.W + 20 && P.y > -20 && P.y < G.H + 20) { x = P.x; y = P.y; r = P.r || P.R || 14; break; } }
+          if (P && typeof P.x === 'number' && typeof P.y === 'number' && P.x > -20 && P.x < FW + 20 && P.y > -20 && P.y < FH + 20) { x = P.x; y = P.y; r = P.r || P.R || 14; found = true; break; } }
+        if (!found && L.A[i] && t - L.A[i].t < 1500) continue; // 3.55: героя на миг не нашли — облачко остаётся, где было, а не прыгает в центр
         anchor(G.c, i, x, y, r, 'guess');
       }
     }
@@ -22113,7 +22496,7 @@
       const pad = B.pad, W = Math.ceil(w + pad * 2), H = Math.ceil(Math.max(h, ty) + pad * 2 + 3), d = DPR(), cv = B.body;
       if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
       const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, W, H); c.translate(pad, pad);
-      const lw = Math.max(2.4, w * 0.034);
+      const lw = Math.max(1.6, w * 0.022); // 3.55: контур тоньше
       c.save(); c.translate(0, 3); bubblePath(c, w, h, tx, ty); c.fillStyle = 'rgba(0,0,0,0.22)'; c.fill(); c.restore();
       bubblePath(c, w, h, tx, ty); c.fillStyle = '#ffffff'; c.fill();
       c.save(); bubblePath(c, w, h, tx, ty); c.clip(); c.fillStyle = '#e6eaf2'; c.fillRect(0, h - h * 0.13, w, h * 0.13 + 2); c.restore();
@@ -22156,16 +22539,18 @@
       const p = L.pins[i], B = L.B[i]; if (!p || !B || !B.w) return;
       const w = B.w, h = B.h, d = DPR(), c = B.emo.getContext('2d');
       // один раз проигрывается и замирает на лучшем кадре: стоп и для k, и для «часов» эмоции
-      const fz = FREEZE[p.e.id] == null ? 0.6 : FREEZE[p.e.id], k = Math.max(0, Math.min(fz, (t - p.t0 - 120) / LOOP_T)), cs = h / 96 * 1.2;
+      const fz = FREEZE[p.e.id] == null ? 0.6 : FREEZE[p.e.id], k = Math.max(0, Math.min(fz, (t - p.t0 - 120) / LOOP_T)), cs = h / 96 * 1.34; // 3.55: эмоция крупнее — края облачка ближе к ней
       if (B.still && k >= fz) return; B.still = k >= fz && (!p.e.ready || p.e.ready()); // кадр уже стоит — холст не трогаем (картинка ещё грузится — ждём)
       c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, w, h);
       c.translate(w / 2, h * 0.53); c.scale(cs, cs);
       p.e.draw(c, k, PG_COL[p.i], PG_DARK[p.i], p.t0 + 120 + k * LOOP_T);
     }
     function build() {
+      // 3.63: значок кнопки эмоций — белое облачко с улыбкой (вместо жёлтого смайлика)
+      const PIN_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11.5a8.5 8 0 0 1-12.3 7.2L3.5 20l1.3-4A8.5 8 0 1 1 20.5 11.5z"/><path d="M8.6 13c.9 1.1 2 1.7 3.4 1.7s2.5-.6 3.4-1.7"/><circle cx="9" cy="9.6" r="1" fill="#fff" stroke="none"/><circle cx="15" cy="9.6" r="1" fill="#fff" stroke="none"/></svg>';
       const el = L.el = document.createElement('div'); el.id = 'pinLayer'; el.hidden = true;
       el.innerHTML = [0, 1].map(() => '<div class="pinB" hidden><canvas class="pinBody"></canvas><canvas class="pinEmo"></canvas></div>').join('') +
-        [0, 1].map(s => `<div class="pinCorner s${s}"><div class="pinPanel" hidden></div><button type="button" class="pinBtn" aria-label="Эмоции">😊</button></div>`).join('');
+        [0, 1].map(s => `<div class="pinCorner s${s}"><div class="pinPanel" hidden></div><button type="button" class="pinBtn" aria-label="Эмоции">${PIN_ICON}</button></div>`).join('');
       document.body.appendChild(el);
       L.B = [...el.querySelectorAll('.pinB')].map(b => ({ el: b, body: b.querySelector('.pinBody'), emo: b.querySelector('.pinEmo'), pad: 9, key: '', mx: 1, w: 0, h: 0 }));
       L.btn = [...el.querySelectorAll('.pinCorner')].map(k => ({ k, b: k.querySelector('.pinBtn'), panel: k.querySelector('.pinPanel') }));
@@ -22182,7 +22567,7 @@
       const icon = (cv, id, i) => {
         const e = BY[id]; if (!e) return; const d = DPR(), W = 48;
         cv.width = cv.height = Math.round(W * d); const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0);
-        const fz = FREEZE[id] == null ? 0.6 : FREEZE[id], k = fz || 0, sc = W / 84;
+        const fz = FREEZE[id] == null ? 0.6 : FREEZE[id], k = fz || 0, sc = W / 70; // 3.55: эмоция крупнее — белая рамка вокруг неё уже
         c.translate(W / 2, W * 0.53); c.scale(sc, sc);
         c.save(); c.beginPath(); c.rect(-W / sc / 2, -W / sc * 0.53, W / sc, W / sc); c.clip();
         try { e.draw(c, k, PG_COL[i], PG_DARK[i], 1000 + k * LOOP_T); } catch (er) {}
@@ -22324,19 +22709,21 @@
       const reveal = () => {
         if (res.err) { title.textContent = 'Не открылся'; hint.textContent = res.err; el.querySelector('.chOk').hidden = false; el.querySelector('.chOk').textContent = 'Закрыть'; return; }
         const id = res.drop, e = BY[id], [rk] = INFO[id], [rn, rc] = RAR[rk];
-        if (res.dup) { snd(440, 0.12); title.innerHTML = `Повторка: «${e.name}»<i class="chRar" style="--rc:${rc}">${rn}</i>`; hint.textContent = `Уже была — ушла в ящик повторок (там ×${res.n})`; }
+        if (res.dup) { snd(440, 0.12); title.innerHTML = `Повторка: «${e.name}»<i class="chRar" style="--rc:${rc}">${rn}</i>`; hint.innerHTML = `Уже была — вместо неё <b class="chTok">+${res.tok} 🎟 жетонов</b> (всего ${res.tokens}). На жетоны открываются следы, образы и победы`; }
         else { snd(660, 0.1); setTimeout(() => snd(990, 0.12), 90); setTimeout(() => snd(1320, 0.18), 180); if (rk === 'm') setTimeout(() => snd(1760, 0.3), 300);
           title.innerHTML = `${rk === 'm' ? 'НЕВЕРОЯТНО! ' : ''}Новая эмоция: «${e.name}»<i class="chRar" style="--rc:${rc}">${rn}</i>`; hint.textContent = 'Уже в «Инвентаре» — кидай в игре кнопкой 😊'; }
         const pr = el.querySelector('.chPrize'); pr.hidden = false; pr.classList.toggle('dup', !!res.dup); pr.classList.toggle('myth', rk === 'm'); requestAnimationFrame(() => pr.classList.add('on'));
         PPFX.pinPreview(pr.querySelector('.chPin'), id, true);
         el.querySelector('.chOk').hidden = false; el.querySelector('.chLater').hidden = true;
+        // 3.55: есть ещё сундучки — открыть следующий сразу
+        if (res.left > 0) { const ok = el.querySelector('.chOk'); ok.textContent = `Открыть ещё (${res.left})`; ok.onclick = () => { close(); setTimeout(chestShow, 260); }; }
       };
       cv.addEventListener('click', () => {
         if (st !== 'shut') return; st = 'shake'; t0 = performance.now(); hint.textContent = '…'; el.querySelector('.chLater').hidden = true;
         [0, 320, 640].forEach(ms => setTimeout(() => snd(220 + ms / 4, 0.06), ms));
         window.PPACC.openChest().then(j => { res = j; if (shook && st === 'shake') { st = 'open'; t0 = performance.now(); reveal(); } });
       });
-      el.querySelector('.chOk').addEventListener('click', close);
+      el.querySelector('.chOk').onclick = close;
       el.querySelector('.chLater').addEventListener('click', () => { close(); toast('Сундучок ждёт тебя в «Инвентаре»', 2500); });
       snd(520, 0.08);
     }
@@ -22477,13 +22864,18 @@
       }
     }
 
+    // 3.55: наборы эмоций и цены в жетонах (цены присылает сервер; здесь — такие же на случай, если ещё не пришли)
+    const MEME = ['kot', 'kotlike', 'kotlol', 'kotcry', 'kotshock', 'kotlove', 'kotsleep', 'avtor'];
+    const PRICE0 = { c: 12, r: 24, sr: 40, e: 70, m: 120 }; // 3.58: легендарные за жетоны не открываются
+    const priceOf = id => { const e = BY[id]; if (!e || e.cat === 'pin') return 0; const ci = window.PPACC && PPACC.chestInfo && PPACC.chestInfo(), P = (ci && ci.prices) || PRICE0; return P[INFO[id][0]] || 0; };
+    const myTokens = () => { const ci = window.PPACC && PPACC.chestInfo && PPACC.chestInfo(); return ci ? ci.tokens || 0 : 0; };
     window.PPINV = {
       mount(box) {
         let tab = lsGet('pp-invtab'); if (!CAT[tab]) tab = 'trail';
         const selOf = {}; for (const k in CAT) { const v = lsGet('pp-invsel-' + k); selOf[k] = BY[v] && BY[v].cat === k ? v : (CAT[k].items.find(x => S.owned.includes(x.id)) || CAT[k].items[CAT[k].items.length - 1]).id; }
         box.innerHTML = `
           <div class="invTop">
-            <div class="invTitle"><b>Инвентарь</b><span class="invCount"></span></div>
+            <div class="invTitle"><b>Инвентарь</b><span class="invTok" title="Жетоны: выпадают вместо повторок, открывают следы, образы и победы">🎟 <b>0</b></span><span class="invCount"></span></div>
             <div class="invBar"><i></i></div>
           </div>
           <div class="invChest" hidden></div>
@@ -22501,19 +22893,31 @@
           <div class="invGrid"></div>`;
         const stage = box.querySelector('.invStage'), stageCv = stage.querySelector('canvas'), grid = box.querySelector('.invGrid');
         let cards = [], stageSt = { T: [] };
+        // 3.55: группы — эмоции по наборам («Стандартные», «Мемы»), остальное по редкости
+        const groups = () => {
+          const its = CAT[tab].items;
+          if (tab === 'pin') return [['std', 'Стандартные'], ['meme', 'Мемы']].map(([k, t]) => ({ t, its: its.filter(e => (MEME.includes(e.id) ? 'meme' : 'std') === k) })).filter(g => g.its.length);
+          return Object.keys(RAR).map(rk => ({ t: RAR[rk][0], col: RAR[rk][1], its: its.filter(e => INFO[e.id][0] === rk) })).filter(g => g.its.length);
+        };
         function build() {
           grid.innerHTML = '';
-          cards = CAT[tab].items.map(e => {
+          cards = [];
+          groups().forEach(g => {
+          const hd = document.createElement('div'); hd.className = 'invGH'; if (g.col) hd.style.setProperty('--rc', g.col);
+          hd.innerHTML = `<b>${g.t}</b><small data-g="${g.its.map(e => e.id).join(',')}"></small>`; grid.appendChild(hd);
+          g.its.forEach(e => cards.push(card(e)));
+          });
+          function card(e) {
             const [rk] = INFO[e.id], [, col] = RAR[rk];
             const b = document.createElement('button'); b.type = 'button'; b.className = 'invItem'; b.style.setProperty('--rc', col);
-            b.innerHTML = `<canvas></canvas><span class="invName">${e.name}</span><i class="invDot"></i><span class="invMiniLock${GIFT[e.id] ? ' gift' : ''}">${GIFT[e.id] ? '🎁' : '🔒'}</span><span class="invWorn">✓</span>`;
+            b.innerHTML = `<canvas></canvas><span class="invName">${e.name}</span><i class="invDot"></i><span class="invMiniLock${GIFT[e.id] ? ' gift' : ''}">${GIFT[e.id] ? '🎁' : '🔒'}</span>${priceOf(e.id) ? `<span class="invPrice">${priceOf(e.id)}🎟</span>` : ''}<span class="invWorn">✓</span>`;
             b.addEventListener('click', () => {
-              if (selOf[tab] === e.id) { if (!window.PPFX.owns(e.id)) { const L = b.querySelector('.invMiniLock'); L.classList.remove('shake'); void L.offsetWidth; L.classList.add('shake'); toast(GIFT[e.id] ? `Подарок ${GIFT_FOR[GIFT[e.id]]} — нажми «Получить»` : DROP[e.id] ? 'Выпадает из сундучка за победы — играй!' : 'Пока закрыто — скоро можно будет получить'); } return; }
+              if (selOf[tab] === e.id) { if (!window.PPFX.owns(e.id)) { const L = b.querySelector('.invMiniLock'); L.classList.remove('shake'); void L.offsetWidth; L.classList.add('shake'); toast(GIFT[e.id] ? `Подарок ${GIFT_FOR[GIFT[e.id]]} — нажми «Получить»` : DROP[e.id] ? 'Выпадает из сундучка за победы — играй!' : priceOf(e.id) ? `Открывается за ${priceOf(e.id)} 🎟 жетонов` : 'Только по особой ссылке или от автора'); } return; }
               selOf[tab] = e.id; lsSet('pp-invsel-' + tab, e.id); stageSt = { T: [] }; show();
             });
             grid.appendChild(b);
             return { e, b, cv: b.querySelector('canvas'), st: { T: [] } };
-          });
+          }
           box.querySelector('.invSec').textContent = CAT[tab].sub;
           box.querySelectorAll('.invTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
         }
@@ -22524,8 +22928,11 @@
           box.querySelector('.invDesc').textContent = desc;
           const on = window.PPFX.worn(tab) === id, eqB = box.querySelector('.invEq');
           const gift = !own && GIFT[id];
-          box.querySelector('.invState').innerHTML = gift ? `<span class="invGift">🎁 Подарок ${GIFT_FOR[gift]}</span> · ${GIFT_HOW[gift].replace(' во вкладке «Друзья»', '')}` : !own && DROP[id] ? '<span class="invNo">📦 Из сундучка</span> · сундучки дают за победы' : !own ? '<span class="invNo">🔒 Закрыто</span> · скоро можно будет получить' : tab === 'pin' ? '<span class="invOk">✓ Есть у тебя</span> · кидай в игре кнопкой 😊' : on ? '<span class="invOk">✓ Надето</span> · видно в играх' : '<span class="invOk">✓ Есть у тебя</span>';
-          eqB.hidden = gift ? false : !own || tab === 'pin'; eqB.textContent = gift ? 'Получить' : on ? 'Снять' : 'Надеть'; eqB.classList.toggle('off', !gift && on); eqB.classList.toggle('gift', !!gift);
+          const pr = !own && !gift ? priceOf(id) : 0, tk = myTokens();
+          box.querySelector('.invState').innerHTML = gift ? `<span class="invGift">🎁 Подарок ${GIFT_FOR[gift]}</span> · ${GIFT_HOW[gift].replace(' во вкладке «Друзья»', '')}` : !own && DROP[id] ? '<span class="invNo">📦 Из сундучка</span> · сундучки дают за победы' : pr ? `<span class="invNo">🎟 За ${pr} жетонов</span> · у тебя ${tk}` : !own ? '<span class="invNo">🔒 Закрыто</span> · только по особой ссылке или от автора' : tab === 'pin' ? '<span class="invOk">✓ Есть у тебя</span> · кидай в игре кнопкой 😊' : on ? '<span class="invOk">✓ Надето</span> · видно в играх' : '<span class="invOk">✓ Есть у тебя</span>';
+          eqB.hidden = gift || pr ? false : !own || tab === 'pin'; eqB.textContent = gift ? 'Получить' : pr ? `Открыть · ${pr} 🎟` : on ? 'Снять' : 'Надеть'; eqB.classList.toggle('off', !gift && !pr && on); eqB.classList.toggle('gift', !!gift); eqB.classList.toggle('buy', !!pr); eqB.classList.toggle('poor', !!pr && tk < pr);
+          box.querySelector('.invTok b').textContent = tk;
+          grid.querySelectorAll('.invGH small').forEach(sm => { const ids = sm.dataset.g.split(','); sm.textContent = `${ids.filter(x => window.PPFX.owns(x)).length}/${ids.length}`; });
           box.querySelector('.invStageLock').textContent = gift ? '🎁' : '🔒';
           stage.style.setProperty('--rc', col); stage.classList.toggle('locked', !own); stage.classList.toggle('legend', rk === 'l');
           cards.forEach(k => { k.b.classList.toggle('on', k.e.id === id); k.b.classList.toggle('locked', !window.PPFX.owns(k.e.id)); k.b.classList.toggle('worn', window.PPFX.worn(tab) === k.e.id); });
@@ -22538,6 +22945,13 @@
         box.querySelector('.invEq').addEventListener('click', () => {
           const id = selOf[tab], put = window.PPFX.worn(tab) === id ? null : id;
           if (!window.PPFX.owns(id) && GIFT[id]) { if (window.PPACC && window.PPACC.gift) window.PPACC.gift(GIFT[id]); return; } // подарок: ведём регистрироваться / привязывать Telegram
+          if (!window.PPFX.owns(id) && priceOf(id)) { // 3.55: открыть за жетоны
+            const pr = priceOf(id), tk = myTokens();
+            if (tk < pr) { toast(`Не хватает ${pr - tk} 🎟. Жетоны выпадают из сундучков вместо повторок`, 2600); return; }
+            if (!window.PPACC || !window.PPACC.buy) return;
+            window.PPACC.buy(id).then(() => toast(`Открыто: ${BY[id].name}! Надень его`, 2200)).catch(e => toast(e.message || 'Не получилось — проверь интернет'));
+            return;
+          }
           if (!window.PPACC || !window.PPACC.equip) return;
           window.PPACC.equip(tab, put).then(() => { if (put) toast(`Надето: ${BY[put].name}`); }).catch(e => toast(e.message || 'Не получилось — проверь интернет'));
         });
@@ -22553,7 +22967,7 @@
           chestBox.innerHTML = `<div class="icRow"><span class="icT">📦 Сундучки за победы</span>${ci.chests ? `<button type="button" class="hkPlay icOpen">Открыть${ci.chests > 1 ? ' (' + ci.chests + ')' : ''}</button>` : ''}</div>
             <div class="icSteps">${steps.map(n => `<span class="${cw >= n ? 'ok' : ''}"><b>${cw >= n ? '✓' : n}</b>${{ 1: 'победа', 3: 'победы', 10: 'побед' }[n]}</span>`).join('<i></i>')}</div>
             <span class="icSub">${cw ? `Побед: ${cw}. ` : ''}${left ? `Новый круг через ${hh ? hh + ' ч ' : ''}${mm} мин` : 'Круг из 12 часов начнётся с первой победы'}</span>
-            ${dn ? `<div class="icDups"><span>Ящик повторок · ${dn}</span>${dups.map(([id, n]) => `<i title="${BY[id].name}">${PIN_ICO[id] || '★'}<b>×${n}</b></i>`).join('')}</div>` : ''}`;
+            <span class="icSub icOdds">Внутри — эмоция: обычная 60%, редкая 30%, сверхредкая 8%, эпическая 1,9%, мифическая 0,1%. Повторка — 🎟 жетоны (2–40 по редкости)</span>`;
           const ob = chestBox.querySelector('.icOpen'); if (ob) ob.onclick = () => chestShow();
         }
         if (window.PPACC && window.PPACC.onChange) window.PPACC.onChange(() => { if (box.isConnected) chestPanel(); });
@@ -22636,6 +23050,10 @@
     const head = home.querySelector('.homeHead'), gear = document.getElementById('appSettingsBtn');
     const lab = el('button', 'labBtn', svg('flask')); gear.innerHTML = svg('gear'); gear.classList.add('labBtn'); lab.id = 'labBtn'; lab.setAttribute('aria-label', 'Лаборатория: новые игры и тесты');
     const hb = el('div', 'headBtns'); gear.parentNode.insertBefore(hb, gear); hb.append(lab, gear);
+    // 3.55: «Друзья» и «Инвентарь» (эмоции) — всегда рядом с настройками
+    const hFr = el('button', 'labBtn hFr', svg('heart') + '<b class="fBadge" hidden></b>'), hInv = el('button', 'labBtn hInv', svg('box'));
+    hFr.setAttribute('aria-label', 'Друзья'); hInv.setAttribute('aria-label', 'Инвентарь и эмоции');
+    hb.insertBefore(hFr, lab); hb.insertBefore(hInv, lab);
 
     // --- режимы ---
     const bar = el('div', 'modeBar');
@@ -22654,6 +23072,10 @@
     // эти игры — только в Лаборатории (не во «Вдвоём» и не в «С ботом»)
     const LAB_IDS = ['pgTile-blocks', 'pgTile-band', 'pgTile-flag', 'pgTile-laser'];
     (() => { const lab = document.getElementById('tilesTanks'); LAB_IDS.forEach(id => { const t = document.getElementById(id); if (t && lab) lab.appendChild(t); }); })();
+    // 3.55: игры на доработке (решение владельца) — тоже в Лабораторию; из «Вдвоём», «С ботом» и игры по сети их нет
+    const FIX_IDS = ['quickTanksTile', 'quickStickTile', 'gravTile', 'pgTile-pinball'];
+    (() => { const lab = document.getElementById('tilesTanks'); if (!lab) return; lab.appendChild(el('div', 'tilesDivider labFix', '<span>🔧 На доработке</span>'));
+      FIX_IDS.forEach(id => { const t = document.getElementById(id); if (t) { t.classList.add('fixTile'); lab.appendChild(t); } }); })();
     const lay = el('div', 'homeLay'), main = el('div', 'homeMain');
     bar.parentNode.insertBefore(lay, bar);
     lay.append(bar, main);
@@ -22677,7 +23099,7 @@
     function buildBot() {
       botGrid.innerHTML = ''; botOff.innerHTML = '';
       const miniOrder = id => { const el = document.getElementById(id), box = document.getElementById('tilesMini'); const i = el && box ? [...box.children].indexOf(el) : -1; return i < 0 ? 1e4 : i; }; // порядок — как во «Вдвоём»
-      BOT_IDS.filter(id => id !== 'pgTile-arena').sort((a, b) => miniOrder(a) - miniOrder(b)).forEach(id => { const o = document.getElementById(id); if (o) botGrid.appendChild(proxy(o)); });
+      BOT_IDS.filter(id => id !== 'pgTile-arena' && !FIX_IDS.includes(id)).sort((a, b) => miniOrder(a) - miniOrder(b)).forEach(id => { const o = document.getElementById(id); if (o) botGrid.appendChild(proxy(o)); });
       [...document.querySelectorAll('#tilesMini .tile')].filter(o => !BOT_IDS.includes(o.id)).forEach(o => { const p = proxy(o, true); const m = p.querySelector('.modeIcons'); if (m) { m.textContent = 'нет бота'; m.classList.add('txt'); } botOff.appendChild(p); });
     }
 
@@ -22859,6 +23281,8 @@
         go,
         set(v) { view = v; } // для duo.js: вид без побочных действий
       };
+      const openSide = m => { view = 'more'; setMode(m); apply(); };
+      hFr.addEventListener('click', () => openSide('friends')); hInv.addEventListener('click', () => openSide('inv'));
       [start, mini, friend, sub].forEach(b => b.addEventListener('click', e => { const t = e.target.closest('[data-v]'); if (!t) return; if (t.dataset.v === 'duoBack') { if (window.PPDuo) PPDuo.back(); else go('friend'); return; } go(t.dataset.v); }));
       if (arenaTile) arenaTile.classList.add('stHidden');
       new MutationObserver(() => { if (!home.hidden) apply(); }).observe(home, { attributes: true, attributeFilter: ['hidden', 'style'] });
@@ -22874,16 +23298,18 @@
     if (window.PPACC) {
       PPACC.mount(friendsBox);
       const badge = bar.querySelector('.fBadge');
-      PPACC.onChange(() => { const n = PPACC.badge(); badge.hidden = !n; badge.textContent = n; });
+      const badge2 = hFr.querySelector('.fBadge');
+      PPACC.onChange(() => { const n = PPACC.badge(); badge.hidden = !n; badge.textContent = n; badge2.hidden = !n; badge2.textContent = n; });
     }
     if (window.PPINV) PPINV.mount(invBox);
     window.pgHome = { setMode, render };
   })();
 
-  // ======================= ТУРНИР (3.13) =======================
-  // Серия случайных игр «Вдвоём» или «С ботом»: рулетка выбирает игру, победа в матче — очко турнира,
-  // кто первым наберёт нужное число очков — чемпион (кубок записывается на этом телефоне).
-  // У каждого игрока на турнир две карты: «×2» (победа в этой игре даст 2 очка) и «🎲» (перекрутить рулетку).
+  // ======================= ТУРНИР (3.13, переделан в 3.59) =======================
+  // 3.59 (решение владельца): перед турниром выбираешь 3 игры сам или «Случайные». Каждая из трёх выпадает
+  // на рулетке по одному разу и играется. Кто выиграл больше игр — чемпион (2 победы — турнир решён).
+  // Вышел из игры (или из турнира, или закрыл приложение) — турнир сгорает целиком, прогресса нет.
+  // Карт «×2» и «🎲» больше нет.
   // Игры не меняются: запуск — как «Продолжить» в home.js (клик по плитке → соперник → «Играть»),
   // конец матча ловим через PPCHEST.end (его зовут все игры), выход в меню — кнопками самих игр.
   // «Быстрые матчи» на время турнира ставят «до скольки» ближе к 3, после матча настройка игры возвращается.
@@ -22912,11 +23338,13 @@
     const ico = (p, cls) => `<svg class="${cls || ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 
     // ---------- состояние ----------
-    const CFG = jGet('cup-cfg', { m: 'two', lv: 1, goal: 3, fast: true });
-    const NEW = () => ({ on: false, m: CFG.m, lv: CFG.lv, goal: CFG.goal, fast: CFG.fast, sc: [0, 0], x2: [1, 1], re: [1, 1], bet: [0, 0], bag: [], cur: null, last: null, n: 0, hist: [] });
+    const CFG = jGet('cup-cfg', { m: 'two', lv: 1, fast: true, how: 'rnd', pick: [] });
+    if (!Array.isArray(CFG.pick)) CFG.pick = [];
+    const GAMES = 3, WIN = 2; // три игры; две победы — турнир решён
+    const NEW = () => ({ on: false, m: CFG.m, lv: CFG.lv, goal: WIN, fast: CFG.fast, how: CFG.how, sc: [0, 0], games: [], left: [], res: [], cur: null, last: null, n: 0, hist: [] });
     let S = NEW();
-    { const s = jGet('cup-state', {}); if (s.on && Array.isArray(s.sc)) S = Object.assign(NEW(), s); }
-    const save = () => lsSet('cup-state', JSON.stringify(S.on ? S : { on: false }));
+    lsSet('cup-state', ''); // турнир не сохраняется: закрыл приложение — турнир сгорел
+    const save = () => {};
     const CUPS = jGet('cup-cups', { b: 0, r: 0, me: 0, bot: 0 });
     let phase = 'off', playAt = 0, restore = null, botDone = false, spinId = 0;
     const who = p => S.m === 'bot' ? (p === 0 ? 'Ты' : 'Бот') : (p === 0 ? 'Синий' : 'Красный');
@@ -22925,25 +23353,20 @@
     const L = el('div', 'cupL'); L.id = 'cupLayer'; L.hidden = true;
     const side = p => `<div class="cupSide" data-p="${p}">
         <div class="cupWho"><b class="cupName"></b><span class="cupPips"></span></div>
-        <div class="cupCards"><button class="cupCard" data-c="x2"><b>×2</b><small>двойная победа</small></button><button class="cupCard" data-c="re"><b>🎲</b><small>перекрутить</small></button></div>
-        <div class="cupFlash"></div>
       </div>`;
     L.innerHTML = `
       <div class="hkOverlay cupSetup" hidden>
         <div class="hkCard">
           <h1 class="menuTitle cupH">${ico(TROPHY, 'cupHi')}Турнир</h1>
-          <p>Рулетка сама выбирает игру. Победил — очко. Кто первым наберёт нужное число очков — чемпион и забирает кубок.</p>
-          <div class="cupRules">
-            <div><b>×2</b><span>поставь перед игрой — победа в ней даст 2 очка</span></div>
-            <div><b>🎲</b><span>не нравится игра — перекрути рулетку</span></div>
-            <small>У каждого по одной карте каждого вида на весь турнир.</small>
-          </div>
+          <p>Три игры — каждая выпадает на рулетке по одному разу. Кто выиграет больше — чемпион и забирает кубок.</p>
+          <div class="cupRules"><div><b>⚠️</b><span>Вышел из игры — турнир сгорает целиком. Доиграйте до конца!</span></div></div>
           <div><h2 class="groupTitle">Соперник</h2>
             <div class="segmented cupOpp"><button data-v="two">👥 Вдвоём</button><button data-v="bot">🤖 С ботом</button></div>
             <div class="segmented cupLv"><button data-v="0">Лёгкий</button><button data-v="1">Средний</button><button data-v="2">Злой</button></div>
           </div>
-          <div class="segInline"><h2 class="groupTitle">Очков до победы</h2>
-            <div class="segmented cupGoal"><button data-v="3">3</button><button data-v="5">5</button><button data-v="7">7</button></div>
+          <div><h2 class="groupTitle">Игры</h2>
+            <div class="segmented cupHow"><button data-v="rnd">🎲 Случайные</button><button data-v="pick">✋ Выбрать 3</button></div>
+            <div class="cupPickBox" hidden><small class="cupPickN"></small><div class="cupGames"></div></div>
           </div>
           <div class="settingRow"><div class="label">Быстрые матчи<small>Каждая игра короче — примерно до 3. Твои настройки игр потом вернутся</small></div><button class="switch cupFast" role="switch" aria-label="Быстрые матчи"><span></span></button></div>
           <div class="hkRow"><button class="backBtn cupBack">← Назад</button><button class="hkPlay cupGo">Начать</button></div>
@@ -22954,10 +23377,11 @@
         <div class="cupMid">
           <div class="cupTop"><button class="cupX" aria-label="Выйти из турнира">✕</button><span class="cupTitle">${ico(TROPHY)}Турнир</span><span class="cupSub"></span></div>
           <div class="cupScore"><b class="cs0"></b><i>:</i><b class="cs1"></b></div>
+          <div class="cupSlots"></div>
           <div class="cupReel"><div class="cupStrip"></div><div class="cupMark"></div></div>
           <div class="cupNote"></div>
           <button class="hkPlay cupPlay">Играть</button>
-          <div class="cupAsk" hidden><span>Выйти из турнира? Счёт пропадёт.</span><div class="hkRow"><button class="backBtn cupNo">Остаться</button><button class="hkPlay cupYes">Выйти</button></div></div>
+          <div class="cupAsk" hidden><span>Выйти из турнира? Весь прогресс пропадёт.</span><div class="hkRow"><button class="backBtn cupNo">Остаться</button><button class="hkPlay cupYes">Выйти</button></div></div>
         </div>
         ${side(0)}
       </div>
@@ -22966,6 +23390,12 @@
         <div class="cupPts"></div>
         <div class="cupResS"></div>
         <button class="hkPlay cupNext">Дальше ›</button>
+      </div></div>
+      <div class="cupRes cupLost" hidden><div class="cupSheet">
+        <div class="cupPts">💔</div>
+        <div class="cupResT"><b>Турнир сгорел</b></div>
+        <div class="cupResS cupLostS">Вы вышли из игры — по правилам весь прогресс турнира пропадает.</div>
+        <button class="hkPlay cupLostOk">Понятно</button>
       </div></div>
       <div class="cupChamp" hidden><div class="cupChCard">
         <div class="cupBig">${ico(TROPHY)}</div>
@@ -22977,30 +23407,53 @@
       </div></div>`;
     document.body.appendChild(L);
     const $ = s => L.querySelector(s);
-    const setupEl = $('.cupSetup'), board = $('.cupBoard'), resEl = $('.cupRes'), champEl = $('.cupChamp');
+    const setupEl = $('.cupSetup'), board = $('.cupBoard'), resEl = $('.cupRes:not(.cupLost)'), champEl = $('.cupChamp'), lostEl = $('.cupLost');
     const reel = $('.cupReel'), strip = $('.cupStrip');
-    const show = part => { L.hidden = !part; [setupEl, board, resEl, champEl].forEach(x => x.hidden = x !== part); };
+    const show = part => { L.hidden = !part; [setupEl, board, resEl, champEl, lostEl].forEach(x => x.hidden = x !== part); };
 
     // ---------- настройки турнира ----------
     function renderSetup() {
-      const pr = (sel, v) => setupEl.querySelectorAll(sel + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(v))));
-      pr('.cupOpp', CFG.m); pr('.cupLv', CFG.lv); pr('.cupGoal', CFG.goal);
+      const pr = (sel, v) => setupEl.querySelectorAll(sel + ' > button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(v))));
+      const pool = poolFor(CFG.m);
+      CFG.pick = CFG.pick.filter(id => pool.includes(id)).slice(0, GAMES);
+      pr('.cupOpp', CFG.m); pr('.cupLv', CFG.lv); pr('.cupHow', CFG.how);
       $('.cupLv').hidden = CFG.m !== 'bot';
       $('.cupFast').setAttribute('aria-checked', String(!!CFG.fast));
+      $('.cupPickBox').hidden = CFG.how !== 'pick';
+      const gs = $('.cupGames');
+      if (gs.dataset.m !== CFG.m) { gs.dataset.m = CFG.m; gs.innerHTML = pool.map(id => { const t = document.getElementById(id), ic = t && t.querySelector('.tileIcon'); return `<button class="cupG" data-id="${id}"><span class="cupGI">${ic ? ic.outerHTML : ''}</span><span class="cupGN">${nameOf(id)}</span><i class="cupGNum"></i></button>`; }).join(''); gs.querySelectorAll('[id]').forEach(x => x.removeAttribute('id')); }
+      gs.querySelectorAll('.cupG').forEach(b => { const k = CFG.pick.indexOf(b.dataset.id); b.setAttribute('aria-pressed', String(k >= 0)); b.querySelector('.cupGNum').textContent = k >= 0 ? k + 1 : ''; });
+      const n = CFG.pick.length;
+      $('.cupPickN').textContent = n < GAMES ? `Выбрано ${n} из ${GAMES} — нажми на игры` : 'Готово — 3 игры выбраны';
+      $('.cupPickN').classList.toggle('ok', n === GAMES);
+      $('.cupGo').disabled = CFG.how === 'pick' && n < GAMES;
     }
     setupEl.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       const g = b.parentNode;
       if (g.classList.contains('cupOpp')) CFG.m = b.dataset.v;
       else if (g.classList.contains('cupLv')) CFG.lv = +b.dataset.v;
-      else if (g.classList.contains('cupGoal')) CFG.goal = +b.dataset.v;
+      else if (g.classList.contains('cupHow')) CFG.how = b.dataset.v;
+      else if (b.classList.contains('cupG')) {
+        const id = b.dataset.id, k = CFG.pick.indexOf(id);
+        if (k >= 0) CFG.pick.splice(k, 1);
+        else if (CFG.pick.length < GAMES) { CFG.pick.push(id); snd(660, 0.05); }
+        else { const n = $('.cupPickN'); n.classList.remove('shake', 'ok'); void n.offsetWidth; n.classList.add('shake'); n.textContent = 'Уже 3 — сначала сними одну'; buzz(15); return; }
+      }
       else if (b.classList.contains('cupFast')) CFG.fast = !CFG.fast;
       else return;
       lsSet('cup-cfg', JSON.stringify(CFG)); renderSetup();
     });
     $('.cupBack').addEventListener('click', () => { show(null); phase = 'off'; });
+    function startCup() {
+      S = NEW(); S.on = true; S.how = CFG.how === 'pick' && CFG.pick.length === GAMES ? 'pick' : 'rnd';
+      const pool = poolFor(S.m);
+      S.games = CFG.how === 'pick' && CFG.pick.length === GAMES ? CFG.pick.slice() : shuffle(pool.slice()).slice(0, GAMES);
+      S.left = S.games.slice(); S.res = S.games.map(() => -1);
+    }
     $('.cupGo').addEventListener('click', () => {
-      S = NEW(); S.on = true; save();
+      if ($('.cupGo').disabled) return;
+      startCup();
       if (window.pgHome) pgHome.setMode(S.m); // плитки и подсказки — в том же режиме, что турнир
       snd(523, 0.1); setTimeout(() => snd(784, 0.14), 90);
       openBoard(true);
@@ -23014,27 +23467,18 @@
         const sd = board.querySelector(`.cupSide[data-p="${p}"]`);
         sd.querySelector('.cupName').textContent = S.m === 'bot' && p === 1 ? `Бот · ${LV[S.lv]}` : who(p);
         sd.querySelector('.cupPips').innerHTML = pips(p);
-        const x2 = sd.querySelector('[data-c="x2"]'), re = sd.querySelector('[data-c="re"]');
-        const mine = !(S.m === 'bot' && p === 1);
-        x2.classList.toggle('on', !!S.bet[p]); x2.classList.toggle('used', !S.x2[p] && !S.bet[p]);
-        re.classList.toggle('used', !S.re[p]);
-        x2.disabled = !mine || phase !== 'pick' || (!S.x2[p] && !S.bet[p]);
-        re.disabled = !mine || phase !== 'pick' || !S.re[p];
-        x2.querySelector('small').textContent = S.bet[p] ? 'поставлено!' : !S.x2[p] ? 'потрачена' : 'двойная победа';
-        re.querySelector('small').textContent = !S.re[p] ? 'потрачена' : 'перекрутить';
-        sd.classList.toggle('bot', !mine);
+        sd.classList.toggle('bot', S.m === 'bot' && p === 1);
       }
       $('.cs0').textContent = S.sc[0]; $('.cs1').textContent = S.sc[1];
-      $('.cupSub').textContent = `игра ${S.n + 1} · до ${S.goal}`;
-      const mp = [0, 1].filter(p => S.sc[p] >= S.goal - 1 || (S.bet[p] && S.sc[p] >= S.goal - 2));
+      $('.cupSub').textContent = `игра ${Math.min(GAMES, S.n + 1)} из ${GAMES}`;
+      // три игры турнира: сыгранные — цветом победителя, текущая — подсвечена
+      $('.cupSlots').innerHTML = S.games.map((id, i) => { const t = document.getElementById(id), ic = t && t.querySelector('.tileIcon'), w = S.res[i];
+        return `<div class="cupSlot${w >= 0 ? ' done' : ''}${id === S.cur && phase === 'pick' ? ' cur' : ''}"${w >= 0 ? ` style="--wc:${COL[w]}"` : ''}><span class="cupGI">${ic ? ic.outerHTML : ''}</span><small>${nameOf(id)}</small>${w >= 0 ? `<b>${S.m === 'bot' ? (w ? 'бот' : 'ты') : (w ? 'красный' : 'синий')}</b>` : ''}</div>`; }).join('');
+      $('.cupSlots').querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
+      const mp = [0, 1].filter(p => S.sc[p] >= S.goal - 1);
       let note = '';
       if (phase === 'spin') note = 'Крутим рулетку…';
-      else if (phase === 'pick') {
-        const bets = [0, 1].filter(p => S.bet[p]).map(p => `<b style="color:${COL[p]}">${who(p)}: ×2</b>`);
-        note = mp.length === 2 ? '<b class="cupHot">Решающая игра!</b>' : mp.length ? `<b class="cupHot">Матч-пойнт: ${who(mp[0])}</b>` : '';
-        if (bets.length) note += (note ? ' · ' : '') + bets.join(' · ');
-        if (!note) note = 'Можно поставить ×2 или перекрутить — или сразу играть';
-      }
+      else if (phase === 'pick') note = mp.length === 2 ? '<b class="cupHot">Решающая игра!</b>' : mp.length ? `<b class="cupHot">Матч-пойнт: ${who(mp[0])}</b>` : 'Выйдешь из игры — турнир сгорит';
       $('.cupNote').innerHTML = note;
       const pl = $('.cupPlay'); pl.disabled = phase !== 'pick';
       pl.textContent = phase === 'pick' && S.cur ? `Играть: ${nameOf(S.cur)}` : 'Играть';
@@ -23050,25 +23494,19 @@
       return -(fin * IW - reel.clientWidth / 2 + IW / 2);
     }
     function staticReel() { // показать уже выбранную игру без прокрутки
-      const pool = poolFor(S.m), r = () => pool[Math.floor(Math.random() * pool.length)];
+      const pool = S.games, r = () => pool[Math.floor(Math.random() * pool.length)];
       strip.style.transition = 'none';
       strip.style.transform = `translateX(${fillStrip([r(), r(), S.cur, r(), r()], 2)}px)`;
       strip.children[2].classList.add('on');
     }
-    function draw(not) { // мешок: все игры по разу, потом заново; не та же, что только что
-      const pool = poolFor(S.m);
-      const ok = id => pool.includes(id) && id !== not && id !== S.last;
-      S.bag = (S.bag || []).filter(id => pool.includes(id));
-      if (!S.bag.some(ok)) S.bag = shuffle(pool.slice());
-      const id = S.bag.find(ok) || pool.find(id => id !== not) || pool[0];
-      S.bag.splice(S.bag.indexOf(id), 1);
-      return id;
+    function draw() { // из оставшихся игр турнира — случайная (каждая выпадет ровно один раз)
+      return S.left[Math.floor(Math.random() * S.left.length)];
     }
     function spin(not) {
       const my = ++spinId;
       phase = 'spin'; botDone = false;
       S.cur = draw(not); save(); renderBoard();
-      const pool = poolFor(S.m), N = 28, fin = N - 3, ids = [];
+      const pool = S.left.length > 1 ? S.left : S.games, N = 28, fin = N - 3, ids = [];
       for (let k = 0; k < N; k++) ids.push(k === fin ? S.cur : pool[Math.floor(Math.random() * pool.length)]);
       const x = fillStrip(ids, fin), T = calm() ? 250 : 2700, rw = reel.clientWidth;
       strip.style.transition = 'none'; strip.style.transform = 'translateX(0px)'; void strip.offsetWidth;
@@ -23086,41 +23524,13 @@
         if (my !== spinId) return;
         const it = strip.children[fin]; if (it) it.classList.add('on');
         snd(660, 0.1); setTimeout(() => snd(990, 0.18), 110); buzz(30);
-        phase = 'pick'; renderBoard(); botThink();
+        phase = 'pick'; renderBoard();
+        // 3.60: «Случайные» — игра начинается сама, без «Играть» (на секунду видно, что выпало)
+        if (S.how === 'rnd') {
+          $('.cupNote').innerHTML = `<b class="cupHot">Начинаем: ${nameOf(S.cur)}…</b>`;
+          setTimeout(() => { if (my === spinId && phase === 'pick' && $('.cupAsk').hidden && !L.hidden) play(); }, calm() ? 600 : 1300);
+        }
       }, T + 80);
-    }
-    function flash(p, text) {
-      const f = board.querySelector(`.cupSide[data-p="${p}"] .cupFlash`);
-      f.textContent = text; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
-    }
-    function useCard(p, c) {
-      if (phase !== 'pick') return;
-      if (c === 'x2') {
-        if (S.bet[p]) { S.bet[p] = 0; S.x2[p] = 1; snd(330, 0.08); }
-        else if (S.x2[p]) { S.bet[p] = 1; S.x2[p] = 0; snd(784, 0.08); setTimeout(() => snd(1175, 0.14), 80); buzz(20); flash(p, '×2'); }
-      } else if (c === 're' && S.re[p]) {
-        S.re[p] = 0;
-        [0, 1].forEach(q => { if (S.bet[q]) { S.bet[q] = 0; S.x2[q] = 1; } }); // игра сменилась — ставки возвращаются
-        flash(p, '🎲'); buzz(20);
-        spin(S.cur); return;
-      }
-      save(); renderBoard();
-    }
-    board.addEventListener('click', e => {
-      const b = e.target.closest('.cupCard'); if (!b || b.disabled) return;
-      const p = +b.closest('.cupSide').dataset.p; if (S.m === 'bot' && p === 1) return;
-      useCard(p, b.dataset.c);
-    });
-    // бот сам решает про свои карты
-    function botThink() {
-      if (S.m !== 'bot' || botDone) return; botDone = true;
-      const my = spinId;
-      setTimeout(() => {
-        if (my !== spinId || phase !== 'pick') return;
-        if (S.re[1] && Math.random() < 0.28) { useCard(1, 're'); return; }
-        const behind = S.sc[1] < S.sc[0], close = S.sc[0] >= S.goal - 1;
-        if (S.x2[1] && !S.bet[1] && (behind || close || Math.random() < 0.2)) useCard(1, 'x2');
-      }, 700 + Math.random() * 500);
     }
     $('.cupPlay').addEventListener('click', play);
     $('.cupX').addEventListener('click', () => { $('.cupAsk').hidden = false; });
@@ -23182,14 +23592,14 @@
     };
     function onEnd(w) {
       phase = 'res';
-      const pts = S.bet[w] ? 2 : 1;
+      const pts = 1, gi = S.games.indexOf(S.cur);
       S.sc[w] += pts; S.n++;
-      S.hist.push([S.cur, w, pts]);
-      S.last = S.cur; S.cur = null; S.bet = [0, 0];
-      save();
-      const done = S.sc[w] >= S.goal;
+      S.hist.push([S.cur, w, pts]); if (gi >= 0) S.res[gi] = w;
+      S.left = S.left.filter(id => id !== S.cur);
+      S.last = S.cur; S.cur = null;
+      const done = S.sc[w] >= S.goal || !S.left.length;
       $('.cupResT').innerHTML = `<b style="color:${COL[w]}">${who(w)}</b> ${S.m === 'bot' && w === 0 ? 'выиграл' : 'выигрывает'} «${nameOf(S.last)}»`;
-      $('.cupPts').innerHTML = pts === 2 ? '+2 <small>×2 сработала!</small>' : '+1';
+      $('.cupPts').innerHTML = '+1';
       $('.cupPts').style.color = COL[w];
       $('.cupResS').innerHTML = `<span style="color:${COL[0]}">${who(0)} ${S.sc[0]}</span> : <span style="color:${COL[1]}">${S.sc[1]} ${who(1)}</span>`;
       $('.cupNext').textContent = done ? 'К награждению 🏆' : 'Дальше ›';
@@ -23199,7 +23609,7 @@
     $('.cupNext').addEventListener('click', async () => {
       if (phase !== 'res') return;
       phase = 'board';
-      const done = S.sc[0] >= S.goal || S.sc[1] >= S.goal;
+      const done = S.sc[0] >= S.goal || S.sc[1] >= S.goal || !S.left.length;
       show(board); renderBoard();
       strip.innerHTML = ''; // пока уходим из игры — табло закрывает экран
       await goHome();
@@ -23219,25 +23629,28 @@
         b.click(); await wait(70);
       }
     }
-    // игрок сам вышел из игры в меню — турнир ждёт на табло, эту игру можно сыграть заново
+    // 3.59: игрок сам вышел из игры в меню — турнир сгорает целиком
     setInterval(() => {
       if (phase !== 'play' || performance.now() - playAt < 1200 || !atHome()) return;
       undoFast();
-      openBoard(false);
-      $('.cupNote').innerHTML = 'Игра прервана — очко никому. Сыграйте её снова или перекрутите';
+      S = NEW(); spinId++; phase = 'lost';
+      show(lostEl); lostEl.classList.remove('in'); void lostEl.offsetWidth; lostEl.classList.add('in');
+      snd(392, 0.2); setTimeout(() => snd(262, 0.4), 200); buzz([60, 40, 120]);
+      renderBanner();
     }, 500);
+    $('.cupLostOk').addEventListener('click', () => { phase = 'off'; show(null); renderBanner(); });
 
     // ---------- чемпион ----------
     function champ() {
       phase = 'champ';
-      const w = S.sc[0] >= S.goal ? 0 : 1;
+      const w = S.sc[0] > S.sc[1] ? 0 : 1;
       if (S.m === 'two') CUPS[w ? 'r' : 'b']++; else CUPS[w ? 'bot' : 'me']++;
       lsSet('cup-cups', JSON.stringify(CUPS));
       const c = $('.cupChCard');
       c.style.setProperty('--cc', w ? '#e04f3f' : '#3f7fe0');
       $('.cupChT').textContent = S.m === 'bot' ? (w ? 'Бот забрал кубок' : 'Ты — чемпион!') : `${who(w)} — чемпион!`;
       $('.cupChS').innerHTML = `<span style="color:${COL[0]}">${S.sc[0]}</span> : <span style="color:${COL[1]}">${S.sc[1]}</span>`;
-      $('.cupHist').innerHTML = S.hist.map(([id, p, pts]) => `<div><i style="background:${COL[p]}"></i><span>${nameOf(id)}</span><b style="color:${COL[p]}">${who(p)}${pts > 1 ? ' ×2' : ''}</b></div>`).join('');
+      $('.cupHist').innerHTML = S.hist.map(([id, p]) => `<div><i style="background:${COL[p]}"></i><span>${nameOf(id)}</span><b style="color:${COL[p]}">${who(p)}</b></div>`).join('');
       $('.cupCups').innerHTML = cupsLine(S.m);
       champEl.querySelectorAll('.confetti').forEach(x => x.remove());
       if (!(S.m === 'bot' && w === 1)) {
@@ -23259,7 +23672,7 @@
         : `Кубков: <b style="color:${COL[0]}">синий ${CUPS.b}</b> · <b style="color:${COL[1]}">красный ${CUPS.r}</b>`;
     }
     $('.cupHome').addEventListener('click', () => { phase = 'off'; show(null); S = NEW(); renderBanner(); });
-    $('.cupAgain').addEventListener('click', () => { S = NEW(); S.on = true; save(); openBoard(true); });
+    $('.cupAgain').addEventListener('click', () => { phase = 'off'; renderSetup(); show(setupEl); phase = 'setup'; setupEl.scrollTop = 0; }); // ещё турнир — снова выбрать игры
 
     // ---------- плашка на главной ----------
     const banner = el('button', 'cupBanner');
@@ -23271,8 +23684,8 @@
       banner.hidden = !(m === 'two' || m === 'bot');
       if (banner.hidden) return;
       const cups = m === 'bot' ? CUPS.me + CUPS.bot : CUPS.b + CUPS.r;
-      const sub = S.on ? `${S.m === 'bot' ? 'С ботом' : 'Вдвоём'} · игра ${S.n + 1} · до ${S.goal} — продолжить`
-        : cups ? cupsLine(m).replace(/<[^>]+>/g, '') : 'Рулетка выбирает игры, кто первым наберёт очки — чемпион';
+      const sub = S.on ? `${S.m === 'bot' ? 'С ботом' : 'Вдвоём'} · игра ${Math.min(GAMES, S.n + 1)} из ${GAMES} — продолжить`
+        : cups ? cupsLine(m).replace(/<[^>]+>/g, '') : 'Выбери 3 игры или случайные — кто выиграет больше, тот чемпион';
       banner.classList.toggle('live', S.on);
       banner.innerHTML = `<span class="cupBIco">${ico(TROPHY)}</span><span class="cupBTxt"><b>${S.on ? `Турнир · ${S.sc[0]} : ${S.sc[1]}` : 'Турнир'}</b><small>${sub}</small></span><span class="cupBArr">›</span>`;
     }
@@ -23441,14 +23854,16 @@
       if (D.via === 'elite') return `<p class="duoConn ok">📶 Связь: стабильная — у обоих одинаково</p>`;
       if (D.via !== 'net' || !NET.on) return '';
       const v = NET.viaInfo();
-      if (v.rtc) return `<p class="duoConn ok">⚡ Связь: напрямую — самая быстрая игра</p>`;
+      const golf = v.slow ? `<p class="duoGolf">🐢 Связь медленная. Выключите VPN или сыграйте в <b>Мини-гольф</b> — там задержка почти не мешает.</p>` : '';
+      if (v.rtc) return `<p class="duoConn ok">⚡ Связь: напрямую — самая быстрая игра</p>` + golf;
       if (v.via !== 'relay') return '';
       if (v.trying && (v.tries || 0) <= 1) return `<p class="duoConn">⚡ Соединяем телефоны напрямую…</p>`;
       return `<div class="duoRelay"><b>Связь: через сервер</b><span>Играть можно, но с задержкой. Сделай быстрее:</span>
         <ol><li>Выключите VPN у обоих → <button class="duoBtn duoSmall" data-a="direct">${v.trying ? 'Пробуем…' : 'Ещё раз напрямую'}</button></li>
         <li>Смени сеть: Wi‑Fi ↔ мобильный — игра сама попробует снова</li>
         <li>${host ? `<button class="duoBtn duoSmall" data-a="toStable">Играть «📶 Стабильно»</button>` : 'Попроси друга нажать «Играть Стабильно»'}</li></ol>
-        <span class="duoSub">Игра сама пробует напрямую каждые 30–60 секунд.</span></div>`;
+        <span class="duoSub">Игра сама пробует напрямую каждые 30–60 секунд.</span>
+        <span class="duoGolf">⛳ Пока связь так себе — сыграйте в <b>Мини-гольф</b>: там задержка почти не мешает.</span></div>`;
     }
     function draw() {
       if (!D.view) { panel.hidden = true; return; }
@@ -23465,7 +23880,7 @@
         if (S.st === 'idle') {
           h = `<div class="duoLabel duoQ">Как играем?</div>
             <button class="duoBig duoFast" data-a="fast"><b>⚡ Быстро</b><small>Телефоны соединяются друг с другом — задержка меньше всего</small></button>
-            <p class="duoNote">Вы рядом? Один включает раздачу интернета, второй подключается к ней — так быстрее всего.</p>
+            <p class="duoNote"><b>Лучшая связь:</b> оба телефона в одном Wi‑Fi. Вы рядом, а Wi‑Fi нет? Один включает раздачу интернета, второй подключается к ней.</p>
             <details class="duoTbl"><summary>Какая будет задержка ⓘ</summary>${LAT_TABLE}</details>
             <button class="duoBig duoStable" data-a="stable"><b>📶 Стабильно</b><small>Игру ведёт сервер — задержка у обоих одинаковая</small></button>
             <div class="duoLabel">Друг уже создал комнату? Введи его код</div>
