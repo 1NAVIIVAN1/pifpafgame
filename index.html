@@ -8880,7 +8880,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '3.63';
+  const NET_BUILD = '3.64';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -19975,7 +19975,7 @@
     function icon(cv, k, i) { const c = cv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); const s = cv.width / 60; c.scale(s, s); drawTank(c, 28, 34, 20, -Math.PI / 2, -Math.PI / 3, PG_COL[i], PG_DARK[i], k); }
     function renderLobby() {
       if (!lobbyEl) return;
-      const two = lobbyOpts && lobbyOpts.opp === 'human', first = !two && !SV.played && !total();
+      const two = lobbyOpts && lobbyOpts.opp === 'human', first = !two && !SV.played && !total() && !(SV.boxes + SV.big);
       const k = !two && !open(SV.sel) ? 'gun' : SV.sel, f = F[k], me = SV.f[k], lvl = two ? 5 : me.lvl, m = mult(lvl), cost = COST[me.lvl - 1], need = PPC[me.lvl - 1], [rn, rc] = rarOf(k);
       const lockTxt = q => F[q].box ? `🔒 из ящика` : `🔒 ${F[q].need} 🏆`;
       const chips = (sel, attr, i) => KEYS.map(q => { const ok = two || open(q), Q = SV.f[q], pr = Q.lvl >= MAXL ? 100 : Math.min(100, Q.pp / PPC[Q.lvl - 1] * 100); return `<button class="arChip${q === sel ? ' on' : ''}${ok ? '' : ' lock'}" style="--rc:${rarOf(q)[1]}" ${attr}="${q}" ${ok ? '' : 'disabled'}><canvas width="120" height="120" data-k="${q}" data-i="${i}"></canvas><b>${F[q].name}</b><small>${ok ? (two ? 'ур. 5' : `ур. ${Q.lvl} · ${Q.tr} 🏆`) : lockTxt(q)}</small>${ok && !two ? `<u><i style="width:${pr}%"></i></u>` : ''}</button>`; }).join('');
@@ -20094,7 +20094,7 @@
     const ppBar = Q => Q.lvl >= MAXL ? '<div class="ahPP max"><i style="width:100%"></i><span>МАКС. УРОВЕНЬ</span></div>' : `<div class="ahPP${Q.pp >= PPC[Q.lvl - 1] ? ' ok' : ''}"><i style="width:${Math.min(100, Q.pp / PPC[Q.lvl - 1] * 100)}%"></i><span>очки силы ${Q.pp}/${PPC[Q.lvl - 1]}</span></div>`;
     const upBtnH = (k) => { const Q = SV.f[k]; if (Q.lvl >= MAXL) return ''; const need = PPC[Q.lvl - 1], cost = COST[Q.lvl - 1]; return Q.pp < need ? `<div class="ahHint">Очки силы выпадают из ящиков</div>` : `<button class="ahBtn green" data-a="up" data-k="${k}" ${SV.coins >= cost ? '' : 'disabled'}>УЛУЧШИТЬ · ${cost} 🪙</button>`; };
     function hubRender() {
-      const two = isTwo(), first = !two && !SV.played && !total();
+      const two = isTwo(), first = !two && !SV.played && !total() && !(SV.boxes + SV.big); // 3.64: есть ящики (например, от владельца) — кнопки видны и до первого боя
       const k = !two && !open(SV.sel) ? 'gun' : SV.sel, f = F[k], Q = SV.f[k], lvl = two ? 5 : Q.lvl, [rn, rc] = rarOf(k);
       const nb = SV.boxes + SV.big, top = `<div class="ahTop"><button class="ahBack" data-a="${HS.view === 'main' ? 'exit' : 'main'}" aria-label="Назад">‹</button><b class="ahTitle">${HS.view === 'list' ? (HS.red ? 'БОЕЦ КРАСНОГО' : 'БОЙЦЫ') : HS.view === 'box' ? 'ЯЩИКИ' : HS.view === 'info' ? 'БОЕЦ' : 'АРЕНА'}</b><span class="ahPill">🏆 ${total()}</span><span class="ahPill">🪙 ${SV.coins}</span></div>`;
       let h = '';
@@ -20687,7 +20687,10 @@
       })().catch(e => { A.err = e.message; changed(); }).finally(() => { ensuring = null; });
       return ensuring;
     }
-    const busy = () => { const h = document.getElementById('homeScreen'); return !h || !h.offsetParent; };
+    // 3.64: экран Арены (выбор бойца, ящики) — это не бой: сверяемся с сервером так же часто, как на главном экране
+    const arHubOpen = () => { const h = document.querySelector('.arHub'); return !!(h && !h.hidden && h.getClientRects().length); };
+    const busy = () => { const h = document.getElementById('homeScreen'); return (!h || !h.offsetParent) && !arHubOpen(); };
+    let hubWas = false;
     let syncT = null, lastSync = 0;
     async function sync() {
       if (!A.token || document.hidden) return;
@@ -20697,8 +20700,9 @@
     // пока открыт главный экран — раз в 8 с (чтобы приглашение пришло быстро), в игре — раз в 30 с
     function loop() {
       clearTimeout(syncT);
-      const gap = busy() ? 30000 : 8000;
-      if (Date.now() - lastSync >= gap - 50) sync();
+      const gap = busy() ? 30000 : 8000, hub = arHubOpen();
+      if ((hub && !hubWas) || Date.now() - lastSync >= gap - 50) sync(); // зашёл в Арену — сразу узнаём про ящики от владельца
+      hubWas = hub;
       if (A.chat && box && !box.hidden && !document.hidden && Date.now() - chatT > 3000) chatPull();
       syncT = setTimeout(loop, 2000);
     }
