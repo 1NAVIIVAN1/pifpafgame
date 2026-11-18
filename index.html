@@ -8880,7 +8880,7 @@
   const SERVERS = { ru: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech', 'Напрямую по России (без VPN)'], ruw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech', 'Напрямую — знакомство через Варшаву'], msk: ['Москва', 'pifpaf-m3ivan.msk1.amvera.tech'], mia: ['Майами', 'pifpaf-m3ivan.mia0.amvera.tech'], waw: ['Варшава', 'pifpaf-m3ivan.waw0.amvera.tech'] };
   let RELAY_HOST = '';
   let RELAY_URL = qs_relay();
-  const NET_BUILD = '3.64';
+  const NET_BUILD = '3.65';
   // САМООБНОВЛЕНИЕ: Telegram на телефоне любит показывать старую копию игры из кэша.
   // При запуске спрашиваем у сайта маленький файл version.txt (всегда свежий) — если там
   // версия новее нашей, перезагружаемся с ?v=версия: такой адрес телефон ещё не видел и качает заново.
@@ -21154,19 +21154,37 @@
       if (!A.token || !A.me || !arOk() || (AR.owner !== A.me.id && !force)) return;
       if (AR.busy) { AR.again = true; return; }
       AR.busy = true; const sent = PPArena.get(), who = A.me.id;
+      const ack = (A.me.arGifts || []).map(g => g.id).filter(id => AR.done.includes(id)); // подарки, которые уже добавлены сюда
       try {
-        const j = await api('arena/save', { base: AR.v, d: sent, force: !!force });
+        const j = await api('arena/save', { base: AR.v, d: sent, force: !!force, ack });
         if (!A.me || A.me.id !== who) return;
         if (j.conflict) { arAdopt(j.ar); return; } // прогресс поменялся на другом устройстве — берём из аккаунта
         if (j.ar) { if (JSON.stringify(j.ar.d) !== JSON.stringify(sent) && !AR.again) arAdopt(j.ar); else arMine(j.ar.v); }
-        if (A.me.arGift) A.me.arGift = false;
+        if (ack.length && A.me) A.me.arGifts = (A.me.arGifts || []).filter(g => !ack.includes(g.id));
       } catch (e) { /* нет связи — отправим со следующим изменением */ }
       finally { AR.busy = false; if (AR.again) { AR.again = false; arPush(); } }
+    }
+    // 3.65: ящики от владельца (/box) — добавляем к себе сами (каждый подарок один раз) и подтверждаем серверу
+    AR.done = (() => { try { const v = JSON.parse(ls.get('arena-gift-done') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } })();
+    const inArenaMatch = () => !arHubOpen() && !!(window.pgGames && pgGames.some(g => g.G && g.G.active && g.G.cfg && g.G.cfg.key === 'arena' && g.G.state === 'play'));
+    function arGiftsTake() {
+      if (!A.me || !arOk() || AR.owner !== A.me.id) return;
+      const pend = A.me.arGifts || [];
+      const fresh = pend.filter(g => !AR.done.includes(g.id));
+      if (fresh.length && !inArenaMatch()) { // во время боя Арены не трогаем — добавим сразу после
+        const d = PPArena.get();
+        fresh.forEach(g => { d.boxes = (d.boxes || 0) + (g.boxes || 0); d.big = (d.big || 0) + (g.big || 0); AR.done.push(g.id); });
+        AR.done = AR.done.slice(-100); ls.set('arena-gift-done', JSON.stringify(AR.done));
+        AR.adopting = true; try { PPArena.set(d); } finally { AR.adopting = false; }
+        const n = fresh.reduce((a, g) => a + (g.boxes || 0) + (g.big || 0), 0);
+        toast(`📦 Пришли ящики Арены: ${n}! Открой их в Арене`, null, 3500);
+      }
+      if (pend.some(g => AR.done.includes(g.id))) arPush(); // подтвердить серверу
     }
     PPArena.onSave = () => { if (AR.adopting) return; clearTimeout(AR.t); AR.t = setTimeout(() => arPush(), 1200); };
     function arOnServer(j) {
       if (!A.me || !arOk() || A.pick) return;
-      if (AR.owner === A.me.id) { if (j.ar && j.ar.v > AR.v) arAdopt(j.ar); if (A.me.arGift) arPush(); return; }
+      if (AR.owner === A.me.id) { if (j.ar && j.ar.v > AR.v) arAdopt(j.ar); arGiftsTake(); return; }
       if (j.ar === undefined) return; // сервер не прислал — спросим при следующей сверке
       const local = PPArena.get(), srv = j.ar;
       if (AR.fresh) { AR.fresh = false; if (srv && !arEmpty(srv.d)) { arAdopt(srv); return; } }
